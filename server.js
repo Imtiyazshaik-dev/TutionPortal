@@ -178,7 +178,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
 
     if (!student.classroomId) {
-      return.json({ success: true, assigned: false, student });
+      return res.json({ success: true, assigned: false, student });
     }
 
     const classroom = await Classroom.findById(student.classroomId);
