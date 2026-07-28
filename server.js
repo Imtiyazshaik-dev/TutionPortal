@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const https = require('https');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -285,7 +287,7 @@ app.post('/api/exam/strike', async (req, res) => {
     await student.save();
 
     if (student.strikes >= 3) {
-      return res.json({ success: true, terminated: true, message: 'Maximum tab-switch violations reached! Exam terminated.' });
+      return res.json({ success: true, terminated: true, message: 'Maximum tab-switch violations reached! Exam auto-submitted.' });
     }
 
     res.json({ success: true, terminated: false, message: `Warning! Tab-switch detected. Strike ${student.strikes}/3.` });
@@ -559,6 +561,18 @@ app.get('/api/reports/download/:id', async (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// --- SELF-PING KEEP-ALIVE MECHANISM ---
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://tutionportal.onrender.com";
+
+setInterval(() => {
+  const protocol = RENDER_URL.startsWith('https') ? https : http;
+  protocol.get(`${RENDER_URL}`, (res) => {
+    console.log(`Keep-alive ping sent. Status: ${res.statusCode}`);
+  }).on('error', (err) => {
+    console.error("Keep-alive ping error:", err.message);
+  });
+}, 10 * 60 * 1000); // Pings every 10 minutes
 
 app.listen(PORT, () => {
   console.log(`Server running smoothly on http://localhost:${PORT}`);
