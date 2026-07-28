@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const password = passwordInput.value;
 
       try {
-        const response = await fetch("http://localhost:3000/api/auth", {
+        const response = await fetch("/api/auth", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password })
@@ -61,7 +61,7 @@ async function triggerProctoringViolation() {
   if (!userId) return;
 
   try {
-    const response = await fetch('http://localhost:3000/api/exam/strike', {
+    const response = await fetch('/api/exam/strike', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
@@ -95,7 +95,7 @@ window.addEventListener("blur", () => {
 
 async function resetStudentExam(studentId, testId) {
   try {
-    const response = await fetch("http://localhost:3000/api/admin/reset-exam", {
+    const response = await fetch("/api/admin/reset-exam", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ studentId, testId })
