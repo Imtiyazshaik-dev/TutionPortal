@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Command Center</title>
+  <title>Admin Command Center - Cohorts</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .manage-list-item {
@@ -32,14 +32,28 @@
 <body>
   <div class="container" style="max-width: 650px;">
     <h2>Admin Command Center</h2>
-    <p>Manage student accounts, clearances, test stats, attendance, and live classes.</p>
+    <p>Manage classroom cohorts, student rosters, tests, study notes, live classes, and attendance.</p>
 
     <!-- Monthly Master Report Banner -->
     <div id="adminReportBanner" style="background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #3b82f6; display:none;">
       <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Monthly Master Report Ready</h3>
-      <p style="font-size:14px; margin-bottom:15px;">Download the compiled attendance and test results document for all students. Once downloaded, it clears automatically from storage.</p>
+      <p style="font-size:14px; margin-bottom:15px;">Download compiled attendance and test results for all cohorts.</p>
       <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Master Report</a>
     </div>
+
+    <hr>
+
+    <!-- Classroom Cohort Creation -->
+    <h3>🏫 Create New Classroom Cohort</h3>
+    <div class="input-group">
+      <label>Classroom Name</label>
+      <input type="text" id="cohortName" placeholder="e.g. Batch A - AI & ML" />
+    </div>
+    <div class="input-group">
+      <label>Description</label>
+      <input type="text" id="cohortDesc" placeholder="e.g. Advanced Python & Machine Learning" />
+    </div>
+    <button onclick="createClassroomCohort()">Create Classroom</button>
 
     <hr>
 
@@ -48,17 +62,21 @@
 
     <hr>
 
-    <h3>Student Status & Account Deletions</h3>
+    <h3>Student Cohort Status & Management</h3>
     <div id="studentStatusList" style="max-height:220px; overflow-y:auto; margin-bottom:20px;"></div>
 
     <hr>
 
-    <h3>📊 Student Test Scores, Stats & Reset Exam</h3>
+    <h3>📊 Student Test Scores & Reset Exam</h3>
     <div id="testStatsList" style="max-height:200px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
 
-    <h3>Post Live Class Google Meet Link</h3>
+    <h3>Post Cohort Live Class Link</h3>
+    <div class="input-group">
+      <label>Select Classroom Cohort</label>
+      <select id="classLiveSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+    </div>
     <div class="input-group">
       <label>Class Title</label>
       <input type="text" id="classTitle" placeholder="e.g. Mathematics Live Lecture" />
@@ -76,14 +94,40 @@
 
     <hr>
 
-    <h3>Create New Assessment Test</h3>
+    <h3>Upload Study Notes to Classroom Repository</h3>
+    <div class="input-group">
+      <label>Select Classroom Cohort</label>
+      <select id="noteClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+    </div>
+    <div class="input-group">
+      <label>Note Title</label>
+      <input type="text" id="noteTitle" placeholder="e.g. Lecture 1 PDF / Slides" />
+    </div>
+    <div class="input-group">
+      <label>Resource / Document URL</label>
+      <input type="text" id="noteLink" placeholder="https://drive.google.com/..." />
+    </div>
+    <button onclick="uploadNote()">Publish Study Note</button>
+
+    <div style="margin-top:20px;">
+      <h4>📂 Manage Classroom Notes</h4>
+      <div id="manageNotesList" style="max-height:200px; overflow-y:auto;"></div>
+    </div>
+
+    <hr>
+
+    <h3>Create Assessment Test for Cohort</h3>
+    <div class="input-group">
+      <label>Select Classroom Cohort</label>
+      <select id="testClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+    </div>
     <div class="input-group">
       <label>Test Title</label>
       <input type="text" id="testTitle" placeholder="e.g. JavaScript Basics" />
     </div>
     <div class="input-group">
       <label>Test Timer Duration (in Minutes)</label>
-      <input type="number" id="testDuration" value="15" placeholder="e.g. 15" />
+      <input type="number" id="testDuration" value="15" placeholder="15" />
     </div>
     <div id="questionsContainer"></div>
     <button onclick="addQuestionField()" style="background:#334155; margin-bottom:10px;">+ Add Question</button>
@@ -96,7 +140,11 @@
 
     <hr>
 
-    <h3>Enroll New Student & Send WhatsApp</h3>
+    <h3>Enroll New Student into Classroom & Send WhatsApp</h3>
+    <div class="input-group">
+      <label>Select Classroom Cohort</label>
+      <select id="enrollClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+    </div>
     <div class="input-group">
       <label>Username</label>
       <input type="text" id="enrollUser" placeholder="Student username" />
@@ -106,7 +154,7 @@
       <input type="text" id="enrollPass" placeholder="Temporary password" />
     </div>
     <div class="input-group">
-      <label>WhatsApp Number (with country code, e.g. 919876543210)</label>
+      <label>WhatsApp Number (e.g. 919876543210)</label>
       <input type="text" id="enrollPhone" placeholder="Phone number" />
     </div>
     <button onclick="enrollStudent()">Enroll & Open WhatsApp</button>
@@ -148,7 +196,7 @@
     </div>
     <div class="input-group">
       <label>XP Amount</label>
-      <input type="number" id="xpAmount" placeholder="e.g. 50" />
+      <input type="number" id="xpAmount" placeholder="50" />
     </div>
     <button onclick="submitXp()">Update Student XP</button>
 
@@ -170,17 +218,45 @@
           adminReportId = data.reportId;
           document.getElementById('adminReportBanner').style.display = 'block';
         }
-      } catch (err) {
-        console.error("Error checking admin report:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     function downloadAdminReport() {
       if(!adminReportId) return;
       window.location.href = `/api/reports/download/${adminReportId}`;
-      setTimeout(() => {
-        document.getElementById('adminReportBanner').style.display = 'none';
-      }, 1500);
+      setTimeout(() => { document.getElementById('adminReportBanner').style.display = 'none'; }, 1500);
+    }
+
+    async function createClassroomCohort() {
+      const name = document.getElementById('cohortName').value;
+      const description = document.getElementById('cohortDesc').value;
+      if(!name) return alert("Enter classroom name");
+
+      const res = await fetch('/api/admin/classrooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if(data.success) {
+        document.getElementById('cohortName').value = '';
+        document.getElementById('cohortDesc').value = '';
+        loadAdminData();
+      }
+    }
+
+    async function loadClassroomSelects(classrooms) {
+      const selects = ['classLiveSelect', 'noteClassSelect', 'testClassSelect', 'enrollClassSelect'];
+      selects.forEach(id => {
+        const sel = document.getElementById(id);
+        if(sel) {
+          sel.innerHTML = '';
+          classrooms.forEach(c => {
+            sel.innerHTML += `<option value="${c._id}">${c.name}</option>`;
+          });
+        }
+      });
     }
 
     async function loadAttendanceRequests() {
@@ -192,49 +268,46 @@
 
         if(data.success && data.requests.length > 0) {
           data.requests.forEach(req => {
-            const studentName = req.studentId ? req.studentId.username : 'Unknown Student';
+            const studentName = req.studentId ? req.studentId.username : 'Unknown';
             const studentTag = req.studentId ? req.studentId.studentIdTag : 'N/A';
             container.innerHTML += `
               <div class="manage-list-item" style="background:rgba(15,23,42,0.7);">
-                <div>
-                  <strong>${studentName}</strong> (${studentTag})<br>
-                  <span style="font-size:12px; color:#38bdf8;">Class: ${req.classTitle}</span> | Date: ${req.date}
-                </div>
+                <div><strong>${studentName}</strong> (${studentTag})<br><span style="font-size:12px; color:#38bdf8;">Class: ${req.classTitle}</span></div>
                 <div style="display:flex; gap:6px;">
                   <button onclick="handleAttendanceRequest('${req._id}', 'approve')" class="action-btn" style="background:#10b981;">Approve</button>
                   <button onclick="handleAttendanceRequest('${req._id}', 'reject')" class="action-btn btn-delete">Reject</button>
                 </div>
-              </div>
-            `;
+              </div>`;
           });
         } else {
           container.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No pending attendance requests.</p>';
         }
-      } catch (err) {
-        console.error("Error loading attendance requests:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     async function handleAttendanceRequest(requestId, action) {
-      try {
-        const res = await fetch('/api/admin/attendance-action', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ requestId, action })
-        });
-        const data = await res.json();
-        alert(data.message);
-        loadAttendanceRequests();
-        loadAdminData();
-      } catch (err) {
-        console.error("Error handling request:", err);
-      }
+      const res = await fetch('/api/admin/attendance-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action })
+      });
+      const data = await res.json();
+      alert(data.message);
+      loadAttendanceRequests();
     }
 
     async function loadAdminData() {
       await checkAdminReport();
       await loadAttendanceRequests();
 
+      // Fetch Classrooms
+      const resC = await fetch('/api/classrooms');
+      const dataC = await resC.json();
+      if(dataC.success) {
+        loadClassroomSelects(dataC.classrooms);
+      }
+
+      // Fetch Students
       const res = await fetch('/api/admin/students');
       const data = await res.json();
       if(data.success) {
@@ -242,61 +315,52 @@
         const xpSelect = document.getElementById('xpStudentSelect');
         const statusList = document.getElementById('studentStatusList');
         
-        attSelect.innerHTML = '';
-        xpSelect.innerHTML = '';
-        statusList.innerHTML = '';
+        attSelect.innerHTML = ''; xpSelect.innerHTML = ''; statusList.innerHTML = '';
 
         if(data.students.length === 0) {
-          statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No students enrolled yet.</p>';
+          statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No students enrolled.</p>';
         }
 
         data.students.forEach(s => {
-          const opt = `<option value="${s._id}">${s.username} (${s.studentIdTag})</option>`;
-          attSelect.innerHTML += opt;
-          xpSelect.innerHTML += opt;
+          const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
+          const opt = `<option value="${s._id}">${s.username} (${cohortName})</option>`;
+          attSelect.innerHTML += opt; xpSelect.innerHTML += opt;
 
           statusList.innerHTML += `
             <div class="manage-list-item">
               <div>
                 <strong>${s.username}</strong><br>
-                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag}</span> | Status: <span style="color:${s.status === 'approved' ? '#10b981' : s.status === 'pending' ? '#f59e0b' : '#ef4444'}">${s.status}</span>
+                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span>
               </div>
               <div style="display:flex; gap:4px;">
                 <button onclick="updateStatus('${s._id}', 'approved')" class="action-btn" style="background:#10b981;">Approve</button>
                 <button onclick="updateStatus('${s._id}', 'rejected')" class="action-btn btn-delete">Reject</button>
-                <button onclick="deleteStudent('${s._id}')" class="action-btn" style="background:#64748b;" title="Delete Account">🗑️</button>
+                <button onclick="deleteStudent('${s._id}')" class="action-btn" style="background:#64748b;" title="Delete">🗑️</button>
               </div>
-            </div>
-          `;
+            </div>`;
         });
       }
 
-      // Load Test Results with Reset Exam Button
+      // Results
       const resResults = await fetch('/api/admin/results');
       const dataResults = await resResults.json();
       if(dataResults.success) {
         const statsList = document.getElementById('testStatsList');
         statsList.innerHTML = '';
         if(dataResults.results.length === 0) {
-          statsList.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No test submissions recorded yet.</p>';
+          statsList.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No test submissions recorded.</p>';
         } else {
           dataResults.results.forEach(r => {
             const studentId = r.studentId ? r.studentId._id : '';
-            const studentName = r.studentId ? r.studentId.username : 'Unknown Student';
-            const studentTag = r.studentId ? r.studentId.studentIdTag : 'N/A';
+            const studentName = r.studentId ? r.studentId.username : 'Unknown';
             const testId = r.testId ? r.testId._id : '';
             const testTitle = r.testId ? r.testId.title : 'Deleted Test';
 
             statsList.innerHTML += `
               <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                  <strong>${studentName}</strong> (${studentTag}) - <em>${testTitle}</em><br>
-                  <span style="font-size:11px; color:#10b981; font-weight:bold;">Score: ${r.score}/${r.totalQuestions}</span> | 
-                  <span style="font-size:11px; color:#38bdf8;">Time Taken: ${r.timeTaken || 'N/A'}</span>
-                </div>
-                <button onclick="resetStudentExam('${studentId}', '${testId}')" class="action-btn" style="background:#f59e0b;" title="Reset Exam for Retake">🔄 Reset Exam</button>
-              </div>
-            `;
+                <div><strong>${studentName}</strong> - <em>${testTitle}</em><br><span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span></div>
+                <button onclick="resetStudentExam('${studentId}', '${testId}')" class="action-btn" style="background:#f59e0b;">🔄 Reset</button>
+              </div>`;
           });
         }
       }
@@ -305,108 +369,101 @@
     }
 
     async function loadManagementLists() {
+      // Classes
       const resClass = await fetch('/api/admin/classes');
       const dataClass = await resClass.json();
       const classList = document.getElementById('manageClassesList');
       classList.innerHTML = '';
       if(dataClass.success && dataClass.classes.length > 0) {
         dataClass.classes.forEach(c => {
+          const cohortName = c.classroomId ? c.classroomId.name : '';
           classList.innerHTML += `
             <div class="manage-list-item">
-              <div>
-                <strong>${c.title}</strong> ${c.isActive ? '<span style="color:#10b981; font-size:11px;">(Active)</span>' : ''}<br>
-                <a href="${c.meetLink}" target="_blank" style="font-size:12px; color:#38bdf8;">${c.meetLink}</a>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button onclick="editClass('${c._id}', '${c.title}', '${c.meetLink}')" class="action-btn btn-edit">Edit</button>
-                <button onclick="deleteClass('${c._id}')" class="action-btn btn-delete">Delete</button>
-              </div>
+              <div><strong>${c.title}</strong> <span style="font-size:11px; color:#f59e0b;">(${cohortName})</span></div>
+              <button onclick="deleteClass('${c._id}')" class="action-btn btn-delete">Delete</button>
             </div>`;
         });
-      } else {
-        classList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No classes published.</p>';
-      }
+      } else { classList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No classes published.</p>'; }
 
-      const resTest = await fetch('/api/tests');
+      // Notes
+      const resNotes = await fetch('/api/admin/notes');
+      const dataNotes = await resNotes.json();
+      const notesList = document.getElementById('manageNotesList');
+      notesList.innerHTML = '';
+      if(dataNotes.success && dataNotes.notes.length > 0) {
+        dataNotes.notes.forEach(n => {
+          const cohortName = n.classroomId ? n.classroomId.name : '';
+          notesList.innerHTML += `
+            <div class="manage-list-item">
+              <div><strong>${n.title}</strong> <span style="font-size:11px; color:#f59e0b;">(${cohortName})</span></div>
+              <button onclick="deleteNote('${n._id}')" class="action-btn btn-delete">Delete</button>
+            </div>`;
+        });
+      } else { notesList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No notes uploaded.</p>'; }
+
+      // Tests
+      const resTest = await fetch('/api/admin/tests');
       const dataTest = await resTest.json();
       const testList = document.getElementById('manageTestsList');
       testList.innerHTML = '';
       if(dataTest.success && dataTest.tests.length > 0) {
         dataTest.tests.forEach(t => {
+          const cohortName = t.classroomId ? t.classroomId.name : '';
           testList.innerHTML += `
             <div class="manage-list-item">
-              <div>
-                <strong>${t.title}</strong><br>
-                <span style="font-size:11px; color:#94a3b8;">${t.questions ? t.questions.length : 0} Questions | ⏱️ ${t.durationMinutes || 15} mins</span>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button onclick="editTest('${t._id}', '${t.title}')" class="action-btn btn-edit">Edit Title</button>
-                <button onclick="deleteTest('${t._id}')" class="action-btn btn-delete">Delete</button>
-              </div>
+              <div><strong>${t.title}</strong> <span style="font-size:11px; color:#f59e0b;">(${cohortName})</span></div>
+              <button onclick="deleteTest('${t._id}')" class="action-btn btn-delete">Delete</button>
             </div>`;
         });
-      } else {
-        testList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No tests published.</p>';
-      }
+      } else { testList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No tests published.</p>'; }
     }
 
     async function postLiveClass() {
+      const classroomId = document.getElementById('classLiveSelect').value;
       const title = document.getElementById('classTitle').value;
       const meetLink = document.getElementById('meetLink').value;
       const res = await fetch('/api/admin/class', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, meetLink })
+        body: JSON.stringify({ classroomId, title, meetLink })
       });
       const data = await res.json();
       alert(data.message);
       loadManagementLists();
     }
 
-    async function editClass(id, oldTitle, oldLink) {
-      const newTitle = prompt("Update Class Title:", oldTitle);
-      if(newTitle === null) return;
-      const newLink = prompt("Update Meet Link:", oldLink);
-      if(newLink === null) return;
-
-      const res = await fetch(`/api/admin/class/${id}`, {
-        method: 'PUT',
+    async function uploadNote() {
+      const classroomId = document.getElementById('noteClassSelect').value;
+      const title = document.getElementById('noteTitle').value;
+      const contentOrLink = document.getElementById('noteLink').value;
+      const res = await fetch('/api/admin/notes', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle, meetLink: newLink })
+        body: JSON.stringify({ classroomId, title, contentOrLink })
       });
       const data = await res.json();
       alert(data.message);
+      if(data.success) {
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteLink').value = '';
+        loadManagementLists();
+      }
+    }
+
+    async function deleteNote(id) {
+      if(!confirm("Delete note?")) return;
+      await fetch(`/api/admin/note/${id}`, { method: 'DELETE' });
       loadManagementLists();
     }
 
     async function deleteClass(id) {
-      if(!confirm("Are you sure you want to delete this class?")) return;
-      const res = await fetch(`/api/admin/class/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      alert(data.message);
-      loadManagementLists();
-    }
-
-    async function editTest(id, oldTitle) {
-      const newTitle = prompt("Update Test Title:", oldTitle);
-      if(!newTitle) return;
-
-      const res = await fetch(`/api/admin/test/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle })
-      });
-      const data = await res.json();
-      alert(data.message);
+      await fetch(`/api/admin/class/${id}`, { method: 'DELETE' });
       loadManagementLists();
     }
 
     async function deleteTest(id) {
-      if(!confirm("Are you sure you want to delete this test? All associated student scores will also be wiped.")) return;
-      const res = await fetch(`/api/admin/test/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      alert(data.message);
-      loadAdminData();
+      await fetch(`/api/admin/test/${id}`, { method: 'DELETE' });
+      loadManagementLists();
     }
 
     async function updateStatus(studentId, status) {
@@ -421,14 +478,13 @@
     }
 
     async function deleteStudent(studentId) {
-      if(!confirm("Are you sure you want to completely delete this student account?")) return;
-      const res = await fetch(`/api/admin/student/${studentId}`, { method: 'DELETE' });
-      const data = await res.json();
-      alert(data.message);
+      if(!confirm("Delete student?")) return;
+      await fetch(`/api/admin/student/${studentId}`, { method: 'DELETE' });
       loadAdminData();
     }
 
     async function enrollStudent() {
+      const classroomId = document.getElementById('enrollClassSelect').value;
       const username = document.getElementById('enrollUser').value;
       const password = document.getElementById('enrollPass').value;
       const phone = document.getElementById('enrollPhone').value;
@@ -436,12 +492,12 @@
       const res = await fetch('/api/admin/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, phone })
+        body: JSON.stringify({ username, password, phone, classroomId })
       });
       const data = await res.json();
       alert(data.message);
       if(data.success && data.whatsappUrl) {
-        document.getElementById('whatsappLinkContainer').innerHTML = `<a href="${data.whatsappUrl}" target="_blank" style="color:#10b981; font-weight:bold;">👉 Click here to send WhatsApp Message</a>`;
+        document.getElementById('whatsappLinkContainer').innerHTML = `<a href="${data.whatsappUrl}" target="_blank" style="color:#10b981; font-weight:bold;">👉 Send WhatsApp Credential Message</a>`;
         loadAdminData();
       }
     }
@@ -478,84 +534,51 @@
       const div = document.createElement('div');
       div.className = 'question-block';
       div.style.border = '1px solid rgba(255,255,255,0.1)';
-      div.style.padding = '15px';
-      div.style.borderRadius = '12px';
-      div.style.marginBottom = '15px';
+      div.style.padding = '15px'; div.style.borderRadius = '12px'; div.style.marginBottom = '15px';
       div.innerHTML = `
         <div class="input-group"><label>Question ${questionCount}</label><input type="text" class="q-text" placeholder="Question"></div>
         <div class="input-group"><label>Option A</label><input type="text" class="q-opt" placeholder="A"></div>
         <div class="input-group"><label>Option B</label><input type="text" class="q-opt" placeholder="B"></div>
         <div class="input-group"><label>Option C</label><input type="text" class="q-opt" placeholder="C"></div>
         <div class="input-group"><label>Option D</label><input type="text" class="q-opt" placeholder="D"></div>
-        <div class="input-group"><label>Correct Answer Text</label><input type="text" class="q-ans" placeholder="Exact option text"></div>
-      `;
+        <div class="input-group"><label>Correct Answer Text</label><input type="text" class="q-ans" placeholder="Exact option text"></div>`;
       container.appendChild(div);
     }
 
     async function submitNewTest() {
-      const titleInput = document.getElementById('testTitle');
-      const durationInput = document.getElementById('testDuration');
-      const title = titleInput ? titleInput.value.trim() : '';
-      const durationMinutes = durationInput ? Number(durationInput.value) : 15;
+      const classroomId = document.getElementById('testClassSelect').value;
+      const title = document.getElementById('testTitle').value.trim();
+      const durationMinutes = Number(document.getElementById('testDuration').value) || 15;
       
-      if (!title) {
-        alert("Please enter a test title.");
-        return;
-      }
+      if (!title) return alert("Enter test title.");
 
       const qElements = document.querySelectorAll('#questionsContainer .question-block');
-      if (qElements.length === 0) {
-        alert("Please add at least one question to the test.");
-        return;
-      }
+      if (qElements.length === 0) return alert("Add at least one question.");
 
       const questions = [];
-      let hasError = false;
-
       qElements.forEach((el) => {
-        const qTextEl = el.querySelector('.q-text');
-        const optEls = el.querySelectorAll('.q-opt');
-        const qAnsEl = el.querySelector('.q-ans');
-
-        const questionText = qTextEl ? qTextEl.value.trim() : '';
-        const options = Array.from(optEls).map(o => o ? o.value.trim() : '');
-        const correctAnswer = qAnsEl ? qAnsEl.value.trim() : '';
-
-        if (!questionText || options.some(o => !o) || !correctAnswer) {
-          hasError = true;
-        }
-
-        questions.push({ questionText, options, correctAnswer });
+        questions.push({
+          questionText: el.querySelector('.q-text').value.trim(),
+          options: Array.from(el.querySelectorAll('.q-opt')).map(o => o.value.trim()),
+          correctAnswer: el.querySelector('.q-ans').value.trim()
+        });
       });
 
-      if (hasError) {
-        alert("Please fill out all question fields, options, and correct answers.");
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/tests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, durationMinutes, questions })
-        });
-        const data = await res.json();
-        alert(data.message || "Test published successfully!");
-        if(data.success) {
-          titleInput.value = '';
-          document.getElementById('questionsContainer').innerHTML = '';
-          questionCount = 0;
-          loadManagementLists();
-        }
-      } catch (err) {
-        console.error("Error publishing test:", err);
-        alert("Failed to publish test. Check server console.");
+      const res = await fetch('/api/admin/tests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classroomId, title, durationMinutes, questions })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if(data.success) {
+        document.getElementById('testTitle').value = '';
+        document.getElementById('questionsContainer').innerHTML = '';
+        loadManagementLists();
       }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      loadAdminData();
-    });
+    window.addEventListener('DOMContentLoaded', () => { loadAdminData(); });
   </script>
 </body>
 </html>

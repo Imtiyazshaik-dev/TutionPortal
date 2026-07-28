@@ -80,7 +80,7 @@ p {
   letter-spacing: 0.5px;
 }
 
-.input-group input {
+.input-group input, .input-group select {
   width: 100%;
   padding: 14px 16px;
   background: rgba(15, 23, 42, 0.6);
@@ -93,7 +93,7 @@ p {
   transition: all 0.2s ease;
 }
 
-.input-group input:focus {
+.input-group input:focus, .input-group select:focus {
   outline: none;
   border-color: #ec4899;
   box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.15);
