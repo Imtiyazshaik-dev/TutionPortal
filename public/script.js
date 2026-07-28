@@ -70,10 +70,16 @@ async function triggerProctoringViolation() {
     const data = await response.json();
 
     if (data.success) {
-      alert(data.message);
       if (data.terminated) {
+        alert(data.message);
         isExamActive = false;
-        window.location.href = "student-dashboard.html";
+        if (typeof submitActiveExam === 'function') {
+          submitActiveExam();
+        } else {
+          window.location.href = "student-dashboard.html";
+        }
+      } else {
+        alert(data.message);
       }
     }
   } catch (err) {
@@ -103,6 +109,9 @@ async function resetStudentExam(studentId, testId) {
 
     const data = await response.json();
     alert(data.message);
+    if (typeof loadAdminData === 'function') {
+      loadAdminData();
+    }
   } catch (err) {
     console.error("Error resetting student exam:", err);
   }
