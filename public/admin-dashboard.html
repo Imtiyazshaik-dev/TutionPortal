@@ -164,7 +164,7 @@
 
     async function checkAdminReport() {
       try {
-        const res = await fetch('http://localhost:3000/api/admin/reports-check');
+        const res = await fetch('/api/admin/reports-check');
         const data = await res.json();
         if(data.success && data.hasReport) {
           adminReportId = data.reportId;
@@ -177,7 +177,7 @@
 
     function downloadAdminReport() {
       if(!adminReportId) return;
-      window.location.href = `http://localhost:3000/api/reports/download/${adminReportId}`;
+      window.location.href = `/api/reports/download/${adminReportId}`;
       setTimeout(() => {
         document.getElementById('adminReportBanner').style.display = 'none';
       }, 1500);
@@ -185,7 +185,7 @@
 
     async function loadAttendanceRequests() {
       try {
-        const res = await fetch('http://localhost:3000/api/admin/attendance-requests');
+        const res = await fetch('/api/admin/attendance-requests');
         const data = await res.json();
         const container = document.getElementById('attendanceRequestsList');
         container.innerHTML = '';
@@ -217,7 +217,7 @@
 
     async function handleAttendanceRequest(requestId, action) {
       try {
-        const res = await fetch('http://localhost:3000/api/admin/attendance-action', {
+        const res = await fetch('/api/admin/attendance-action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ requestId, action })
@@ -235,7 +235,7 @@
       await checkAdminReport();
       await loadAttendanceRequests();
 
-      const res = await fetch('http://localhost:3000/api/admin/students');
+      const res = await fetch('/api/admin/students');
       const data = await res.json();
       if(data.success) {
         const attSelect = document.getElementById('attendanceStudentSelect');
@@ -272,7 +272,7 @@
       }
 
       // Load Test Results with Reset Exam Button
-      const resResults = await fetch('http://localhost:3000/api/admin/results');
+      const resResults = await fetch('/api/admin/results');
       const dataResults = await resResults.json();
       if(dataResults.success) {
         const statsList = document.getElementById('testStatsList');
@@ -305,7 +305,7 @@
     }
 
     async function loadManagementLists() {
-      const resClass = await fetch('http://localhost:3000/api/admin/classes');
+      const resClass = await fetch('/api/admin/classes');
       const dataClass = await resClass.json();
       const classList = document.getElementById('manageClassesList');
       classList.innerHTML = '';
@@ -327,7 +327,7 @@
         classList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No classes published.</p>';
       }
 
-      const resTest = await fetch('http://localhost:3000/api/tests');
+      const resTest = await fetch('/api/tests');
       const dataTest = await resTest.json();
       const testList = document.getElementById('manageTestsList');
       testList.innerHTML = '';
@@ -353,7 +353,7 @@
     async function postLiveClass() {
       const title = document.getElementById('classTitle').value;
       const meetLink = document.getElementById('meetLink').value;
-      const res = await fetch('http://localhost:3000/api/admin/class', {
+      const res = await fetch('/api/admin/class', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, meetLink })
@@ -369,7 +369,7 @@
       const newLink = prompt("Update Meet Link:", oldLink);
       if(newLink === null) return;
 
-      const res = await fetch(`http://localhost:3000/api/admin/class/${id}`, {
+      const res = await fetch(`/api/admin/class/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle, meetLink: newLink })
@@ -381,7 +381,7 @@
 
     async function deleteClass(id) {
       if(!confirm("Are you sure you want to delete this class?")) return;
-      const res = await fetch(`http://localhost:3000/api/admin/class/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/class/${id}`, { method: 'DELETE' });
       const data = await res.json();
       alert(data.message);
       loadManagementLists();
@@ -391,7 +391,7 @@
       const newTitle = prompt("Update Test Title:", oldTitle);
       if(!newTitle) return;
 
-      const res = await fetch(`http://localhost:3000/api/admin/test/${id}`, {
+      const res = await fetch(`/api/admin/test/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle })
@@ -403,14 +403,14 @@
 
     async function deleteTest(id) {
       if(!confirm("Are you sure you want to delete this test? All associated student scores will also be wiped.")) return;
-      const res = await fetch(`http://localhost:3000/api/admin/test/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/test/${id}`, { method: 'DELETE' });
       const data = await res.json();
       alert(data.message);
       loadAdminData();
     }
 
     async function updateStatus(studentId, status) {
-      const res = await fetch('http://localhost:3000/api/admin/student-status', {
+      const res = await fetch('/api/admin/student-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, status })
@@ -422,7 +422,7 @@
 
     async function deleteStudent(studentId) {
       if(!confirm("Are you sure you want to completely delete this student account?")) return;
-      const res = await fetch(`http://localhost:3000/api/admin/student/${studentId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/student/${studentId}`, { method: 'DELETE' });
       const data = await res.json();
       alert(data.message);
       loadAdminData();
@@ -433,7 +433,7 @@
       const password = document.getElementById('enrollPass').value;
       const phone = document.getElementById('enrollPhone').value;
 
-      const res = await fetch('http://localhost:3000/api/admin/enroll', {
+      const res = await fetch('/api/admin/enroll', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, phone })
@@ -450,7 +450,7 @@
       const studentId = document.getElementById('attendanceStudentSelect').value;
       const date = document.getElementById('attendanceDate').value;
       const status = document.getElementById('attendanceStatus').value;
-      const res = await fetch('http://localhost:3000/api/admin/attendance', {
+      const res = await fetch('/api/admin/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, date, status })
@@ -463,7 +463,7 @@
       const studentId = document.getElementById('xpStudentSelect').value;
       const action = document.getElementById('xpActionType').value;
       const xpAmount = document.getElementById('xpAmount').value;
-      const res = await fetch('http://localhost:3000/api/admin/xp', {
+      const res = await fetch('/api/admin/xp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ studentId, xpAmount, action })
@@ -534,7 +534,7 @@
       }
 
       try {
-        const res = await fetch('http://localhost:3000/api/admin/tests', {
+        const res = await fetch('/api/admin/tests', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, durationMinutes, questions })

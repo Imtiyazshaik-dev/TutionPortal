@@ -39,7 +39,7 @@
       }
 
       try {
-        const res = await fetch(`http://localhost:3000/api/tests/${activeTestId}`);
+        const res = await fetch(`/api/tests/${activeTestId}`);
         const data = await res.json();
         if (data.success) {
           loadedTestObj = data.test;
@@ -124,7 +124,7 @@
       });
 
       try {
-        const res = await fetch('http://localhost:3000/api/exam/submit', {
+        const res = await fetch('/api/exam/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, testId: activeTestId, answers, timeTaken: timeTakenStr })

@@ -178,7 +178,7 @@
 
     function downloadStudentReport() {
       if(!studentReportId) return;
-      window.location.href = `http://localhost:3000/api/reports/download/${studentReportId}`;
+      window.location.href = `/api/reports/download/${studentReportId}`;
       setTimeout(() => {
         document.getElementById('studentReportBanner').style.display = 'none';
       }, 1500);
@@ -237,7 +237,7 @@
       const userId = localStorage.getItem("userId");
       if(!userId) return;
 
-      const res = await fetch(`http://localhost:3000/api/student/data/${userId}`);
+      const res = await fetch(`/api/student/data/${userId}`);
       const data = await res.json();
       if(data.success) {
         document.getElementById('dropdownStudentTag').innerText = data.student.studentIdTag || "N/A";
@@ -278,7 +278,7 @@
     async function joinLiveClass() {
       const userId = localStorage.getItem("userId");
       if(!userId) return;
-      await fetch('http://localhost:3000/api/student/join-class', {
+      await fetch('/api/student/join-class', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, classId: currentClassId, classTitle: currentClassTitle })
@@ -287,7 +287,7 @@
     }
 
     async function loadStudentTests() {
-      const res = await fetch('http://localhost:3000/api/tests');
+      const res = await fetch('/api/tests');
       const data = await res.json();
       if(data.success) {
         const container = document.getElementById('availableTestsContainer');
@@ -296,7 +296,7 @@
           container.innerHTML = '<p>No tests assigned or created yet.</p>';
           return;
         }
-        data.tests.forEach(t => {
+        data.tests.label = data.tests.forEach(t => {
           const alreadyDone = submittedTestIds.includes(t._id);
           container.innerHTML += `
             <div style="background:rgba(15,23,42,0.5); padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
@@ -320,7 +320,7 @@
       const oldPassword = document.getElementById('oldPass').value;
       const newPassword = document.getElementById('newPass').value;
 
-      const res = await fetch('http://localhost:3000/api/auth/change-password', {
+      const res = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, oldPassword, newPassword })
