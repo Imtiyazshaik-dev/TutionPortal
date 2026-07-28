@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Test - Secure Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container" style="max-width: 700px; margin: 40px auto;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:15px;">
+      <h2 id="activeTestTitle" style="margin:0; font-size:22px;">Loading Assessment...</h2>
+      <div id="timerDisplay" style="background:rgba(239, 68, 68, 0.2); border:1px solid #ef4444; color:#ef4444; padding:8px 14px; border-radius:8px; font-weight:bold; font-size:14px;">⏱️ 00:00</div>
+    </div>
+
+    <div id="quizQuestionsArea"></div>
+
+    <button onclick="submitActiveExam()" style="margin-top:20px;">Submit Exam Final</button>
+
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    let activeTestId = null;
+    let loadedTestObj = null;
+    let examStartTime = null;
+    let examTimerInterval = null;
+
+    async function initExamPage() {
+      const urlParams = new URLSearchParams(window.location.search);
+      activeTestId = urlParams.get('testId');
+      const userId = localStorage.getItem("userId");
+
+      if (!activeTestId || !userId) {
+        alert("Invalid test session.");
+        window.location.href = "student-dashboard.html";
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/tests/${activeTestId}`);
+        const data = await res.json();
+        if (data.success) {
+          loadedTestObj = data.test;
+          document.getElementById('activeTestTitle').innerText = loadedTestObj.title;
+
+          examStartTime = new Date();
+          const durationSecs = (loadedTestObj.durationMinutes || 15) * 60;
+          let timeLeft = durationSecs;
+
+          examTimerInterval = setInterval(() => {
+            timeLeft--;
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timerDisplay').innerText = `⏱️ ${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+            if (timeLeft <= 0) {
+              clearInterval(examTimerInterval);
+              alert("Time is up! Submitting exam automatically.");
+              submitActiveExam();
+            }
+          }, 1000);
+
+          const qArea = document.getElementById('quizQuestionsArea');
+          qArea.innerHTML = '';
+          loadedTestObj.questions.forEach((q, idx) => {
+            let optsHtml = '';
+            q.options.forEach(opt => {
+              optsHtml += `
+                <label class="option-label" data-qindex="${idx}" data-opt="${opt}" data-correct="${q.correctAnswer}" style="display:block; margin:8px 0; padding:12px; background:rgba(15,23,42,0.6); border-radius:8px; border:1px solid #334155; cursor:pointer;">
+                  <input type="radio" name="question_${idx}" value="${opt}" style="margin-right:8px;" onclick="checkAnswerInstant(this, ${idx}, '${opt}', '${q.correctAnswer}')"> ${opt}
+                </label>`;
+            });
+            qArea.innerHTML += `
+              <div style="background:rgba(15,23,42,0.4); padding:20px; border-radius:12px; margin-bottom:20px;">
+                <p style="color:#fff; font-weight:600; margin-top:0;">Q${idx+1}: ${q.questionText}</p>
+                ${optsHtml}
+              </div>
+            `;
+          });
+
+          startExamProctoring();
+        } else {
+          alert("Could not load test details.");
+          window.location.href = "student-dashboard.html";
+        }
+      } catch (err) {
+        console.error("Error loading test:", err);
+        window.location.href = "student-dashboard.html";
+      }
+    }
+
+    function checkAnswerInstant(radioEl, qIndex, selectedOpt, correctOpt) {
+      const labels = document.querySelectorAll(`label[data-qindex="${qIndex}"]`);
+      labels.forEach(lbl => {
+        const input = lbl.querySelector('input');
+        input.disabled = true;
+        if(lbl.getAttribute('data-opt') === correctOpt) {
+          lbl.style.background = 'rgba(16, 185, 129, 0.3)';
+          lbl.style.borderColor = '#10b981';
+        } else if(lbl.getAttribute('data-opt') === selectedOpt) {
+          lbl.style.background = 'rgba(239, 68, 68, 0.3)';
+          lbl.style.borderColor = '#ef4444';
+        }
+      });
+    }
+
+    async function submitActiveExam() {
+      if(examTimerInterval) clearInterval(examTimerInterval);
+      const userId = localStorage.getItem("userId");
+      if(!userId || !loadedTestObj) return;
+
+      const now = new Date();
+      const diffMs = now - examStartTime;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffSecs = Math.floor((diffMs % 60000) / 1000);
+      const timeTakenStr = `${diffMins}m ${diffSecs}s`;
+
+      const answers = [];
+      loadedTestObj.questions.forEach((q, idx) => {
+        const selected = document.querySelector(`input[name="question_${idx}"]:checked`);
+        answers.push(selected ? selected.value : "");
+      });
+
+      try {
+        const res = await fetch('http://localhost:3000/api/exam/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, testId: activeTestId, answers, timeTaken: timeTakenStr })
+        });
+        const data = await res.json();
+        alert(data.message || "Test successfully submitted!");
+        window.location.href = "student-dashboard.html";
+      } catch (err) {
+        console.error("Error submitting exam:", err);
+        window.location.href = "student-dashboard.html";
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initExamPage();
+    });
+  </script>
+</body>
+</html>

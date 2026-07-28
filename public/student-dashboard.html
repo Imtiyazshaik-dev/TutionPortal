@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+      float: right;
+    }
+    .profile-btn {
+      background: rgba(236, 72, 153, 0.2);
+      border: 1px solid #ec4899;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background: #1e293b;
+      min-width: 240px;
+      box-shadow: 0px 8px 16px rgba(0,0,0,0.5);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      z-index: 10;
+      padding: 15px;
+    }
+    .dropdown-content.show { display: block; }
+
+    .calendar-container {
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .calendar-day-header {
+      text-align: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: #94a3b8;
+      padding-bottom: 2px;
+    }
+    .calendar-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+    }
+    .calendar-cell.present {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10b981;
+      color: #10b981;
+    }
+    .calendar-cell.absent {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 650px;">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h2 style="margin:0;">Dashboard</h2>
+      <div class="profile-dropdown">
+        <button onclick="toggleDropdown()" class="profile-btn">👤 Profile ▼</button>
+        <div id="profileMenu" class="dropdown-content">
+          <p style="margin:0 0 10px 0; font-size:13px; color:#94a3b8; word-break:break-all;">Assigned Student ID:<br><strong id="dropdownStudentTag" style="color:#38bdf8; font-size:13px;"></strong></p>
+          <hr style="margin:10px 0;">
+          
+          <!-- Toggle Password Change Button -->
+          <button onclick="togglePasswordSection()" id="togglePassBtn" style="padding:8px; font-size:13px; margin-bottom:10px; background:#334155; width:100%;">Change Password</button>
+          
+          <!-- Hidden Password Section by Default -->
+          <div id="passwordSection" style="display:none; margin-bottom:10px;">
+            <input type="password" id="oldPass" placeholder="Old Password" style="margin-bottom:8px; padding:8px; font-size:13px; width:100%; box-sizing:border-box;" />
+            <input type="password" id="newPass" placeholder="New Password" style="margin-bottom:8px; padding:8px; font-size:13px; width:100%; box-sizing:border-box;" />
+            <button onclick="changePassword()" style="padding:8px; font-size:13px; width:100%; background:#10b981;">Save Password</button>
+          </div>
+
+          <a href="index.html" onclick="localStorage.clear()" style="color:#ef4444; font-size:13px; display:block; text-align:center;">Log Out</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Report Banner -->
+    <div id="studentReportBanner" style="background:linear-gradient(135deg, rgba(236,72,153,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #ec4899; display:none;">
+      <h3 style="color:#ec4899; margin-bottom:5px;">📥 Your Monthly Performance Report Ready</h3>
+      <p style="font-size:14px; margin-bottom:15px;">Download your attendance and test score report for the past month. Downloading clears it to optimize database space.</p>
+      <a id="studentReportBtn" href="#" onclick="downloadStudentReport()" style="display:inline-block; background:#ec4899; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download My Report</a>
+    </div>
+
+    <div style="background:rgba(15,23,42,0.6); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid rgba(236,72,153,0.3);">
+      <h3 id="studentWelcome" style="margin-top:0;">Welcome, Student</h3>
+      <p style="margin-bottom:0;">Your XP Rank: <span id="studentXp" style="color:#ec4899; font-weight:800; font-size:18px;">0</span> XP ⚡</p>
+    </div>
+
+    <div id="liveClassBanner" style="background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #10b981; display:none;">
+      <h3 id="liveClassTitle" style="color:#10b981; margin-bottom:5px;">Live Class Ongoing</h3>
+      <p style="font-size:14px; margin-bottom:15px;">Clicking join will open Google Meet and send your attendance request to the admin!</p>
+      <a id="liveClassBtn" href="#" target="_blank" onclick="joinLiveClass()" style="display:inline-block; background:#10b981; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Join Live Class & Request Attendance</a>
+    </div>
+
+    <div style="background:rgba(15,23,42,0.5); padding:20px; border-radius:16px; margin-bottom:20px;">
+      <h3>🏆 Top Students Leaderboard</h3>
+      <div id="leaderboardList" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Attendance Calendar -->
+    <div style="background:rgba(15,23,42,0.4); padding:20px; border-radius:16px; margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; font-size:16px;">📅 Attendance Calendar</h3>
+        <span id="currentMonthLabel" style="font-size:12px; color:#38bdf8; font-weight:600;"></span>
+      </div>
+      <div style="display:flex; gap:12px; font-size:11px; margin-bottom:12px; color:#94a3b8;">
+        <span>🟢 Present</span>
+        <span>🔴 Absent</span>
+        <span>⚪ Upcoming</span>
+      </div>
+      
+      <div class="calendar-container">
+        <div class="calendar-grid">
+          <div class="calendar-day-header">Su</div>
+          <div class="calendar-day-header">Mo</div>
+          <div class="calendar-day-header">Tu</div>
+          <div class="calendar-day-header">We</div>
+          <div class="calendar-day-header">Th</div>
+          <div class="calendar-day-header">Fr</div>
+          <div class="calendar-day-header">Sa</div>
+        </div>
+        <div id="calendarDaysContainer" class="calendar-grid" style="margin-top:4px;"></div>
+      </div>
+    </div>
+    
+    <div id="testListSection" style="margin-top: 20px;">
+      <h3>Available Assessment Tests</h3>
+      <div id="availableTestsContainer"></div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    let submittedTestIds = [];
+    let studentReportId = null;
+    let currentClassId = null;
+    let currentClassTitle = 'Live Class Session';
+
+    function toggleDropdown() {
+      document.getElementById('profileMenu').classList.toggle('show');
+    }
+
+    function togglePasswordSection() {
+      const passSec = document.getElementById('passwordSection');
+      if(passSec.style.display === 'none') {
+        passSec.style.display = 'block';
+      } else {
+        passSec.style.display = 'none';
+      }
+    }
+
+    function downloadStudentReport() {
+      if(!studentReportId) return;
+      window.location.href = `http://localhost:3000/api/reports/download/${studentReportId}`;
+      setTimeout(() => {
+        document.getElementById('studentReportBanner').style.display = 'none';
+      }, 1500);
+    }
+
+    function renderAttendanceCalendar(attendanceArray) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      document.getElementById('currentMonthLabel').innerText = `${monthNames[month]} ${year}`;
+
+      const attMap = {};
+      attendanceArray.forEach(att => {
+        attMap[att.date] = att.status;
+      });
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const todayDateObj = new Date();
+
+      const container = document.getElementById('calendarDaysContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < firstDayIndex; i++) {
+        container.innerHTML += `<div class="calendar-cell" style="opacity: 0; pointer-events: none;"></div>`;
+      }
+
+      for (let day = 1; day <= totalDays; day++) {
+        const dayStr = String(day).padStart(2, '0');
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dateKey = `${year}-${monthStr}-${dayStr}`;
+
+        let statusClass = '';
+        const status = attMap[dateKey];
+
+        const cellDate = new Date(year, month, day);
+        const isFuture = cellDate > todayDateObj;
+
+        if (status === 'Present') {
+          statusClass = 'present';
+        } else if (status === 'Absent') {
+          statusClass = 'absent';
+        }
+
+        container.innerHTML += `
+          <div class="calendar-cell ${statusClass}" title="${dateKey}: ${status || (isFuture ? 'Upcoming' : 'No record')}">
+            ${day}
+          </div>
+        `;
+      }
+    }
+
+    async function loadStudentData() {
+      const userId = localStorage.getItem("userId");
+      if(!userId) return;
+
+      const res = await fetch(`http://localhost:3000/api/student/data/${userId}`);
+      const data = await res.json();
+      if(data.success) {
+        document.getElementById('dropdownStudentTag').innerText = data.student.studentIdTag || "N/A";
+        document.getElementById('studentWelcome').innerText = `Welcome, ${data.student.username}`;
+        document.getElementById('studentXp').innerText = data.student.xp;
+
+        if(data.hasReport) {
+          studentReportId = data.reportId;
+          document.getElementById('studentReportBanner').style.display = 'block';
+        }
+
+        submittedTestIds = data.submittedResults.map(r => r.testId);
+
+        const lbContainer = document.getElementById('leaderboardList');
+        lbContainer.innerHTML = '';
+        data.leaderboard.forEach((st, idx) => {
+          lbContainer.innerHTML += `
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:14px;">
+              <span><strong>#${idx+1}</strong> ${st.username}</span>
+              <span style="color:#ec4899; font-weight:bold;">${st.xp} XP</span>
+            </div>
+          `;
+        });
+
+        if(data.activeClass) {
+          currentClassId = data.activeClass._id;
+          currentClassTitle = data.activeClass.title;
+          document.getElementById('liveClassTitle').innerText = data.activeClass.title;
+          document.getElementById('liveClassBtn').href = data.activeClass.meetLink;
+          document.getElementById('liveClassBanner').style.display = 'block';
+        }
+
+        renderAttendanceCalendar(data.student.attendance);
+        loadStudentTests();
+      }
+    }
+
+    async function joinLiveClass() {
+      const userId = localStorage.getItem("userId");
+      if(!userId) return;
+      await fetch('http://localhost:3000/api/student/join-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, classId: currentClassId, classTitle: currentClassTitle })
+      });
+      alert("Attendance request sent to admin!");
+    }
+
+    async function loadStudentTests() {
+      const res = await fetch('http://localhost:3000/api/tests');
+      const data = await res.json();
+      if(data.success) {
+        const container = document.getElementById('availableTestsContainer');
+        container.innerHTML = '';
+        if(data.tests.length === 0) {
+          container.innerHTML = '<p>No tests assigned or created yet.</p>';
+          return;
+        }
+        data.tests.forEach(t => {
+          const alreadyDone = submittedTestIds.includes(t._id);
+          container.innerHTML += `
+            <div style="background:rgba(15,23,42,0.5); padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+              <span><strong>${t.title}</strong> <span style="font-size:11px; color:#94a3b8; margin-left:8px;">(⏱️ ${t.durationMinutes || 15} mins)</span> ${alreadyDone ? '<span style="color:#10b981; font-size:12px; margin-left:10px;">(Completed)</span>' : ''}</span>
+              ${alreadyDone ? 
+                `<button disabled style="width:auto; padding:8px 16px; background:#334155; opacity:0.6; cursor:not-allowed;">Already Attempted</button>` : 
+                `<button onclick="startTest('${t._id}')" style="width:auto; padding:8px 16px;">Start Test</button>`
+              }
+            </div>
+          `;
+        });
+      }
+    }
+
+    function startTest(testId) {
+      window.location.href = `exam.html?testId=${testId}`;
+    }
+
+    async function changePassword() {
+      const userId = localStorage.getItem("userId");
+      const oldPassword = document.getElementById('oldPass').value;
+      const newPassword = document.getElementById('newPass').value;
+
+      const res = await fetch('http://localhost:3000/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, oldPassword, newPassword })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if(data.success) {
+        document.getElementById('oldPass').value = '';
+        document.getElementById('newPass').value = '';
+        togglePasswordSection();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStudentData();
+    });
+  </script>
+</body>
+</html>
