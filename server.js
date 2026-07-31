@@ -45,6 +45,8 @@ const testSchema = new mongoose.Schema({
   classroomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Classroom', required: true },
   title: { type: String, required: true },
   durationMinutes: { type: Number, default: 15 },
+  startTime: { type: Date },
+  endTime: { type: Date },
   questions: [{
     questionText: String,
     options: [String],
@@ -84,7 +86,7 @@ const noteSchema = new mongoose.Schema({
   uploadedAt: { type: Date, default: Date.now }
 });
 
-const monthlyReportSchema = new mongoose.Schema({
+const weeklyReportSchema = new mongoose.Schema({
   reportType: { type: String, enum: ['student', 'master'], required: true },
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
   content: { type: String, required: true },
@@ -98,7 +100,7 @@ const Result = mongoose.model('Result', resultSchema);
 const LiveClass = mongoose.model('LiveClass', liveClassSchema);
 const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestSchema);
 const Note = mongoose.model('Note', noteSchema);
-const MonthlyReport = mongoose.model('MonthlyReport', monthlyReportSchema);
+const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
 // Seed Default Admin
 async function seedDefaultAdmin() {
@@ -118,6 +120,49 @@ async function seedDefaultAdmin() {
     console.error("Error seeding admin:", err);
   }
 }
+
+// --- WEEKLY SUNDAY REPORT GENERATOR ---
+async function generateWeeklyReports() {
+  try {
+    const students = await Student.find({ role: 'student', status: 'approved' });
+    let masterContent = "--- WEEKLY PERFORMANCE MASTER REPORT ---\nGenerated on: " + new Date().toLocaleString() + "\n\n";
+
+    for (const student of students) {
+      const results = await Result.find({ studentId: student._id }).populate('testId', 'title');
+      let studentText = `Student: ${student.username} (ID: ${student.studentIdTag || 'N/A'})\nTotal XP: ${student.xp}\nAttendance Count: ${student.attendance.length}\nTest Scores:\n`;
+      
+      results.forEach(r => {
+        const testTitle = r.testId ? r.testId.title : 'Test';
+        studentText += ` - ${testTitle}: ${r.score}/${r.totalQuestions}\n`;
+      });
+      studentText += "----------------------------------------\n";
+      masterContent += studentText;
+
+      // Individual report for student portal
+      const individualContent = `--- YOUR WEEKLY PERFORMANCE REPORT ---\nStudent: ${student.username}\nStudent ID: ${student.studentIdTag || 'N/A'}\nTotal XP: ${student.xp}\nAttendance Count: ${student.attendance.length}\n\nYour Test Scores:\n` + 
+        results.map(r => ` - ${r.testId ? r.testId.title : 'Test'}: ${r.score}/${r.totalQuestions}`).join('\n') + 
+        `\n\nKeep up the great work!`;
+
+      await WeeklyReport.deleteMany({ studentId: student._id, reportType: 'student' });
+      await WeeklyReport.create({ reportType: 'student', studentId: student._id, content: individualContent });
+    }
+
+    // Master report for admin
+    await WeeklyReport.deleteMany({ reportType: 'master' });
+    await WeeklyReport.create({ reportType: 'master', content: masterContent });
+    console.log("Weekly Sunday Master and Student Reports generated successfully!");
+  } catch (err) {
+    console.error("Error generating weekly reports:", err);
+  }
+}
+
+// Check every 24 hours if today is Sunday
+setInterval(() => {
+  const now = new Date();
+  if (now.getDay() === 0) { // 0 = Sunday
+    generateWeeklyReports();
+  }
+}, 24 * 60 * 60 * 1000);
 
 // --- AUTHENTICATION ROUTES ---
 app.post('/api/auth', async (req, res) => {
@@ -189,11 +234,34 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       .sort({ xp: -1 })
       .select('username xp studentIdTag');
 
-    const tests = await Test.find({ classroomId: student.classroomId });
+    const allTests = await Test.find({ classroomId: student.classroomId });
+    const now = new Date();
+
+    const availableTests = allTests.map(test => {
+      let isUnlocked = true;
+      let statusMessage = "Available";
+
+      if (test.startTime && new Date(test.startTime) > now) {
+        isUnlocked = false;
+        statusMessage = `Unlocks at: ${new Date(test.startTime).toLocaleString()}`;
+      } else if (test.endTime && new Date(test.endTime) < now) {
+        isUnlocked = false;
+        statusMessage = `Locked (Ended at: ${new Date(test.endTime).toLocaleString()})`;
+      }
+
+      return {
+        _id: test._id,
+        title: test.title,
+        durationMinutes: test.durationMinutes,
+        isUnlocked,
+        statusMessage
+      };
+    });
+
     const notes = await Note.find({ classroomId: student.classroomId }).sort({ uploadedAt: -1 });
     const activeClass = await LiveClass.findOne({ classroomId: student.classroomId, isActive: true });
     const submittedResults = await Result.find({ studentId: student._id });
-    const report = await MonthlyReport.findOne({ studentId: student._id });
+    const report = await WeeklyReport.findOne({ studentId: student._id, reportType: 'student' });
 
     res.json({
       success: true,
@@ -201,7 +269,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       classroom,
       student,
       leaderboard,
-      tests,
+      tests: availableTests,
       notes,
       activeClass,
       submittedResults: submittedResults.map(r => r.testId.toString()),
@@ -239,6 +307,12 @@ app.get('/api/tests/:id', async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
+
+    const now = new Date();
+    if ((test.startTime && new Date(test.startTime) > now) || (test.endTime && new Date(test.endTime) < now)) {
+      return res.status(403).json({ success: false, message: 'This test is currently locked outside its scheduled window.' });
+    }
+
     res.json({ success: true, test });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -325,7 +399,6 @@ app.get('/api/admin/approved-students', async (req, res) => {
   }
 });
 
-// Foolproof Enrollment Route with Unique Timestamp ID Generation
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
@@ -339,7 +412,7 @@ app.post('/api/admin/enroll', async (req, res) => {
 
     const randomSuffix = Math.floor(100 + Math.random() * 900);
     const studentIdTag = `STU-${Date.now().toString().slice(-4)}${randomSuffix}`;
-    const portalUrl = "https://tutionportal.onrender.com";
+    const portalUrl = "https://www.tutorpoint.page";
 
     const studentData = {
       username: username.trim(),
@@ -523,9 +596,9 @@ app.delete('/api/admin/class/:id', async (req, res) => {
 
 app.post('/api/admin/tests', async (req, res) => {
   try {
-    const { classroomId, title, durationMinutes, questions } = req.body;
-    await Test.create({ classroomId, title, durationMinutes, questions });
-    res.json({ success: true, message: 'Cohort assessment test published!' });
+    const { classroomId, title, durationMinutes, startTime, endTime, questions } = req.body;
+    await Test.create({ classroomId, title, durationMinutes, startTime, endTime, questions });
+    res.json({ success: true, message: 'Cohort assessment test published with schedule window!' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -580,7 +653,7 @@ app.delete('/api/admin/note/:id', async (req, res) => {
 
 app.get('/api/admin/reports-check', async (req, res) => {
   try {
-    const report = await MonthlyReport.findOne({ reportType: 'master' });
+    const report = await WeeklyReport.findOne({ reportType: 'master' });
     res.json({ success: true, hasReport: !!report, reportId: report ? report._id : null });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -589,10 +662,10 @@ app.get('/api/admin/reports-check', async (req, res) => {
 
 app.get('/api/reports/download/:id', async (req, res) => {
   try {
-    const report = await MonthlyReport.findByIdAndDelete(req.params.id);
+    const report = await WeeklyReport.findById(req.params.id);
     if (!report) return res.status(404).send('Report not found.');
 
-    res.setHeader('Content-disposition', 'attachment; filename=performance-report.txt');
+    res.setHeader('Content-disposition', `attachment; filename=${report.reportType}-weekly-report.txt`);
     res.setHeader('Content-type', 'text/plain');
     res.send(report.content);
   } catch (err) {
@@ -606,7 +679,7 @@ app.get('*', (req, res) => {
 });
 
 // --- SELF-PING KEEP-ALIVE MECHANISM ---
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://tutionportal.onrender.com";
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://www.tutorpoint.page";
 
 setInterval(() => {
   const protocol = RENDER_URL.startsWith('https') ? https : http;
@@ -615,7 +688,7 @@ setInterval(() => {
   }).on('error', (err) => {
     console.error("Keep-alive ping error:", err.message);
   });
-}, 10 * 60 * 1000); // Pings every 10 minutes
+}, 10 * 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`Server running smoothly on http://localhost:${PORT}`);

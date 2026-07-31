@@ -35,11 +35,11 @@
     <h2>Admin Command Center</h2>
     <p>Manage classroom cohorts, student rosters, tests, study notes, live classes, and attendance.</p>
 
-    <!-- Monthly Master Report Banner -->
+    <!-- Weekly Master Report Banner -->
     <div id="adminReportBanner" style="background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #3b82f6; display:none;">
-      <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Monthly Master Report Ready</h3>
-      <p style="font-size:14px; margin-bottom:15px;">Download compiled attendance and test results for all cohorts.</p>
-      <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Master Report</a>
+      <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Sunday Weekly Master Report Ready</h3>
+      <p style="font-size:14px; margin-bottom:15px;">Download compiled weekly attendance and test results for all cohorts.</p>
+      <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Weekly Report</a>
     </div>
 
     <hr>
@@ -117,7 +117,7 @@
 
     <hr>
 
-    <h3>Create Assessment Test for Cohort</h3>
+    <h3>Create Assessment Test with Schedule Window</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
       <select id="testClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
@@ -130,9 +130,17 @@
       <label>Test Timer Duration (in Minutes)</label>
       <input type="number" id="testDuration" value="15" placeholder="15" />
     </div>
+    <div class="input-group">
+      <label>Test Start Time (Unlock Date & Time)</label>
+      <input type="datetime-local" id="testStartTime" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';" />
+    </div>
+    <div class="input-group">
+      <label>Test End Time (Lock Date & Time)</label>
+      <input type="datetime-local" id="testEndTime" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';" />
+    </div>
     <div id="questionsContainer"></div>
     <button onclick="addQuestionField()" style="background:#334155; margin-bottom:10px;">+ Add Question</button>
-    <button onclick="submitNewTest()">Publish Test</button>
+    <button onclick="submitNewTest()">Publish Scheduled Test</button>
 
     <div style="margin-top:20px;">
       <h4>📝 Manage Published Tests</h4>
@@ -301,14 +309,12 @@
       await checkAdminReport();
       await loadAttendanceRequests();
 
-      // Fetch Classrooms
       const resC = await fetch('/api/classrooms');
       const dataC = await resC.json();
       if(dataC.success) {
         loadClassroomSelects(dataC.classrooms);
       }
 
-      // 1. Fetch Pending Students for Approval Queue & populate studentStatusList
       const resPending = await fetch('/api/admin/pending-students');
       const dataPending = await resPending.json();
       const statusList = document.getElementById('studentStatusList');
@@ -334,7 +340,6 @@
         statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No pending student requests in line.</p>';
       }
 
-      // 2. Fetch Approved Students for Attendance and XP Dropdowns
       const resApproved = await fetch('/api/admin/approved-students');
       const dataApproved = await resApproved.json();
       const attSelect = document.getElementById('attendanceStudentSelect');
@@ -355,7 +360,6 @@
         xpSelect.innerHTML = '<option value="">No approved students available</option>';
       }
 
-      // Results
       const resResults = await fetch('/api/admin/results');
       const dataResults = await resResults.json();
       if(dataResults.success) {
@@ -383,7 +387,6 @@
     }
 
     async function loadManagementLists() {
-      // Classes
       const resClass = await fetch('/api/admin/classes');
       const dataClass = await resClass.json();
       const classList = document.getElementById('manageClassesList');
@@ -399,7 +402,6 @@
         });
       } else { classList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No classes published.</p>'; }
 
-      // Notes
       const resNotes = await fetch('/api/admin/notes');
       const dataNotes = await resNotes.json();
       const notesList = document.getElementById('manageNotesList');
@@ -415,7 +417,6 @@
         });
       } else { notesList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No notes uploaded.</p>'; }
 
-      // Tests
       const resTest = await fetch('/api/admin/tests');
       const dataTest = await resTest.json();
       const testList = document.getElementById('manageTestsList');
@@ -572,6 +573,8 @@
       const classroomId = document.getElementById('testClassSelect').value;
       const title = document.getElementById('testTitle').value.trim();
       const durationMinutes = Number(document.getElementById('testDuration').value) || 15;
+      const startTime = document.getElementById('testStartTime').value;
+      const endTime = document.getElementById('testEndTime').value;
       
       if (!title) return alert("Enter test title.");
 
@@ -590,12 +593,14 @@
       const res = await fetch('/api/admin/tests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, durationMinutes, questions })
+        body: JSON.stringify({ classroomId, title, durationMinutes, startTime, endTime, questions })
       });
       const data = await res.json();
       alert(data.message);
       if(data.success) {
         document.getElementById('testTitle').value = '';
+        document.getElementById('testStartTime').value = '';
+        document.getElementById('testEndTime').value = '';
         document.getElementById('questionsContainer').innerHTML = '';
         loadManagementLists();
       }
