@@ -308,24 +308,20 @@
         loadClassroomSelects(dataC.classrooms);
       }
 
-      // 1. Fetch Pending Students for Approval Queue
+      // 1. Fetch Pending Students for Approval Queue & populate studentStatusList
       const resPending = await fetch('/api/admin/pending-students');
       const dataPending = await resPending.json();
-      if(dataPending.success) {
-        const statusList = document.getElementById('studentStatusList');
-        statusList.innerHTML = '';
+      const statusList = document.getElementById('studentStatusList');
+      statusList.innerHTML = '';
 
-        if(dataPending.students.length === 0) {
-          statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No pending student requests in line.</p>';
-        }
-
+      if(dataPending.success && dataPending.students.length > 0) {
         dataPending.students.forEach(s => {
           const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
           statusList.innerHTML += `
             <div class="manage-list-item">
               <div>
                 <strong>${s.username}</strong><br>
-                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Status: <span style="color:#f59e0b;">${s.status}</span>
+                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span>
               </div>
               <div style="display:flex; gap:4px;">
                 <button onclick="updateStatus('${s._id}', 'approved')" class="action-btn btn-approve">Approve</button>
@@ -334,29 +330,29 @@
               </div>
             </div>`;
         });
+      } else {
+        statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No pending student requests in line.</p>';
       }
 
       // 2. Fetch Approved Students for Attendance and XP Dropdowns
       const resApproved = await fetch('/api/admin/approved-students');
       const dataApproved = await resApproved.json();
-      if(dataApproved.success) {
-        const attSelect = document.getElementById('attendanceStudentSelect');
-        const xpSelect = document.getElementById('xpStudentSelect');
-        
-        attSelect.innerHTML = ''; 
-        xpSelect.innerHTML = '';
+      const attSelect = document.getElementById('attendanceStudentSelect');
+      const xpSelect = document.getElementById('xpStudentSelect');
+      
+      attSelect.innerHTML = ''; 
+      xpSelect.innerHTML = '';
 
-        if(dataApproved.students.length === 0) {
-          attSelect.innerHTML = '<option value="">No approved students available</option>';
-          xpSelect.innerHTML = '<option value="">No approved students available</option>';
-        } else {
-          dataApproved.students.forEach(s => {
-            const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
-            const opt = `<option value="${s._id}">${s.username} (${cohortName})</option>`;
-            attSelect.innerHTML += opt; 
-            xpSelect.innerHTML += opt;
-          });
-        }
+      if(dataApproved.success && dataApproved.students.length > 0) {
+        dataApproved.students.forEach(s => {
+          const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
+          const opt = `<option value="${s._id}">${s.username} (${cohortName})</option>`;
+          attSelect.innerHTML += opt; 
+          xpSelect.innerHTML += opt;
+        });
+      } else {
+        attSelect.innerHTML = '<option value="">No approved students available</option>';
+        xpSelect.innerHTML = '<option value="">No approved students available</option>';
       }
 
       // Results
