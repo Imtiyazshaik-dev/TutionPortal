@@ -34,7 +34,7 @@ const studentSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'student'], default: 'student' },
   studentIdTag: { type: String },
   classroomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Classroom' },
-  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved' },
   xp: { type: Number, default: 0 },
   attendance: [{ date: String, status: String }],
   strikes: { type: Number, default: 0 }
@@ -306,23 +306,9 @@ app.get('/api/admin/students', async (req, res) => {
   }
 });
 
-app.get('/api/admin/pending-students', async (req, res) => {
-  try {
-    const pendingStudents = await Student.find({ role: 'student', status: 'pending' }).sort({ _id: 1 }).populate('classroomId', 'name');
-    res.json({ success: true, students: pendingStudents });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username and password are required.' });
-    }
-
     const existing = await Student.findOne({ username });
     if (existing) return res.status(400).json({ success: false, message: 'Username already exists' });
 
@@ -339,17 +325,10 @@ app.post('/api/admin/enroll', async (req, res) => {
       classroomId: classroomId || null
     });
 
-    let whatsappUrl = '';
-    if (phone && phone.trim() !== '') {
-      const message = encodeURIComponent(`Hey! You have been enrolled in the Tuition Portal.\n\nPortal: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`);
-      whatsappUrl = `https://wa.me/${phone}?text=${message}`;
-    }
+    const message = encodeURIComponent(`Hey! You have been enrolled in the Tuition Portal.\n\nPortal: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`);
+    const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
 
-    res.json({ 
-      success: true, 
-      message: 'Student enrolled successfully!', 
-      whatsappUrl: whatsappUrl 
-    });
+    res.json({ success: true, message: 'Student enrolled successfully!', whatsappUrl });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -358,11 +337,6 @@ app.post('/api/admin/enroll', async (req, res) => {
 app.post('/api/admin/student-status', async (req, res) => {
   try {
     const { studentId, status } = req.body;
-    
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid status value.' });
-    }
-
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
 
