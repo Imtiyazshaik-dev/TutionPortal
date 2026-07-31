@@ -3,89 +3,221 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard - Tuition Portal</title>
+  <title>Student Portal - Tuition Hub</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
+    :root {
+      --bg-main: #090d16;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-blue: #38bdf8;
+      --accent-green: #10b981;
+      --accent-purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
     }
-    @media(min-width: 768px) {
-      .dashboard-grid {
-        grid-template-columns: 2fr 1fr;
-      }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      margin: 0;
+      padding: 0;
     }
-    .card {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 20px;
-      border-radius: 16px;
-      margin-bottom: 20px;
+
+    .portal-container {
+      max-width: 1050px;
+      margin: 30px auto;
+      padding: 0 20px;
     }
-    .test-item, .note-item {
-      background: rgba(30, 41, 59, 0.5);
-      padding: 12px 15px;
-      border-radius: 10px;
-      margin-bottom: 10px;
+
+    /* Top Navigation Header */
+    .portal-header {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      padding: 20px 30px;
+      border-radius: 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
+
+    .portal-header h2 {
+      margin: 0 0 5px 0;
+      font-size: 22px;
+      background: linear-gradient(135deg, #fff, var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-glass:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .btn-danger {
+      color: #ef4444 !important;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: #ef4444 !important;
+    }
+
+    /* Layout Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 25px;
+    }
+    @media(min-width: 850px) {
+      .dashboard-grid {
+        grid-template-columns: 1.8fr 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      border-radius: 20px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    /* Items List */
+    .item-row {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--border-color);
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s;
+    }
+    .item-row:hover {
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+
     .action-btn {
-      padding: 6px 14px;
+      padding: 8px 16px;
       font-size: 13px;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       border: none;
       color: white;
-      background: #3b82f6;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
       font-weight: 600;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+      transition: opacity 0.2s;
     }
+    .action-btn:hover { opacity: 0.9; }
     .action-btn:disabled {
-      background: #64748b;
+      background: #334155;
+      color: var(--text-muted);
       cursor: not-allowed;
+      box-shadow: none;
     }
-    /* Modal Styles for Profile */
+
+    /* Modal Overlay */
     .modal {
       display: none; 
       position: fixed; 
       z-index: 1000; 
       left: 0; top: 0; width: 100%; height: 100%; 
-      background-color: rgba(0,0,0,0.6); 
+      background-color: rgba(5, 8, 17, 0.8); 
+      backdrop-filter: blur(8px);
       justify-content: center; 
       align-items: center;
     }
     .modal-content {
-      background: #1e293b; 
-      padding: 25px; 
-      border-radius: 16px; 
+      background: #0f172a; 
+      padding: 30px; 
+      border-radius: 20px; 
       width: 90%; 
-      max-width: 400px; 
-      border: 1px solid rgba(255,255,255,0.1);
+      max-width: 420px; 
+      border: 1px solid var(--border-color);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       color: #fff;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(15,23,42,0.8);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: #fff;
+      box-sizing: border-box;
+      margin-top: 6px;
+      font-family: 'Outfit';
+    }
+    .modal-content input:focus {
+      border-color: var(--accent-blue);
+      outline: none;
     }
   </style>
 </head>
 <body>
-  <div class="container" style="max-width: 900px;">
+  <div class="portal-container">
     
-    <!-- Header & Navigation -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <!-- Modern Header -->
+    <div class="portal-header">
       <div>
-        <h2 id="welcomeTitle" style="margin-bottom: 5px;">Welcome, Student</h2>
-        <p id="studentTagDisplay" style="color: #38bdf8; font-size: 14px; margin: 0;"></p>
+        <h2 id="welcomeTitle">Welcome, Student</h2>
+        <p id="studentTagDisplay" style="color: var(--accent-blue); font-size: 13px; margin: 0; font-weight: 500;"></p>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <button onclick="openProfileModal()" style="background: #334155; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px;">👤 Profile & Password</button>
-        <a href="index.html" onclick="localStorage.clear()" style="color: #ef4444; font-size: 14px; text-decoration: none; font-weight: bold; padding: 8px;">Log Out</a>
+      <div class="header-actions">
+        <button class="btn-glass" onclick="openProfileModal()">👤 Profile & Security</button>
+        <a href="index.html" onclick="localStorage.clear()" class="btn-glass btn-danger">Log Out</a>
       </div>
     </div>
 
     <!-- Pending / Unassigned State Notice -->
     <div id="statusNoticeCard" class="card" style="display:none; text-align: center; border-color: #f59e0b;">
-      <h3 style="color: #f59e0b; margin-top: 0;">Account Status: Pending Approval</h3>
-      <p style="font-size: 14px; color: #94a3b8;">Your account is currently waiting for master admin approval or cohort assignment. Once approved, your tests and classroom resources will appear here.</p>
+      <h3 style="color: #f59e0b; justify-content: center;">⏳ Account Awaiting Activation</h3>
+      <p style="font-size: 14px; color: var(--text-muted); max-width: 500px; margin: 0 auto;">Your account is currently pending master admin approval or cohort assignment. Once activated, your assessments and classroom resources will appear here.</p>
     </div>
 
     <!-- Main Dashboard Workspace -->
@@ -94,57 +226,57 @@
       <!-- Left Column: Tests & Study Notes -->
       <div>
         <!-- Live Class Banner -->
-        <div id="liveClassBanner" class="card" style="display:none; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.2)); border-color: #10b981;">
-          <h3 style="color: #10b981; margin-top: 0;">🔴 Live Class Active Now!</h3>
-          <p id="liveClassTitle" style="font-size: 15px; font-weight: bold; margin-bottom: 10px;"></p>
-          <div style="display: flex; gap: 10px;">
-            <a id="liveClassMeetLink" href="#" target="_blank" style="background: #10b981; color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">Join Google Meet</a>
+        <div id="liveClassBanner" class="card" style="display:none; background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15)); border-color: var(--accent-green);">
+          <h3 style="color: var(--accent-green);">🔴 Live Class Active Now</h3>
+          <p id="liveClassTitle" style="font-size: 16px; font-weight: 600; margin-bottom: 15px;"></p>
+          <div style="display: flex; gap: 12px;">
+            <a id="liveClassMeetLink" href="#" target="_blank" style="background: var(--accent-green); color: #fff; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">Join Google Meet</a>
             <button onclick="requestAttendance()" class="action-btn" style="background: #3b82f6;">Request Attendance</button>
           </div>
         </div>
 
         <!-- Assessment Queue -->
         <div class="card">
-          <h3 style="margin-top: 0; color: #f8fafc;">📝 Assessment Test Queue</h3>
+          <h3>📝 Assessment Test Queue</h3>
           <div id="testsListContainer">
-            <p style="color: #94a3b8; font-size: 14px;">Loading tests...</p>
+            <p style="color: var(--text-muted); font-size: 14px;">Loading tests...</p>
           </div>
         </div>
 
         <!-- Study Notes Repository -->
         <div class="card">
-          <h3 style="margin-top: 0; color: #f8fafc;">📂 Study Notes & Resources</h3>
+          <h3>📂 Study Notes & Resources</h3>
           <div id="notesListContainer">
-            <p style="color: #94a3b8; font-size: 14px;">Loading notes...</p>
+            <p style="color: var(--text-muted); font-size: 14px;">Loading notes...</p>
           </div>
         </div>
       </div>
 
-      <!-- Right Column: Leaderboard, XP & Profile Stats -->
+      <!-- Right Column: Leaderboard, XP & Stats -->
       <div>
         <!-- XP & Attendance Stats Card -->
         <div class="card" style="text-align: center;">
-          <h3 style="margin-top: 0; color: #38bdf8;">⭐ My Performance</h3>
+          <h3 style="justify-content: center; color: var(--accent-blue);">⭐ Performance Stats</h3>
           <div style="display: flex; justify-content: space-around; margin: 15px 0;">
             <div>
-              <span id="statXp" style="font-size: 24px; font-weight: bold; color: #f59e0b;">0</span>
-              <p style="font-size: 12px; color: #94a3b8; margin: 0;">Total XP</p>
+              <span id="statXp" style="font-size: 26px; font-weight: bold; color: #f59e0b;">0</span>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Total XP</p>
             </div>
             <div>
-              <span id="statAttendance" style="font-size: 24px; font-weight: bold; color: #10b981;">0</span>
-              <p style="font-size: 12px; color: #94a3b8; margin: 0;">Classes Attended</p>
+              <span id="statAttendance" style="font-size: 26px; font-weight: bold; color: var(--accent-green);">0</span>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Classes Attended</p>
             </div>
           </div>
-          <div id="reportDownloadContainer" style="display:none; margin-top: 15px;">
-            <a id="reportDownloadBtn" href="#" style="display: block; background: #8b5cf6; color: #fff; padding: 8px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: bold;">📥 Download Weekly Report</a>
+          <div id="reportDownloadContainer" style="display:none; margin-top: 18px;">
+            <a id="reportDownloadBtn" href="#" style="display: block; background: var(--accent-purple); color: #fff; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold; box-shadow: 0 4px 15px rgba(139,92,246,0.3);">📥 Download Weekly Report</a>
           </div>
         </div>
 
         <!-- Cohort Leaderboard -->
         <div class="card">
-          <h3 style="margin-top: 0; color: #f8fafc; font-size: 16px;">🏆 Cohort Leaderboard</h3>
-          <div id="leaderboardContainer" style="max-height: 300px; overflow-y: auto;">
-            <p style="color: #94a3b8; font-size: 13px;">Loading leaderboard...</p>
+          <h3>🏆 Cohort Leaderboard</h3>
+          <div id="leaderboardContainer" style="max-height: 280px; overflow-y: auto;">
+            <p style="color: var(--text-muted); font-size: 13px;">Loading leaderboard...</p>
           </div>
         </div>
       </div>
@@ -152,28 +284,26 @@
     </div>
   </div>
 
-  <!-- Profile & Password Modal -->
+  <!-- Profile & Security Modal -->
   <div id="profileModal" class="modal">
     <div class="modal-content">
-      <h3 style="margin-top:0; color:#38bdf8;">👤 Student Profile</h3>
-      <p style="font-size: 14px; margin-bottom: 5px;"><strong>Username:</strong> <span id="modalUsername">---</span></p>
-      <p style="font-size: 14px; margin-bottom: 15px;"><strong>Student ID Tag:</strong> <span id="modalStudentTag" style="color:#f59e0b;">---</span></p>
+      <h3 style="color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">👤 Student Profile & Security</h3>
+      <p style="font-size: 14px; margin-bottom: 8px;"><strong>Username:</strong> <span id="modalUsername">---</span></p>
+      <p style="font-size: 14px; margin-bottom: 20px;"><strong>Student ID Tag:</strong> <span id="modalStudentTag" style="color:#f59e0b; font-weight: bold;">---</span></p>
       
-      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
-      
-      <h4 style="margin-top:0; font-size: 14px; color:#38bdf8;">🔐 Change Password</h4>
-      <div class="input-group" style="margin-bottom: 10px;">
-        <label style="font-size: 12px; color: #94a3b8;">Current Password</label>
-        <input type="password" id="oldPassword" placeholder="Enter old password" style="width:100%; padding: 10px; background: rgba(15,23,42,0.6); border: 1px solid #334155; border-radius: 8px; color: #fff; box-sizing: border-box;" />
+      <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--text-main);">🔐 Change Account Password</h4>
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 12px; color: var(--text-muted);">Current Password</label>
+        <input type="password" id="oldPassword" placeholder="Enter current password" />
       </div>
-      <div class="input-group" style="margin-bottom: 15px;">
-        <label style="font-size: 12px; color: #94a3b8;">New Password</label>
-        <input type="password" id="newPassword" placeholder="Enter new password" style="width:100%; padding: 10px; background: rgba(15,23,42,0.6); border: 1px solid #334155; border-radius: 8px; color: #fff; box-sizing: border-box;" />
+      <div style="margin-bottom: 20px;">
+        <label style="font-size: 12px; color: var(--text-muted);">New Password</label>
+        <input type="password" id="newPassword" placeholder="Enter new password" />
       </div>
       
       <div style="display: flex; gap: 10px;">
-        <button onclick="changeStudentPassword()" style="flex: 1; background: #0284c7; padding: 10px; border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer;">Update Password</button>
-        <button onclick="closeProfileModal()" style="background: #334155; padding: 10px 15px; border: none; border-radius: 8px; color: #fff; cursor: pointer;">Close</button>
+        <button onclick="changeStudentPassword()" style="flex: 1; background: linear-gradient(135deg, #0284c7, #2563eb); padding: 12px; border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer;">Update Password</button>
+        <button onclick="closeProfileModal()" style="background: #334155; padding: 12px 18px; border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Close</button>
       </div>
     </div>
   </div>
@@ -249,7 +379,7 @@
             let btnHTML = '';
 
             if (isSubmitted) {
-              btnHTML = `<button class="action-btn" disabled style="background:#64748b;">Submitted</button>`;
+              btnHTML = `<button class="action-btn" disabled style="background:#475569;">Submitted</button>`;
             } else if (!test.isUnlocked) {
               btnHTML = `<button class="action-btn" disabled title="${test.statusMessage}">Locked</button>`;
             } else {
@@ -257,16 +387,16 @@
             }
 
             testsContainer.innerHTML += `
-              <div class="test-item">
+              <div class="item-row">
                 <div>
-                  <strong>${test.title}</strong><br>
-                  <span style="font-size: 11px; color: #94a3b8;">Duration: ${test.durationMinutes} mins | ${test.statusMessage}</span>
+                  <strong style="font-size: 15px;">${test.title}</strong><br>
+                  <span style="font-size: 12px; color: var(--text-muted);">Duration: ${test.durationMinutes} mins | <span style="color: ${test.isUnlocked ? '#10b981' : '#f59e0b'};">${test.statusMessage}</span></span>
                 </div>
                 <div>${btnHTML}</div>
               </div>`;
           });
         } else {
-          testsContainer.innerHTML = `<p style="color: #94a3b8; font-size: 14px; margin:0;">No tests available in queue.</p>`;
+          testsContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px; margin:0;">No assessment tests available right now.</p>`;
         }
 
         const notesContainer = document.getElementById('notesListContainer');
@@ -275,13 +405,13 @@
         if (data.notes && data.notes.length > 0) {
           data.notes.forEach(note => {
             notesContainer.innerHTML += `
-              <div class="note-item">
-                <div><strong>${note.title}</strong></div>
-                <a href="${note.contentOrLink}" target="_blank" class="action-btn" style="text-decoration: none; background: #0284c7;">View / Download</a>
+              <div class="item-row">
+                <div><strong style="font-size: 14px;">${note.title}</strong></div>
+                <a href="${note.contentOrLink}" target="_blank" class="action-btn" style="text-decoration: none; background: #0284c7; padding: 6px 14px; font-size: 12px;">View / Download</a>
               </div>`;
           });
         } else {
-          notesContainer.innerHTML = `<p style="color: #94a3b8; font-size: 14px; margin:0;">No study materials uploaded yet.</p>`;
+          notesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px; margin:0;">No study materials uploaded yet.</p>`;
         }
 
         const lbContainer = document.getElementById('leaderboardContainer');
@@ -291,13 +421,13 @@
           data.leaderboard.forEach((lbStudent, index) => {
             const isMe = lbStudent._id === studentId;
             lbContainer.innerHTML += `
-              <div style="display: flex; justify-content: space-between; padding: 8px 10px; background: ${isMe ? 'rgba(59,130,246,0.2)' : 'transparent'}; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: ${isMe ? 'rgba(56,189,248,0.1)' : 'transparent'}; border-bottom: 1px solid var(--border-color); font-size: 13px; border-radius: 8px;">
                 <span><strong>#${index + 1}</strong> ${lbStudent.username} ${isMe ? '(You)' : ''}</span>
                 <span style="color: #f59e0b; font-weight: bold;">${lbStudent.xp} XP</span>
               </div>`;
           });
         } else {
-          lbContainer.innerHTML = `<p style="color: #94a3b8; font-size: 13px;">No leaderboard data available.</p>`;
+          lbContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">No leaderboard entries found.</p>`;
         }
 
       } catch (err) {

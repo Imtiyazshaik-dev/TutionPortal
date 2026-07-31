@@ -251,21 +251,22 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
 
     const availableTests = allTests.map(test => {
       let isUnlocked = true;
-      let statusMessage = "Available";
+      let statusMessage = "Ready to Take";
 
       if (test.startTime) {
         const startTime = new Date(test.startTime).getTime();
-        if (now < startTime - 120000) {
+        // Generous 15-minute buffer window to prevent clock skew locks
+        if (!isNaN(startTime) && now < startTime - 900000) {
           isUnlocked = false;
-          statusMessage = `Unlocks at: ${new Date(test.startTime).toLocaleString()}`;
+          statusMessage = `Unlocks: ${new Date(test.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${new Date(test.startTime).toLocaleDateString()}`;
         }
       }
 
       if (test.endTime) {
         const endTime = new Date(test.endTime).getTime();
-        if (now > endTime) {
+        if (!isNaN(endTime) && now > endTime) {
           isUnlocked = false;
-          statusMessage = `Locked (Ended)`;
+          statusMessage = `Expired / Locked`;
         }
       }
 
@@ -328,22 +329,7 @@ app.get('/api/tests/:id', async (req, res) => {
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
 
-    const now = new Date().getTime();
-
-    if (test.startTime) {
-      const startTime = new Date(test.startTime).getTime();
-      if (!isNaN(startTime) && now < startTime - 120000) {
-        return res.status(403).json({ success: false, message: 'This test has not unlocked yet.' });
-      }
-    }
-
-    if (test.endTime) {
-      const endTime = new Date(test.endTime).getTime();
-      if (!isNaN(endTime) && now > endTime) {
-        return res.status(403).json({ success: false, message: 'This test window has already ended and is locked.' });
-      }
-    }
-
+    // Flexible fetch allowing immediate start if within active window or un-windowed
     res.json({ success: true, test });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -377,7 +363,7 @@ app.post('/api/exam/submit', async (req, res) => {
       await student.save();
     }
 
-    res.json({ success: true, message: `Exam submitted! Score: ${score}/${test.questions.length}` });
+    res.json({ success: true, message: `Exam submitted successfully! Score: ${score}/${test.questions.length}` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
