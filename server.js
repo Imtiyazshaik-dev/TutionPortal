@@ -306,10 +306,9 @@ app.get('/api/admin/students', async (req, res) => {
   }
 });
 
-// Added explicit endpoint to fetch only pending students for the approval queue
 app.get('/api/admin/pending-students', async (req, res) => {
   try {
-    const pendingStudents = await Student.find({ role: 'student', status: 'pending' }).sort({ _id: 1 });
+    const pendingStudents = await Student.find({ role: 'student', status: 'pending' }).sort({ _id: 1 }).populate('classroomId', 'name');
     res.json({ success: true, students: pendingStudents });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -319,6 +318,11 @@ app.get('/api/admin/pending-students', async (req, res) => {
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    }
+
     const existing = await Student.findOne({ username });
     if (existing) return res.status(400).json({ success: false, message: 'Username already exists' });
 
@@ -335,10 +339,17 @@ app.post('/api/admin/enroll', async (req, res) => {
       classroomId: classroomId || null
     });
 
-    const message = encodeURIComponent(`Hey! You have been enrolled in the Tuition Portal.\n\nPortal: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`);
-    const whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+    let whatsappUrl = '';
+    if (phone && phone.trim() !== '') {
+      const message = encodeURIComponent(`Hey! You have been enrolled in the Tuition Portal.\n\nPortal: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`);
+      whatsappUrl = `https://wa.me/${phone}?text=${message}`;
+    }
 
-    res.json({ success: true, message: 'Student enrolled successfully!', whatsappUrl });
+    res.json({ 
+      success: true, 
+      message: 'Student enrolled successfully!', 
+      whatsappUrl: whatsappUrl 
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
