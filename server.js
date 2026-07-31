@@ -247,24 +247,26 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       .select('username xp studentIdTag');
 
     const allTests = await Test.find({ classroomId: student.classroomId }).sort({ _id: -1 });
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const now = new Date().getTime();
 
-    const filteredTests = allTests.filter(test => {
-      const testCreationDate = test._id.getTimestamp();
-      return testCreationDate >= oneWeekAgo;
-    }).slice(0, 7);
-
-    const availableTests = filteredTests.map(test => {
+    const availableTests = allTests.map(test => {
       let isUnlocked = true;
       let statusMessage = "Available";
 
-      if (test.startTime && new Date(test.startTime) > now) {
-        isUnlocked = false;
-        statusMessage = `Unlocks at: ${new Date(test.startTime).toLocaleString()}`;
-      } else if (test.endTime && new Date(test.endTime) < now) {
-        isUnlocked = false;
-        statusMessage = `Locked (Ended at: ${new Date(test.endTime).toLocaleString()})`;
+      if (test.startTime) {
+        const startTime = new Date(test.startTime).getTime();
+        if (now < startTime - 120000) {
+          isUnlocked = false;
+          statusMessage = `Unlocks at: ${new Date(test.startTime).toLocaleString()}`;
+        }
+      }
+
+      if (test.endTime) {
+        const endTime = new Date(test.endTime).getTime();
+        if (now > endTime) {
+          isUnlocked = false;
+          statusMessage = `Locked (Ended)`;
+        }
       }
 
       return {
@@ -330,14 +332,14 @@ app.get('/api/tests/:id', async (req, res) => {
 
     if (test.startTime) {
       const startTime = new Date(test.startTime).getTime();
-      if (now < startTime - 120000) {
+      if (!isNaN(startTime) && now < startTime - 120000) {
         return res.status(403).json({ success: false, message: 'This test has not unlocked yet.' });
       }
     }
 
     if (test.endTime) {
       const endTime = new Date(test.endTime).getTime();
-      if (now > endTime) {
+      if (!isNaN(endTime) && now > endTime) {
         return res.status(403).json({ success: false, message: 'This test window has already ended and is locked.' });
       }
     }
