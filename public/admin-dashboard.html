@@ -27,6 +27,7 @@
     }
     .btn-edit { background: #3b82f6; }
     .btn-delete { background: #ef4444; }
+    .btn-approve { background: #10b981; }
   </style>
 </head>
 <body>
@@ -62,7 +63,7 @@
 
     <hr>
 
-    <h3>Student Cohort Status & Management</h3>
+    <h3>Student Cohort Status & Approval Queue</h3>
     <div id="studentStatusList" style="max-height:220px; overflow-y:auto; margin-bottom:20px;"></div>
 
     <hr>
@@ -307,8 +308,8 @@
         loadClassroomSelects(dataC.classrooms);
       }
 
-      // Fetch Students
-      const res = await fetch('/api/admin/students');
+      // Fetch Students (specifically using the pending queue route to automatically filter out processed items)
+      const res = await fetch('/api/admin/pending-students');
       const data = await res.json();
       if(data.success) {
         const attSelect = document.getElementById('attendanceStudentSelect');
@@ -318,7 +319,7 @@
         attSelect.innerHTML = ''; xpSelect.innerHTML = ''; statusList.innerHTML = '';
 
         if(data.students.length === 0) {
-          statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No students enrolled.</p>';
+          statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px;">No pending student requests in line.</p>';
         }
 
         data.students.forEach(s => {
@@ -330,10 +331,10 @@
             <div class="manage-list-item">
               <div>
                 <strong>${s.username}</strong><br>
-                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span>
+                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Status: <span style="color:#f59e0b;">${s.status}</span>
               </div>
               <div style="display:flex; gap:4px;">
-                <button onclick="updateStatus('${s._id}', 'approved')" class="action-btn" style="background:#10b981;">Approve</button>
+                <button onclick="updateStatus('${s._id}', 'approved')" class="action-btn btn-approve">Approve</button>
                 <button onclick="updateStatus('${s._id}', 'rejected')" class="action-btn btn-delete">Reject</button>
                 <button onclick="deleteStudent('${s._id}')" class="action-btn" style="background:#64748b;" title="Delete">🗑️</button>
               </div>
