@@ -129,7 +129,7 @@ app.post('/api/auth', async (req, res) => {
     }
 
     if (user.role === 'student' && user.status !== 'approved') {
-      return res.status(403).json({ success: false, message: `Your account status is ${user.status}. Please contact admin.` });
+      return res.status(403).json({ success: false, message: `Your account status is currently ${user.status}. Please wait for admin approval.` });
     }
 
     res.json({ success: true, userId: user._id, role: user.role });
