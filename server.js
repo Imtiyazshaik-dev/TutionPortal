@@ -26,7 +26,7 @@ mongoose.connect(MONGO_URI)
 const classroomSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: String,
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -207,7 +207,10 @@ app.get('/api/classrooms/:adminId', async (req, res) => {
     if (adminUser.username === 'admin') {
       classrooms = await Classroom.find().populate('createdBy', 'username').sort({ createdAt: -1 });
     } else {
-      classrooms = await Classroom.find({ createdBy: adminUser._id }).populate('createdBy', 'username').sort({ createdAt: -1 });
+      classrooms = await Classroom.find({ $or: [{ createdBy: adminUser._id }, { createdBy: { $exists: false } }] }).populate('createdBy', 'username').sort({ createdAt: -1 });
+      if (classrooms.length === 0) {
+        classrooms = await Classroom.find().populate('createdBy', 'username').sort({ createdAt: -1 });
+      }
     }
 
     res.json({ success: true, classrooms });
@@ -323,9 +326,20 @@ app.get('/api/tests/:id', async (req, res) => {
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
 
-    const now = new Date();
-    if ((test.startTime && new Date(test.startTime) > now) || (test.endTime && new Date(test.endTime) < now)) {
-      return res.status(403).json({ success: false, message: 'This test is currently locked outside its scheduled window.' });
+    const now = new Date().getTime();
+
+    if (test.startTime) {
+      const startTime = new Date(test.startTime).getTime();
+      if (now < startTime - 120000) {
+        return res.status(403).json({ success: false, message: 'This test has not unlocked yet.' });
+      }
+    }
+
+    if (test.endTime) {
+      const endTime = new Date(test.endTime).getTime();
+      if (now > endTime) {
+        return res.status(403).json({ success: false, message: 'This test window has already ended and is locked.' });
+      }
     }
 
     res.json({ success: true, test });
@@ -422,6 +436,9 @@ app.get('/api/admin/approved-students/:adminId', async (req, res) => {
       const teacherClassrooms = await Classroom.find({ createdBy: adminUser._id }).select('_id');
       const classroomIds = teacherClassrooms.map(c => c._id);
       approvedStudents = await Student.find({ role: 'student', status: 'approved', classroomId: { $in: classroomIds } }).populate('classroomId', 'name');
+      if (approvedStudents.length === 0) {
+        approvedStudents = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+      }
     }
 
     res.json({ success: true, students: approvedStudents });
@@ -440,13 +457,6 @@ app.post('/api/admin/enroll', async (req, res) => {
 
     const adminUser = await Student.findById(adminId);
     if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
-
-    if (adminUser.username !== 'admin') {
-      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
-      if (!cohort) {
-        return res.status(403).json({ success: false, message: 'You can only enroll students into your own cohorts.' });
-      }
-    }
 
     const existing = await Student.findOne({ username });
     if (existing) return res.status(400).json({ success: false, message: 'Username already exists' });
@@ -613,15 +623,7 @@ app.post('/api/admin/reset-exam', async (req, res) => {
 // --- CLASSROOM ASSETS: LIVE CLASSES, TESTS, NOTES ---
 app.post('/api/admin/class', async (req, res) => {
   try {
-    const { classroomId, title, meetLink, adminId } = req.body;
-    const adminUser = await Student.findById(adminId);
-    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
-
-    if (adminUser.username !== 'admin') {
-      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
-      if (!cohort) return res.status(403).json({ success: false, message: 'Access denied. You can only manage your own cohorts.' });
-    }
-
+    const { classroomId, title, meetLink } = req.body;
     await LiveClass.updateMany({ classroomId }, { isActive: false });
     await LiveClass.create({ classroomId, title, meetLink, isActive: true });
     res.json({ success: true, message: 'Live class published for cohort!' });
@@ -650,15 +652,7 @@ app.delete('/api/admin/class/:id', async (req, res) => {
 
 app.post('/api/admin/tests', async (req, res) => {
   try {
-    const { classroomId, title, durationMinutes, startTime, endTime, questions, adminId } = req.body;
-    const adminUser = await Student.findById(adminId);
-    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
-
-    if (adminUser.username !== 'admin') {
-      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
-      if (!cohort) return res.status(403).json({ success: false, message: 'Access denied. You can only create tests for your own cohorts.' });
-    }
-
+    const { classroomId, title, durationMinutes, startTime, endTime, questions } = req.body;
     await Test.create({ classroomId, title, durationMinutes, startTime, endTime, questions });
     res.json({ success: true, message: 'Cohort assessment test published with schedule window!' });
   } catch (err) {
@@ -687,15 +681,7 @@ app.delete('/api/admin/test/:id', async (req, res) => {
 
 app.post('/api/admin/notes', async (req, res) => {
   try {
-    const { classroomId, title, contentOrLink, adminId } = req.body;
-    const adminUser = await Student.findById(adminId);
-    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
-
-    if (adminUser.username !== 'admin') {
-      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
-      if (!cohort) return res.status(403).json({ success: false, message: 'Access denied. You can only upload notes to your own cohorts.' });
-    }
-
+    const { classroomId, title, contentOrLink } = req.body;
     await Note.create({ classroomId, title, contentOrLink });
     res.json({ success: true, message: 'Study note uploaded to classroom repository!' });
   } catch (err) {
