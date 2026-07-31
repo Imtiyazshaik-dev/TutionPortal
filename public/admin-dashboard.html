@@ -139,7 +139,7 @@
 
     <hr>
 
-    <h3>Create Assessment Test with Schedule Window</h3>
+    <h3>Create Assessment Test</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
       <select id="testClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
@@ -153,16 +153,12 @@
       <input type="number" id="testDuration" value="15" placeholder="15" />
     </div>
     <div class="input-group">
-      <label>Test Start Time (Unlock Date & Time)</label>
-      <input type="datetime-local" id="testStartTime" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';" />
-    </div>
-    <div class="input-group">
-      <label>Test End Time (Lock Date & Time)</label>
-      <input type="datetime-local" id="testEndTime" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';" />
+      <label>Active Window Duration (in Hours from publication)</label>
+      <input type="number" id="testDurationHours" value="24" placeholder="24" />
     </div>
     <div id="questionsContainer"></div>
     <button onclick="addQuestionField()" style="background:#334155; margin-bottom:10px;">+ Add Question</button>
-    <button onclick="submitNewTest()">Publish Scheduled Test</button>
+    <button onclick="submitNewTest()">Publish Test</button>
 
     <div style="margin-top:20px;">
       <h4>📝 Manage Published Tests</h4>
@@ -302,11 +298,15 @@
         const sel = document.getElementById(id);
         if(sel) {
           sel.innerHTML = '';
-          classrooms.forEach(c => {
-            const creatorName = c.createdBy ? c.createdBy.username : '';
-            const label = creatorName ? `${c.name} (by ${creatorName})` : c.name;
-            sel.innerHTML += `<option value="${c._id}">${label}</option>`;
-          });
+          if(classrooms.length === 0) {
+            sel.innerHTML = `<option value="">No classrooms available</option>`;
+          } else {
+            classrooms.forEach(c => {
+              const creatorName = c.createdBy ? c.createdBy.username : '';
+              const label = creatorName ? `${c.name} (by ${creatorName})` : c.name;
+              sel.innerHTML += `<option value="${c._id}">${label}</option>`;
+            });
+          }
         }
       });
     }
@@ -358,7 +358,6 @@
         loadClassroomSelects(dataC.classrooms);
       }
 
-      // 1. Pending Students Queue (Master Admin Only)
       const resPending = await fetch(`/api/admin/pending-students/${currentAdminId}`);
       const dataPending = await resPending.json();
       
@@ -388,7 +387,6 @@
         }
       }
 
-      // 2. Approved Students List (With Delete Buttons)
       const resApproved = await fetch(`/api/admin/approved-students/${currentAdminId}`);
       const dataApproved = await resApproved.json();
       const approvedContainer = document.getElementById('approvedStudentsList');
@@ -403,12 +401,10 @@
         dataApproved.students.forEach(s => {
           const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
           
-          // Populate Dropdowns
           const opt = `<option value="${s._id}">${s.username} (${cohortName})</option>`;
           attSelect.innerHTML += opt; 
           xpSelect.innerHTML += opt;
 
-          // Populate Approved Students Management List with Delete Option
           approvedContainer.innerHTML += `
             <div class="manage-list-item">
               <div>
@@ -506,7 +502,7 @@
       const res = await fetch('/api/admin/class', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, meetLink, adminId: currentAdminId })
+        body: JSON.stringify({ classroomId, title, meetLink })
       });
       const data = await res.json();
       alert(data.message);
@@ -520,7 +516,7 @@
       const res = await fetch('/api/admin/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, contentOrLink, adminId: currentAdminId })
+        body: JSON.stringify({ classroomId, title, contentOrLink })
       });
       const data = await res.json();
       alert(data.message);
@@ -641,8 +637,7 @@
       const classroomId = document.getElementById('testClassSelect').value;
       const title = document.getElementById('testTitle').value.trim();
       const durationMinutes = Number(document.getElementById('testDuration').value) || 15;
-      const startTime = document.getElementById('testStartTime').value;
-      const endTime = document.getElementById('testEndTime').value;
+      const durationHours = Number(document.getElementById('testDurationHours').value) || 24;
       
       if (!title) return alert("Enter test title.");
 
@@ -661,14 +656,12 @@
       const res = await fetch('/api/admin/tests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, durationMinutes, startTime, endTime, questions, adminId: currentAdminId })
+        body: JSON.stringify({ classroomId, title, durationMinutes, durationHours, questions })
       });
       const data = await res.json();
       alert(data.message);
       if(data.success) {
         document.getElementById('testTitle').value = '';
-        document.getElementById('testStartTime').value = '';
-        document.getElementById('testEndTime').value = '';
         document.getElementById('questionsContainer').innerHTML = '';
         loadManagementLists();
       }

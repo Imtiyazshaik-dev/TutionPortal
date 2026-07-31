@@ -46,13 +46,13 @@ const testSchema = new mongoose.Schema({
   classroomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Classroom', required: true },
   title: { type: String, required: true },
   durationMinutes: { type: Number, default: 15 },
-  startTime: { type: Date },
-  endTime: { type: Date },
+  durationHours: { type: Number, default: 24 }, // Active window in hours from publication
   questions: [{
     questionText: String,
     options: [String],
     correctAnswer: String
-  }]
+  }],
+  createdAt: { type: Date, default: Date.now }
 });
 
 const resultSchema = new mongoose.Schema({
@@ -250,24 +250,16 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
     const now = new Date().getTime();
 
     const availableTests = allTests.map(test => {
+      const createdTime = test.createdAt ? new Date(test.createdAt).getTime() : test._id.getTimestamp().getTime();
+      const expirationHours = test.durationHours || 24;
+      const expirationTime = createdTime + (expirationHours * 60 * 60 * 1000);
+
       let isUnlocked = true;
-      let statusMessage = "Ready to Take";
+      let statusMessage = `Active (${expirationHours}h Window)`;
 
-      if (test.startTime) {
-        const startTime = new Date(test.startTime).getTime();
-        // Generous 15-minute buffer window to prevent clock skew locks
-        if (!isNaN(startTime) && now < startTime - 900000) {
-          isUnlocked = false;
-          statusMessage = `Unlocks: ${new Date(test.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${new Date(test.startTime).toLocaleDateString()}`;
-        }
-      }
-
-      if (test.endTime) {
-        const endTime = new Date(test.endTime).getTime();
-        if (!isNaN(endTime) && now > endTime) {
-          isUnlocked = false;
-          statusMessage = `Expired / Locked`;
-        }
+      if (now > expirationTime) {
+        isUnlocked = false;
+        statusMessage = "Expired & Locked";
       }
 
       return {
@@ -329,7 +321,15 @@ app.get('/api/tests/:id', async (req, res) => {
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
 
-    // Flexible fetch allowing immediate start if within active window or un-windowed
+    const now = new Date().getTime();
+    const createdTime = test.createdAt ? new Date(test.createdAt).getTime() : test._id.getTimestamp().getTime();
+    const expirationHours = test.durationHours || 24;
+    const expirationTime = createdTime + (expirationHours * 60 * 60 * 1000);
+
+    if (now > expirationTime) {
+      return res.status(403).json({ success: false, message: 'This test window has expired and is now locked.' });
+    }
+
     res.json({ success: true, test });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -640,9 +640,9 @@ app.delete('/api/admin/class/:id', async (req, res) => {
 
 app.post('/api/admin/tests', async (req, res) => {
   try {
-    const { classroomId, title, durationMinutes, startTime, endTime, questions } = req.body;
-    await Test.create({ classroomId, title, durationMinutes, startTime, endTime, questions });
-    res.json({ success: true, message: 'Cohort assessment test published with schedule window!' });
+    const { classroomId, title, durationMinutes, durationHours, questions } = req.body;
+    await Test.create({ classroomId, title, durationMinutes, durationHours: durationHours || 24, questions });
+    res.json({ success: true, message: 'Cohort assessment test published successfully!' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
