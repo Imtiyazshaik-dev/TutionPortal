@@ -26,6 +26,7 @@ mongoose.connect(MONGO_URI)
 const classroomSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: String,
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -102,10 +103,10 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
-// Seed Default Admin
+// Seed Default Master Admin
 async function seedDefaultAdmin() {
   try {
-    const adminExists = await Student.findOne({ role: 'admin' });
+    const adminExists = await Student.findOne({ username: 'admin' });
     if (!adminExists) {
       await Student.create({
         username: 'admin',
@@ -114,7 +115,7 @@ async function seedDefaultAdmin() {
         status: 'approved',
         studentIdTag: 'ADMIN-001'
       });
-      console.log("Default admin account created: admin / adminpassword123");
+      console.log("Default master admin account created: admin / adminpassword123");
     }
   } catch (err) {
     console.error("Error seeding admin:", err);
@@ -138,7 +139,6 @@ async function generateWeeklyReports() {
       studentText += "----------------------------------------\n";
       masterContent += studentText;
 
-      // Individual report for student portal
       const individualContent = `--- YOUR WEEKLY PERFORMANCE REPORT ---\nStudent: ${student.username}\nStudent ID: ${student.studentIdTag || 'N/A'}\nTotal XP: ${student.xp}\nAttendance Count: ${student.attendance.length}\n\nYour Test Scores:\n` + 
         results.map(r => ` - ${r.testId ? r.testId.title : 'Test'}: ${r.score}/${r.totalQuestions}`).join('\n') + 
         `\n\nKeep up the great work!`;
@@ -147,7 +147,6 @@ async function generateWeeklyReports() {
       await WeeklyReport.create({ reportType: 'student', studentId: student._id, content: individualContent });
     }
 
-    // Master report for admin
     await WeeklyReport.deleteMany({ reportType: 'master' });
     await WeeklyReport.create({ reportType: 'master', content: masterContent });
     console.log("Weekly Sunday Master and Student Reports generated successfully!");
@@ -156,10 +155,9 @@ async function generateWeeklyReports() {
   }
 }
 
-// Check every 24 hours if today is Sunday
 setInterval(() => {
   const now = new Date();
-  if (now.getDay() === 0) { // 0 = Sunday
+  if (now.getDay() === 0) {
     generateWeeklyReports();
   }
 }, 24 * 60 * 60 * 1000);
@@ -178,7 +176,7 @@ app.post('/api/auth', async (req, res) => {
       return res.status(403).json({ success: false, message: `Your account status is currently ${user.status}. Please wait for admin approval.` });
     }
 
-    res.json({ success: true, userId: user._id, role: user.role });
+    res.json({ success: true, userId: user._id, role: user.role, username: user.username });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -200,9 +198,18 @@ app.post('/api/auth/change-password', async (req, res) => {
 });
 
 // --- CLASSROOMS API ---
-app.get('/api/classrooms', async (req, res) => {
+app.get('/api/classrooms/:adminId', async (req, res) => {
   try {
-    const classrooms = await Classroom.find().sort({ createdAt: -1 });
+    const adminUser = await Student.findById(req.params.adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    let classrooms;
+    if (adminUser.username === 'admin') {
+      classrooms = await Classroom.find().populate('createdBy', 'username').sort({ createdAt: -1 });
+    } else {
+      classrooms = await Classroom.find({ createdBy: adminUser._id }).populate('createdBy', 'username').sort({ createdAt: -1 });
+    }
+
     res.json({ success: true, classrooms });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -211,15 +218,17 @@ app.get('/api/classrooms', async (req, res) => {
 
 app.post('/api/admin/classrooms', async (req, res) => {
   try {
-    const { name, description } = req.body;
-    await Classroom.create({ name, description });
+    const { name, description, adminId } = req.body;
+    if (!adminId) return res.status(400).json({ success: false, message: 'Admin ID required.' });
+
+    await Classroom.create({ name, description, createdBy: adminId });
     res.json({ success: true, message: 'Classroom cohort created successfully!' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// --- STUDENT DASHBOARD ROUTES (COHORT SPECIFIC) ---
+// --- STUDENT DASHBOARD ROUTES ---
 app.get('/api/student/classroom-data/:id', async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -234,10 +243,16 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       .sort({ xp: -1 })
       .select('username xp studentIdTag');
 
-    const allTests = await Test.find({ classroomId: student.classroomId });
+    const allTests = await Test.find({ classroomId: student.classroomId }).sort({ _id: -1 });
     const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    const availableTests = allTests.map(test => {
+    const filteredTests = allTests.filter(test => {
+      const testCreationDate = test._id.getTimestamp();
+      return testCreationDate >= oneWeekAgo;
+    }).slice(0, 7);
+
+    const availableTests = filteredTests.map(test => {
       let isUnlocked = true;
       let statusMessage = "Available";
 
@@ -381,8 +396,13 @@ app.get('/api/admin/students', async (req, res) => {
   }
 });
 
-app.get('/api/admin/pending-students', async (req, res) => {
+app.get('/api/admin/pending-students/:adminId', async (req, res) => {
   try {
+    const adminUser = await Student.findById(req.params.adminId);
+    if (!adminUser || adminUser.username !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Master admin only.' });
+    }
+
     const pendingStudents = await Student.find({ role: 'student', status: 'pending' }).sort({ _id: 1 }).populate('classroomId', 'name');
     res.json({ success: true, students: pendingStudents });
   } catch (err) {
@@ -390,9 +410,20 @@ app.get('/api/admin/pending-students', async (req, res) => {
   }
 });
 
-app.get('/api/admin/approved-students', async (req, res) => {
+app.get('/api/admin/approved-students/:adminId', async (req, res) => {
   try {
-    const approvedStudents = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+    const adminUser = await Student.findById(req.params.adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    let approvedStudents;
+    if (adminUser.username === 'admin') {
+      approvedStudents = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+    } else {
+      const teacherClassrooms = await Classroom.find({ createdBy: adminUser._id }).select('_id');
+      const classroomIds = teacherClassrooms.map(c => c._id);
+      approvedStudents = await Student.find({ role: 'student', status: 'approved', classroomId: { $in: classroomIds } }).populate('classroomId', 'name');
+    }
+
     res.json({ success: true, students: approvedStudents });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -401,10 +432,20 @@ app.get('/api/admin/approved-students', async (req, res) => {
 
 app.post('/api/admin/enroll', async (req, res) => {
   try {
-    const { username, password, phone, classroomId } = req.body;
+    const { username, password, phone, classroomId, adminId } = req.body;
     
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username and password are required.' });
+    if (!username || !password || !classroomId) {
+      return res.status(400).json({ success: false, message: 'Username, password, and classroom are required.' });
+    }
+
+    const adminUser = await Student.findById(adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    if (adminUser.username !== 'admin') {
+      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
+      if (!cohort) {
+        return res.status(403).json({ success: false, message: 'You can only enroll students into your own cohorts.' });
+      }
     }
 
     const existing = await Student.findOne({ username });
@@ -420,7 +461,7 @@ app.post('/api/admin/enroll', async (req, res) => {
       role: 'student',
       status: 'pending',
       studentIdTag: studentIdTag,
-      classroomId: classroomId && classroomId !== "" ? classroomId : null,
+      classroomId: classroomId,
       xp: 0,
       strikes: 0
     };
@@ -436,7 +477,7 @@ app.post('/api/admin/enroll', async (req, res) => {
 
     res.json({ 
       success: true, 
-      message: 'Student enrolled successfully!', 
+      message: 'Student enrolled successfully and sent to Master Admin approval queue!', 
       whatsappUrl: whatsappUrl 
     });
   } catch (err) {
@@ -447,8 +488,13 @@ app.post('/api/admin/enroll', async (req, res) => {
 
 app.post('/api/admin/student-status', async (req, res) => {
   try {
-    const { studentId, status } = req.body;
+    const { studentId, status, adminId } = req.body;
+    const adminUser = await Student.findById(adminId);
     
+    if (!adminUser || adminUser.username !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Only Master Admin can approve or reject students.' });
+    }
+
     if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status value.' });
     }
@@ -567,7 +613,15 @@ app.post('/api/admin/reset-exam', async (req, res) => {
 // --- CLASSROOM ASSETS: LIVE CLASSES, TESTS, NOTES ---
 app.post('/api/admin/class', async (req, res) => {
   try {
-    const { classroomId, title, meetLink } = req.body;
+    const { classroomId, title, meetLink, adminId } = req.body;
+    const adminUser = await Student.findById(adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    if (adminUser.username !== 'admin') {
+      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
+      if (!cohort) return res.status(403).json({ success: false, message: 'Access denied. You can only manage your own cohorts.' });
+    }
+
     await LiveClass.updateMany({ classroomId }, { isActive: false });
     await LiveClass.create({ classroomId, title, meetLink, isActive: true });
     res.json({ success: true, message: 'Live class published for cohort!' });
@@ -596,7 +650,15 @@ app.delete('/api/admin/class/:id', async (req, res) => {
 
 app.post('/api/admin/tests', async (req, res) => {
   try {
-    const { classroomId, title, durationMinutes, startTime, endTime, questions } = req.body;
+    const { classroomId, title, durationMinutes, startTime, endTime, questions, adminId } = req.body;
+    const adminUser = await Student.findById(adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    if (adminUser.username !== 'admin') {
+      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
+      if (!cohort) return res.status(403).json({ success: false, message: 'Access denied. You can only create tests for your own cohorts.' });
+    }
+
     await Test.create({ classroomId, title, durationMinutes, startTime, endTime, questions });
     res.json({ success: true, message: 'Cohort assessment test published with schedule window!' });
   } catch (err) {
@@ -625,7 +687,15 @@ app.delete('/api/admin/test/:id', async (req, res) => {
 
 app.post('/api/admin/notes', async (req, res) => {
   try {
-    const { classroomId, title, contentOrLink } = req.body;
+    const { classroomId, title, contentOrLink, adminId } = req.body;
+    const adminUser = await Student.findById(adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    if (adminUser.username !== 'admin') {
+      const cohort = await Classroom.findOne({ _id: classroomId, createdBy: adminUser._id });
+      if (!cohort) return res.status(403).json({ success: false, message: 'Access denied. You can only upload notes to your own cohorts.' });
+    }
+
     await Note.create({ classroomId, title, contentOrLink });
     res.json({ success: true, message: 'Study note uploaded to classroom repository!' });
   } catch (err) {
