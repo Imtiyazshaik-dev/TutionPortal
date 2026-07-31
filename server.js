@@ -325,7 +325,7 @@ app.get('/api/admin/approved-students', async (req, res) => {
   }
 });
 
-// Enrolment Route with diagnostic console logs
+// Foolproof Enrollment Route with Unique Timestamp ID Generation
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
@@ -337,8 +337,8 @@ app.post('/api/admin/enroll', async (req, res) => {
     const existing = await Student.findOne({ username });
     if (existing) return res.status(400).json({ success: false, message: 'Username already exists' });
 
-    const count = await Student.countDocuments({ role: 'student' });
-    const studentIdTag = `STU-${String(count + 1).padStart(3, '0')}`;
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const studentIdTag = `STU-${Date.now().toString().slice(-4)}${randomSuffix}`;
     const portalUrl = "https://tutionportal.onrender.com";
 
     const studentData = {
@@ -352,10 +352,8 @@ app.post('/api/admin/enroll', async (req, res) => {
       strikes: 0
     };
 
-    console.log("DIAGNOSTIC: Attempting to save student to MongoDB:", studentData);
-
     const newStudent = await Student.create(studentData);
-    console.log("DIAGNOSTIC: Successfully saved student ID in DB:", newStudent._id);
+    console.log("Successfully saved student ID in DB:", newStudent._id);
 
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
