@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 mongoose.connect(MONGO_URI)
   .then(async () => {
     console.log("MongoDB Connected Successfully via Mongoose!");
+    console.log("Connected to Database Name:", mongoose.connection.name);
     await seedDefaultAdmin();
   })
   .catch(err => console.error("MongoDB Connection Error:", err));
@@ -324,6 +325,7 @@ app.get('/api/admin/approved-students', async (req, res) => {
   }
 });
 
+// Enrolment Route with diagnostic console logs
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
@@ -339,14 +341,21 @@ app.post('/api/admin/enroll', async (req, res) => {
     const studentIdTag = `STU-${String(count + 1).padStart(3, '0')}`;
     const portalUrl = "https://tutionportal.onrender.com";
 
-    await Student.create({
-      username,
-      password,
+    const studentData = {
+      username: username.trim(),
+      password: password,
       role: 'student',
       status: 'pending',
-      studentIdTag,
-      classroomId: classroomId || null
-    });
+      studentIdTag: studentIdTag,
+      classroomId: classroomId && classroomId !== "" ? classroomId : null,
+      xp: 0,
+      strikes: 0
+    };
+
+    console.log("DIAGNOSTIC: Attempting to save student to MongoDB:", studentData);
+
+    const newStudent = await Student.create(studentData);
+    console.log("DIAGNOSTIC: Successfully saved student ID in DB:", newStudent._id);
 
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
@@ -360,6 +369,7 @@ app.post('/api/admin/enroll', async (req, res) => {
       whatsappUrl: whatsappUrl 
     });
   } catch (err) {
+    console.error("CRITICAL ENROLLMENT ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
