@@ -29,7 +29,6 @@
     .btn-delete { background: #ef4444; }
     .btn-approve { background: #10b981; }
     
-    /* XP Color Helper Classes */
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
@@ -63,7 +62,15 @@
 
     <hr>
 
-    <!-- Classroom Cohort Creation -->
+    <!-- Cohort Leaderboard Section -->
+    <h3>🏆 Student Leaderboard & Standings</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Live XP standings across all approved students.</p>
+    <div id="adminLeaderboardContainer" style="max-height: 240px; overflow-y: auto; margin-bottom: 20px; background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px;">
+      <p style="color: #94a3b8; font-size: 13px;">Loading leaderboard...</p>
+    </div>
+
+    <hr>
+
     <h3>🏫 Create New Classroom Cohort</h3>
     <div class="input-group">
       <label>Classroom Name</label>
@@ -407,10 +414,27 @@
       attSelect.innerHTML = ''; 
       xpSelect.innerHTML = '';
 
+      // Populate Admin Leaderboard
+      const adminLbContainer = document.getElementById('adminLeaderboardContainer');
+      adminLbContainer.innerHTML = '';
+
       if(dataApproved.success && dataApproved.students.length > 0) {
+        // Sort students by XP descending for leaderboard
+        const sortedStudents = [...dataApproved.students].sort((a, b) => b.xp - a.xp);
+
+        sortedStudents.forEach((s, index) => {
+          const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
+          const colorClass = getXpColorClass(s.xp);
+          
+          adminLbContainer.innerHTML += `
+            <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
+              <span><strong>#${index + 1}</strong> ${s.username} <span style="font-size: 11px; color: #94a3b8;">(${cohortName})</span></span>
+              <span class="${colorClass}">${s.xp} XP</span>
+            </div>`;
+        });
+
         dataApproved.students.forEach(s => {
           const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
-          
           const opt = `<option value="${s._id}">${s.username} (${cohortName})</option>`;
           attSelect.innerHTML += opt; 
           xpSelect.innerHTML += opt;
@@ -427,6 +451,7 @@
             </div>`;
         });
       } else {
+        adminLbContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No leaderboard data available.</p>';
         approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No approved students found.</p>';
         attSelect.innerHTML = '<option value="">No approved students available</option>';
         xpSelect.innerHTML = '<option value="">No approved students available</option>';
@@ -638,6 +663,7 @@
       });
       const data = await res.json();
       alert(data.message);
+      loadAdminData();
     }
 
     async function submitXp() {
