@@ -31,7 +31,6 @@
       padding: 0 20px;
     }
 
-    /* Top Navigation Header */
     .portal-header {
       background: var(--card-bg);
       backdrop-filter: blur(12px);
@@ -81,15 +80,12 @@
       color: var(--accent-blue);
     }
 
-    .btn-danger {
-      color: #ef4444 !important;
-    }
+    .btn-danger { color: #ef4444 !important; }
     .btn-danger:hover {
       background: rgba(239, 68, 68, 0.15) !important;
       border-color: #ef4444 !important;
     }
 
-    /* Layout Grid */
     .dashboard-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -101,7 +97,6 @@
       }
     }
 
-    /* Cards */
     .card {
       background: var(--card-bg);
       backdrop-filter: blur(12px);
@@ -123,7 +118,6 @@
       margin-bottom: 16px;
     }
 
-    /* Items List */
     .item-row {
       background: rgba(30, 41, 59, 0.4);
       border: 1px solid var(--border-color);
@@ -133,11 +127,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: transform 0.2s;
-    }
-    .item-row:hover {
-      border-color: rgba(255,255,255,0.15);
-      transform: translateY(-2px);
     }
 
     .action-btn {
@@ -149,18 +138,13 @@
       color: white;
       background: linear-gradient(135deg, #0284c7, #2563eb);
       font-weight: 600;
-      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
-      transition: opacity 0.2s;
     }
-    .action-btn:hover { opacity: 0.9; }
     .action-btn:disabled {
       background: #334155;
       color: var(--text-muted);
       cursor: not-allowed;
-      box-shadow: none;
     }
 
-    /* Modal Overlay */
     .modal {
       display: none; 
       position: fixed; 
@@ -178,10 +162,8 @@
       width: 90%; 
       max-width: 420px; 
       border: 1px solid var(--border-color);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       color: #fff;
     }
-
     .modal-content input {
       width: 100%;
       padding: 12px 14px;
@@ -191,18 +173,17 @@
       color: #fff;
       box-sizing: border-box;
       margin-top: 6px;
-      font-family: 'Outfit';
     }
-    .modal-content input:focus {
-      border-color: var(--accent-blue);
-      outline: none;
-    }
+
+    /* Leaderboard XP Color Classes */
+    .xp-red { color: #ef4444; font-weight: bold; }
+    .xp-yellow { color: #f59e0b; font-weight: bold; }
+    .xp-green { color: #10b981; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="portal-container">
     
-    <!-- Modern Header -->
     <div class="portal-header">
       <div>
         <h2 id="welcomeTitle">Welcome, Student</h2>
@@ -214,28 +195,23 @@
       </div>
     </div>
 
-    <!-- Pending / Unassigned State Notice -->
     <div id="statusNoticeCard" class="card" style="display:none; text-align: center; border-color: #f59e0b;">
       <h3 style="color: #f59e0b; justify-content: center;">⏳ Account Awaiting Activation</h3>
-      <p style="font-size: 14px; color: var(--text-muted); max-width: 500px; margin: 0 auto;">Your account is currently pending master admin approval or cohort assignment. Once activated, your assessments and classroom resources will appear here.</p>
+      <p style="font-size: 14px; color: var(--text-muted); max-width: 500px; margin: 0 auto;">Your account is currently pending master admin approval or cohort assignment.</p>
     </div>
 
-    <!-- Main Dashboard Workspace -->
     <div id="mainDashboardContent" class="dashboard-grid">
       
-      <!-- Left Column: Tests & Study Notes -->
       <div>
-        <!-- Live Class Banner -->
         <div id="liveClassBanner" class="card" style="display:none; background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15)); border-color: var(--accent-green);">
           <h3 style="color: var(--accent-green);">🔴 Live Class Active Now</h3>
           <p id="liveClassTitle" style="font-size: 16px; font-weight: 600; margin-bottom: 15px;"></p>
           <div style="display: flex; gap: 12px;">
-            <a id="liveClassMeetLink" href="#" target="_blank" style="background: var(--accent-green); color: #fff; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">Join Google Meet</a>
+            <a id="liveClassMeetLink" href="#" target="_blank" style="background: var(--accent-green); color: #fff; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px;">Join Google Meet</a>
             <button onclick="requestAttendance()" class="action-btn" style="background: #3b82f6;">Request Attendance</button>
           </div>
         </div>
 
-        <!-- Assessment Queue -->
         <div class="card">
           <h3>📝 Assessment Test Queue</h3>
           <div id="testsListContainer">
@@ -243,7 +219,6 @@
           </div>
         </div>
 
-        <!-- Study Notes Repository -->
         <div class="card">
           <h3>📂 Study Notes & Resources</h3>
           <div id="notesListContainer">
@@ -252,9 +227,7 @@
         </div>
       </div>
 
-      <!-- Right Column: Leaderboard, XP & Stats -->
       <div>
-        <!-- XP & Attendance Stats Card -->
         <div class="card" style="text-align: center;">
           <h3 style="justify-content: center; color: var(--accent-blue);">⭐ Performance Stats</h3>
           <div style="display: flex; justify-content: space-around; margin: 15px 0;">
@@ -268,11 +241,10 @@
             </div>
           </div>
           <div id="reportDownloadContainer" style="display:none; margin-top: 18px;">
-            <a id="reportDownloadBtn" href="#" style="display: block; background: var(--accent-purple); color: #fff; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold; box-shadow: 0 4px 15px rgba(139,92,246,0.3);">📥 Download Weekly Report</a>
+            <a id="reportDownloadBtn" href="#" style="display: block; background: var(--accent-purple); color: #fff; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold;">📥 Download Weekly Report</a>
           </div>
         </div>
 
-        <!-- Cohort Leaderboard -->
         <div class="card">
           <h3>🏆 Cohort Leaderboard</h3>
           <div id="leaderboardContainer" style="max-height: 280px; overflow-y: auto;">
@@ -284,14 +256,13 @@
     </div>
   </div>
 
-  <!-- Profile & Security Modal -->
   <div id="profileModal" class="modal">
     <div class="modal-content">
       <h3 style="color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">👤 Student Profile & Security</h3>
       <p style="font-size: 14px; margin-bottom: 8px;"><strong>Username:</strong> <span id="modalUsername">---</span></p>
       <p style="font-size: 14px; margin-bottom: 20px;"><strong>Student ID Tag:</strong> <span id="modalStudentTag" style="color:#f59e0b; font-weight: bold;">---</span></p>
       
-      <h4 style="margin: 0 0 10px 0; font-size: 14px; color: var(--text-main);">🔐 Change Account Password</h4>
+      <h4 style="margin: 0 0 10px 0; font-size: 14px;">🔐 Change Account Password</h4>
       <div style="margin-bottom: 12px;">
         <label style="font-size: 12px; color: var(--text-muted);">Current Password</label>
         <input type="password" id="oldPassword" placeholder="Enter current password" />
@@ -303,7 +274,7 @@
       
       <div style="display: flex; gap: 10px;">
         <button onclick="changeStudentPassword()" style="flex: 1; background: linear-gradient(135deg, #0284c7, #2563eb); padding: 12px; border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer;">Update Password</button>
-        <button onclick="closeProfileModal()" style="background: #334155; padding: 12px 18px; border: none; border-radius: 10px; color: #fff; cursor: pointer; font-weight: 500;">Close</button>
+        <button onclick="closeProfileModal()" style="background: #334155; padding: 12px 18px; border: none; border-radius: 10px; color: #fff; cursor: pointer;">Close</button>
       </div>
     </div>
   </div>
@@ -317,6 +288,12 @@
 
     if (!studentId) {
       window.location.href = "index.html";
+    }
+
+    function getXpColorClass(xp) {
+      if (xp < 30) return 'xp-red';
+      if (xp > 45) return 'xp-green';
+      return 'xp-yellow';
     }
 
     function openProfileModal() {
@@ -379,7 +356,7 @@
             let btnHTML = '';
 
             if (isSubmitted) {
-              btnHTML = `<button class="action-btn" disabled style="background:#475569;">Submitted</button>`;
+              btnHTML = `<button class="action-btn" disabled style="background:#475569;">Attempted (Pending XP)</button>`;
             } else if (!test.isUnlocked) {
               btnHTML = `<button class="action-btn" disabled title="${test.statusMessage}">Locked</button>`;
             } else {
@@ -420,10 +397,11 @@
         if (data.leaderboard && data.leaderboard.length > 0) {
           data.leaderboard.forEach((lbStudent, index) => {
             const isMe = lbStudent._id === studentId;
+            const colorClass = getXpColorClass(lbStudent.xp);
             lbContainer.innerHTML += `
               <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: ${isMe ? 'rgba(56,189,248,0.1)' : 'transparent'}; border-bottom: 1px solid var(--border-color); font-size: 13px; border-radius: 8px;">
                 <span><strong>#${index + 1}</strong> ${lbStudent.username} ${isMe ? '(You)' : ''}</span>
-                <span style="color: #f59e0b; font-weight: bold;">${lbStudent.xp} XP</span>
+                <span class="${colorClass}">${lbStudent.xp} XP</span>
               </div>`;
           });
         } else {

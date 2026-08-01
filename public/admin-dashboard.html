@@ -28,6 +28,11 @@
     .btn-edit { background: #3b82f6; }
     .btn-delete { background: #ef4444; }
     .btn-approve { background: #10b981; }
+    
+    /* XP Color Helper Classes */
+    .xp-red { color: #ef4444; font-weight: bold; }
+    .xp-yellow { color: #f59e0b; font-weight: bold; }
+    .xp-green { color: #10b981; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -49,7 +54,7 @@
       <button onclick="changePassword()" style="background:#0284c7; padding:8px 16px; font-size:14px;">Update Password</button>
     </div>
 
-    <!-- Weekly Master Report Banner (Master Admin Only) -->
+    <!-- Weekly Master Report Banner -->
     <div id="adminReportBanner" style="background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #3b82f6; display:none;">
       <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Sunday Weekly Master Report Ready</h3>
       <p style="font-size:14px; margin-bottom:15px;">Download compiled weekly attendance and test results for all cohorts.</p>
@@ -72,14 +77,12 @@
 
     <hr>
 
-    <!-- Student Approval Queue (Master Admin Only Section) -->
     <div id="masterApprovalSection" style="display:none;">
       <h3>🧑‍🎓 Student Approval Queue (Master Admin Only)</h3>
       <div id="studentStatusList" style="max-height:220px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
       <hr>
     </div>
 
-    <!-- Manage & Remove Approved Students Section -->
     <h3>👥 Manage & Remove Approved Students</h3>
     <div id="approvedStudentsList" style="max-height:220px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
@@ -90,8 +93,9 @@
 
     <hr>
 
-    <h3>📊 Student Test Scores & Reset Exam</h3>
-    <div id="testStatsList" style="max-height:200px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
+    <h3>📊 Student Test Submissions & Grant XP</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Review student test scores and manually grant XP (Max 10 XP per test, max 70 XP per week).</p>
+    <div id="testStatsList" style="max-height:260px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
 
@@ -209,7 +213,7 @@
 
     <hr>
 
-    <h3>Award / Deduct Student XP</h3>
+    <h3>Award / Deduct Student XP Manually</h3>
     <div class="input-group">
       <label>Select Student</label>
       <select id="xpStudentSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
@@ -237,6 +241,12 @@
     const currentAdminId = localStorage.getItem('userId');
     let questionCount = 0;
     let adminReportId = null;
+
+    function getXpColorClass(xp) {
+      if (xp < 30) return 'xp-red';
+      if (xp > 45) return 'xp-green';
+      return 'xp-yellow';
+    }
 
     async function changePassword() {
       const oldPassword = document.getElementById('oldPassword').value;
@@ -409,7 +419,7 @@
             <div class="manage-list-item">
               <div>
                 <strong>${s.username}</strong><br>
-                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span>
+                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span> | XP: <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span>
               </div>
               <div>
                 <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete" title="Delete Student">🗑️ Delete</button>
@@ -435,17 +445,44 @@
             const studentName = r.studentId ? r.studentId.username : 'Unknown';
             const testId = r.testId ? r.testId._id : '';
             const testTitle = r.testId ? r.testId.title : 'Deleted Test';
+            const isGranted = r.xpGranted;
+            const grantedVal = r.grantedXpAmount || 0;
 
             statsList.innerHTML += `
-              <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
-                <div><strong>${studentName}</strong> - <em>${testTitle}</em><br><span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span></div>
-                <button onclick="resetStudentExam('${studentId}', '${testId}')" class="action-btn" style="background:#f59e0b;">🔄 Reset</button>
+              <div style="padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>${studentName}</strong> - <em>${testTitle}</em><br>
+                  <span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span> | 
+                  <span style="font-size:11px; color:${isGranted ? '#38bdf8' : '#f59e0b'};">${isGranted ? `XP Granted: ${grantedVal}` : 'Pending XP Grant'}</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="xpInput_${r._id}" value="${grantedVal || Math.min(10, r.score)}" min="0" max="10" style="width:50px; padding:4px; background:#1e293b; border:1px solid #334155; border-radius:4px; color:#fff;" />
+                  <button onclick="grantExamXp('${r._id}')" class="action-btn" style="background:#10b981;">Grant XP</button>
+                  <button onclick="resetStudentExam('${studentId}', '${testId}')" class="action-btn" style="background:#f59e0b;" title="Reset Exam">🔄</button>
+                </div>
               </div>`;
           });
         }
       }
 
       loadManagementLists();
+    }
+
+    async function grantExamXp(resultId) {
+      const xpInputVal = document.getElementById(`xpInput_${resultId}`).value;
+      const xpAmount = Number(xpInputVal);
+      if (xpAmount < 0 || xpAmount > 10) {
+        return alert("Total XP for any test must be between 0 and 10.");
+      }
+
+      const res = await fetch('/api/admin/grant-exam-xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resultId, xpAmount })
+      });
+      const data = await res.json();
+      alert(data.message);
+      loadAdminData();
     }
 
     async function loadManagementLists() {
@@ -614,6 +651,18 @@
       });
       const data = await res.json();
       alert(data.message);
+      loadAdminData();
+    }
+
+    async function resetStudentExam(studentId, testId) {
+      const res = await fetch("/api/admin/reset-exam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId, testId })
+      });
+      const data = await res.json();
+      alert(data.message);
+      loadAdminData();
     }
 
     function addQuestionField() {

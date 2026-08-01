@@ -46,7 +46,7 @@ const testSchema = new mongoose.Schema({
   classroomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Classroom', required: true },
   title: { type: String, required: true },
   durationMinutes: { type: Number, default: 15 },
-  durationHours: { type: Number, default: 24 }, // Active window in hours from publication
+  durationHours: { type: Number, default: 24 },
   questions: [{
     questionText: String,
     options: [String],
@@ -61,6 +61,8 @@ const resultSchema = new mongoose.Schema({
   score: { type: Number, required: true },
   totalQuestions: { type: Number, required: true },
   timeTaken: { type: String },
+  xpGranted: { type: Boolean, default: false },
+  grantedXpAmount: { type: Number, default: 0 },
   submittedAt: { type: Date, default: Date.now }
 });
 
@@ -103,7 +105,6 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
-// Seed Default Master Admin
 async function seedDefaultAdmin() {
   try {
     const adminExists = await Student.findOne({ username: 'admin' });
@@ -122,7 +123,6 @@ async function seedDefaultAdmin() {
   }
 }
 
-// --- WEEKLY SUNDAY REPORT GENERATOR ---
 async function generateWeeklyReports() {
   try {
     const students = await Student.find({ role: 'student', status: 'approved' });
@@ -134,7 +134,7 @@ async function generateWeeklyReports() {
       
       results.forEach(r => {
         const testTitle = r.testId ? r.testId.title : 'Test';
-        studentText += ` - ${testTitle}: ${r.score}/${r.totalQuestions}\n`;
+        studentText += ` - ${testTitle}: ${r.score}/${r.totalQuestions} (XP Granted: ${r.grantedXpAmount || 0})\n`;
       });
       studentText += "----------------------------------------\n";
       masterContent += studentText;
@@ -162,7 +162,6 @@ setInterval(() => {
   }
 }, 24 * 60 * 60 * 1000);
 
-// --- AUTHENTICATION ROUTES ---
 app.post('/api/auth', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -197,7 +196,6 @@ app.post('/api/auth/change-password', async (req, res) => {
   }
 });
 
-// --- CLASSROOMS API ---
 app.get('/api/classrooms/:adminId', async (req, res) => {
   try {
     const adminUser = await Student.findById(req.params.adminId);
@@ -231,7 +229,6 @@ app.post('/api/admin/classrooms', async (req, res) => {
   }
 });
 
-// --- STUDENT DASHBOARD ROUTES ---
 app.get('/api/student/classroom-data/:id', async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
@@ -315,7 +312,6 @@ app.post('/api/student/join-class', async (req, res) => {
   }
 });
 
-// --- ASSESSMENT & EXAM ROUTES ---
 app.get('/api/tests/:id', async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
@@ -354,16 +350,12 @@ app.post('/api/exam/submit', async (req, res) => {
       testId,
       score,
       totalQuestions: test.questions.length,
-      timeTaken
+      timeTaken,
+      xpGranted: false,
+      grantedXpAmount: 0
     });
 
-    const student = await Student.findById(userId);
-    if (student) {
-      student.xp += score * 10;
-      await student.save();
-    }
-
-    res.json({ success: true, message: `Exam submitted successfully! Score: ${score}/${test.questions.length}` });
+    res.json({ success: true, message: `Exam submitted successfully! Score: ${score}/${test.questions.length}. Waiting for teacher grading/XP grant.` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -388,7 +380,6 @@ app.post('/api/exam/strike', async (req, res) => {
   }
 });
 
-// --- ADMIN COMMAND CENTER ROUTES ---
 app.get('/api/admin/students', async (req, res) => {
   try {
     const students = await Student.find({ role: 'student' }).populate('classroomId', 'name');
@@ -465,8 +456,6 @@ app.post('/api/admin/enroll', async (req, res) => {
     };
 
     const newStudent = await Student.create(studentData);
-    console.log("Successfully saved student ID in DB:", newStudent._id);
-
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
       const message = encodeURIComponent(`Hey! You have been enrolled in the Tuition Portal.\n\nPortal: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`);
@@ -479,7 +468,6 @@ app.post('/api/admin/enroll', async (req, res) => {
       whatsappUrl: whatsappUrl 
     });
   } catch (err) {
-    console.error("CRITICAL ENROLLMENT ERROR:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -598,17 +586,56 @@ app.get('/api/admin/results', async (req, res) => {
   }
 });
 
-app.post('/api/admin/reset-exam', async (req, res) => {
+// --- GRANT EXAM XP ROUTE ---
+app.post('/api/admin/grant-exam-xp', async (req, res) => {
   try {
-    const { studentId, testId } = req.body;
-    await Result.findOneAndDelete({ studentId, testId });
-    res.json({ success: true, message: 'Exam submission reset. Student can retake the test.' });
+    const { resultId, xpAmount } = req.body;
+    const result = await Result.findById(resultId);
+    if (!result) return res.status(404).json({ success: false, message: 'Result submission not found.' });
+
+    const amount = Number(xpAmount) || 0;
+    if (amount > 10) {
+      return res.status(400).json({ success: false, message: 'Max total XP for any test is 10.' });
+    }
+
+    const student = await Student.findById(result.studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+
+    // If already granted, subtract old and add new. If not granted, add new.
+    const previousGranted = result.grantedXpAmount || 0;
+    const netDifference = amount - previousGranted;
+
+    student.xp += netDifference;
+    await student.save();
+
+    result.xpGranted = true;
+    result.grantedXpAmount = amount;
+    await result.save();
+
+    res.json({ success: true, message: `Granted ${amount} XP successfully to ${student.username}!` });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// --- CLASSROOM ASSETS: LIVE CLASSES, TESTS, NOTES ---
+app.post('/api/admin/reset-exam', async (req, res) => {
+  try {
+    const { studentId, testId } = req.body;
+    const existingResult = await Result.findOne({ studentId, testId });
+    if (existingResult && existingResult.xpGranted && existingResult.grantedXpAmount > 0) {
+      const student = await Student.findById(studentId);
+      if (student) {
+        student.xp = Math.max(0, student.xp - existingResult.grantedXpAmount);
+        await student.save();
+      }
+    }
+    await Result.findOneAndDelete({ studentId, testId });
+    res.json({ success: true, message: 'Exam submission reset and XP adjusted. Student can retake the test.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.post('/api/admin/class', async (req, res) => {
   try {
     const { classroomId, title, meetLink } = req.body;
@@ -659,6 +686,19 @@ app.get('/api/admin/tests', async (req, res) => {
 
 app.delete('/api/admin/test/:id', async (req, res) => {
   try {
+    const testDoc = await Test.findById(req.params.id);
+    if (testDoc) {
+      const results = await Result.find({ testId: testDoc._id });
+      for (const r of results) {
+        if (r.xpGranted && r.grantedXpAmount > 0) {
+          const student = await Student.findById(r.studentId);
+          if (student) {
+            student.xp = Math.max(0, student.xp - r.grantedXpAmount);
+            await student.save();
+          }
+        }
+      }
+    }
     await Test.findByIdAndDelete(req.params.id);
     await Result.deleteMany({ testId: req.params.id });
     res.json({ success: true, message: 'Test deleted.' });
@@ -717,12 +757,10 @@ app.get('/api/reports/download/:id', async (req, res) => {
   }
 });
 
-// Fallback SPA Route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// --- SELF-PING KEEP-ALIVE MECHANISM ---
 const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://www.tutorpoint.page";
 
 setInterval(() => {
