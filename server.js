@@ -114,11 +114,9 @@ const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 // --- BULLETPROOF ATTENDANCE CALCULATION ENGINE ---
 async function calculateAttendanceStats(student) {
   try {
+    // Set start date to the beginning of the active month (August 1, 2026) to show full calendar range
     const termStart = new Date('2026-08-01');
-    let studentEnrollDate = student.createdAt ? new Date(student.createdAt) : new Date('2026-08-01');
-    
-    let startDate = studentEnrollDate > termStart ? studentEnrollDate : termStart;
-    startDate.setHours(0,0,0,0);
+    termStart.setHours(0,0,0,0);
 
     const today = new Date('2026-08-03');
     today.setHours(0,0,0,0);
@@ -130,7 +128,7 @@ async function calculateAttendanceStats(student) {
     let totalPresent = 0;
     const calendarMap = {};
 
-    let curr = new Date(startDate);
+    let curr = new Date(termStart);
     while (curr.getTime() <= today.getTime()) {
       const year = curr.getFullYear();
       const month = String(curr.getMonth() + 1).padStart(2, '0');
@@ -550,16 +548,27 @@ app.post('/api/admin/attendance-action', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+// --- VALIDATED MANUAL ATTENDANCE ROUTE (BLOCKS SUNDAYS) ---
 app.post('/api/admin/attendance', async (req, res) => {
   try {
     const { studentId, date, status } = req.body;
+    if (!date) return res.status(400).json({ success: false, message: 'Date is required.' });
+
+    // Check if the selected date is a Sunday
+    const targetDate = new Date(date + 'T00:00:00');
+    if (targetDate.getDay() === 0) {
+      return res.status(400).json({ success: false, message: 'Error: Cannot mark attendance on a Sunday!' });
+    }
+
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+
     student.attendance = student.attendance.filter(a => a.date !== date);
     student.attendance.push({ date, status });
     await student.save();
     await checkAndAwardBadges(studentId);
-    res.json({ success: true, message: 'Attendance saved!' });
+    
+    res.json({ success: true, message: 'Attendance saved successfully!' });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
