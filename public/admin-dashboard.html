@@ -278,6 +278,7 @@
         document.getElementById('holidayDate').value = '';
         document.getElementById('holidayTitle').value = '';
         loadHolidays();
+        loadAdminData();
       }
     }
 
@@ -304,6 +305,7 @@
     async function deleteHoliday(id) {
       await fetch(`/api/admin/holiday/${id}`, { method: 'DELETE' });
       loadHolidays();
+      loadAdminData();
     }
 
     async function loadAdminData() {
@@ -358,7 +360,7 @@
           adminLbContainer.innerHTML += `
             <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
               <span><strong>#${idx+1}</strong> ${s.username}</span>
-              <span><strong style="color:#10b981;">${s.attendancePercentage}% Attendance</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
+              <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
             </div>`;
         });
 
@@ -371,6 +373,8 @@
               <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete">🗑️ Delete</button>
             </div>`;
         });
+      } else {
+        adminLbContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No leaderboard data available.</p>';
       }
 
       const resResults = await fetch('/api/admin/results');
@@ -378,16 +382,20 @@
       if(dataResults.success) {
         const statsList = document.getElementById('testStatsList');
         statsList.innerHTML = '';
-        dataResults.results.forEach(r => {
-          statsList.innerHTML += `
-            <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
-              <div><strong>${r.studentId ? r.studentId.username : 'Unknown'}</strong> - <em>${r.testId ? r.testId.title : 'Test'}</em><br><span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span></div>
-              <div style="display:flex; gap:6px; align-items:center;">
-                <input type="number" id="xpInput_${r._id}" value="${r.grantedXpAmount || Math.min(10, r.score)}" min="0" max="10" style="width:45px; background:#1e293b; color:#fff; border:1px solid #334155; border-radius:4px; padding:4px;" />
-                <button onclick="grantExamXp('${r._id}')" class="action-btn btn-approve">Grant</button>
-              </div>
-            </div>`;
-        });
+        if(dataResults.results.length === 0) {
+          statsList.innerHTML = '<p style="color:#94a3b8; font-size:13px; margin:0;">No submissions recorded.</p>';
+        } else {
+          dataResults.results.forEach(r => {
+            statsList.innerHTML += `
+              <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>${r.studentId ? r.studentId.username : 'Unknown'}</strong> - <em>${r.testId ? r.testId.title : 'Test'}</em><br><span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span></div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="xpInput_${r._id}" value="${r.grantedXpAmount || Math.min(10, r.score)}" min="0" max="10" style="width:45px; background:#1e293b; color:#fff; border:1px solid #334155; border-radius:4px; padding:4px;" />
+                  <button onclick="grantExamXp('${r._id}')" class="action-btn btn-approve">Grant</button>
+                </div>
+              </div>`;
+          });
+        }
       }
     }
 

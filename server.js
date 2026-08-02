@@ -43,7 +43,7 @@ const studentSchema = new mongoose.Schema({
 });
 
 const holidaySchema = new mongoose.Schema({
-  date: { type: String, required: true, unique: true }, // Format: YYYY-MM-DD
+  date: { type: String, required: true, unique: true },
   title: { type: String, default: 'Holiday' }
 });
 
@@ -111,49 +111,57 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
-// --- INDIVIDUAL ENROLLMENT-BASED ATTENDANCE ENGINE ---
+// --- ROBUST ATTENDANCE CALCULATION ENGINE ---
 async function calculateAttendanceStats(student) {
-  const termStart = new Date('2026-08-01');
-  let studentEnrollDate = student.createdAt ? new Date(student.createdAt) : new Date('2026-08-01');
-  
-  // Start tracking from whichever is later: term start or student join date
-  let startDate = studentEnrollDate > termStart ? studentEnrollDate : termStart;
-  startDate.setHours(0,0,0,0);
+  try {
+    const termStart = new Date('2026-08-01');
+    let studentEnrollDate = student.createdAt ? new Date(student.createdAt) : new Date('2026-08-01');
+    
+    let startDate = studentEnrollDate > termStart ? studentEnrollDate : termStart;
+    startDate.setHours(0,0,0,0);
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
-  const holidays = await Holiday.find({});
-  const holidaySet = new Set(holidays.map(h => h.date));
+    const holidays = await Holiday.find({});
+    const holidaySet = new Set(holidays.map(h => h.date));
 
-  let totalWorkingDays = 0;
-  let totalPresent = 0;
-  const calendarMap = {};
+    let totalWorkingDays = 0;
+    let totalPresent = 0;
+    const calendarMap = {};
 
-  let curr = new Date(startDate);
-  while (curr <= today) {
-    const dateStr = curr.toISOString().split('T')[0];
-    const dayOfWeek = curr.getDay(); // 0 = Sunday
+    let curr = new Date(startDate);
+    while (curr <= today) {
+      const year = curr.getFullYear();
+      const month = String(curr.getMonth() + 1).padStart(2, '0');
+      const day = String(curr.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
+      const dayOfWeek = curr.getDay(); // 0 = Sunday
 
-    if (dayOfWeek === 0) {
-      calendarMap[dateStr] = 'Sunday';
-    } else if (holidaySet.has(dateStr)) {
-      calendarMap[dateStr] = 'Holiday';
-    } else {
-      totalWorkingDays++;
-      const record = student.attendance.find(a => a.date === dateStr);
-      if (record && record.status === 'Present') {
-        totalPresent++;
-        calendarMap[dateStr] = 'Present';
+      if (dayOfWeek === 0) {
+        calendarMap[dateStr] = 'Sunday';
+      } else if (holidaySet.has(dateStr)) {
+        calendarMap[dateStr] = 'Holiday';
       } else {
-        calendarMap[dateStr] = 'Absent';
+        totalWorkingDays++;
+        const record = (student.attendance || []).find(a => a.date === dateStr);
+        if (record && record.status === 'Present') {
+          totalPresent++;
+          calendarMap[dateStr] = 'Present';
+        } else {
+          calendarMap[dateStr] = 'Absent';
+        }
       }
+      curr.setDate(curr.getDate() + 1);
     }
-    curr.setDate(curr.getDate() + 1);
-  }
 
-  const percentage = totalWorkingDays > 0 ? ((totalPresent / totalWorkingDays) * 100).toFixed(1) : '100.0';
-  return { percentage: Number(percentage), totalWorkingDays, totalPresent, calendarMap };
+    const percentage = totalWorkingDays > 0 ? ((totalPresent / totalWorkingDays) * 100).toFixed(1) : '100.0';
+    return { percentage: Number(percentage), totalWorkingDays, totalPresent, calendarMap };
+  } catch (err) {
+    console.error("Attendance calculation error:", err);
+    return { percentage: 0, totalWorkingDays: 0, totalPresent: 0, calendarMap: {} };
+  }
 }
 
 async function checkAndAwardBadges(studentId) {
@@ -462,7 +470,7 @@ app.post('/api/admin/student-status', async (req, res) => {
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
     student.status = status;
-    student.createdAt = new Date(); // Update official join date upon approval
+    student.createdAt = new Date();
     await student.save();
     res.json({ success: true, message: `Status updated to ${status}.` });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
