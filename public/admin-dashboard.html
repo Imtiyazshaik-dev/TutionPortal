@@ -55,14 +55,13 @@
 
     <!-- Weekly Master Report Banner -->
     <div id="adminReportBanner" style="background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #3b82f6; display:none;">
-      <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Sunday Weekly Master Report Ready</h3>
-      <p style="font-size:14px; margin-bottom:15px;">Download compiled weekly attendance and test results for all cohorts.</p>
-      <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Weekly Report</a>
+      <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Sunday Weekly Master HTML Report Ready</h3>
+      <p style="font-size:14px; margin-bottom:15px;">Download visual, color-coded weekly attendance and test results for all cohorts.</p>
+      <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Visual HTML Report</a>
     </div>
 
     <hr>
 
-    <!-- Cohort Leaderboard Section -->
     <h3>🏆 Student Leaderboard & Standings</h3>
     <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Live XP standings across all approved students.</p>
     <div id="adminLeaderboardContainer" style="max-height: 240px; overflow-y: auto; margin-bottom: 20px; background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px;">
@@ -100,8 +99,8 @@
 
     <hr>
 
-    <h3>📊 Student Test Submissions & Grant XP</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Review student test scores and manually grant XP (Max 10 XP per test, max 70 XP per week).</p>
+    <h3>📊 Student Test Submissions & Timestamps</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Review student test scores, submission times, and grant XP (Max 10 XP per test).</p>
     <div id="testStatsList" style="max-height:260px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
@@ -414,12 +413,10 @@
       attSelect.innerHTML = ''; 
       xpSelect.innerHTML = '';
 
-      // Populate Admin Leaderboard
       const adminLbContainer = document.getElementById('adminLeaderboardContainer');
       adminLbContainer.innerHTML = '';
 
       if(dataApproved.success && dataApproved.students.length > 0) {
-        // Sort students by XP descending for leaderboard
         const sortedStudents = [...dataApproved.students].sort((a, b) => b.xp - a.xp);
 
         sortedStudents.forEach((s, index) => {
@@ -472,12 +469,14 @@
             const testTitle = r.testId ? r.testId.title : 'Deleted Test';
             const isGranted = r.xpGranted;
             const grantedVal = r.grantedXpAmount || 0;
+            const submittedTime = r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A';
 
             statsList.innerHTML += `
               <div style="padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
                   <strong>${studentName}</strong> - <em>${testTitle}</em><br>
                   <span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span> | 
+                  <span style="font-size:11px; color:#38bdf8;">Submitted: ${submittedTime}</span><br>
                   <span style="font-size:11px; color:${isGranted ? '#38bdf8' : '#f59e0b'};">${isGranted ? `XP Granted: ${grantedVal}` : 'Pending XP Grant'}</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center;">

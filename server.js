@@ -39,6 +39,7 @@ const studentSchema = new mongoose.Schema({
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   xp: { type: Number, default: 0 },
   attendance: [{ date: String, status: String }],
+  badges: [String],
   strikes: { type: Number, default: 0 }
 });
 
@@ -105,6 +106,39 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
+async function checkAndAwardBadges(studentId) {
+  const student = await Student.findById(studentId);
+  if (!student) return;
+
+  const resultsCount = await Result.countDocuments({ studentId: student._id });
+  const currentBadges = student.badges || [];
+  let updated = false;
+
+  const award = (badgeName) => {
+    if (!currentBadges.includes(badgeName)) {
+      currentBadges.push(badgeName);
+      updated = true;
+    }
+  };
+
+  if (resultsCount >= 1) award("🎯 First Step");
+  if (student.xp >= 30) award("🥉 Bronze Scholar (30+ XP)");
+  if (student.xp >= 45) award("🥈 Silver Achiever (45+ XP)");
+  if (student.xp >= 70) award("🥇 Gold Elite (70 XP Weekly Max)");
+
+  const perfectTests = await Result.findOne({ studentId: student._id, grantedXpAmount: 10 });
+  if (perfectTests) award("⭐ Perfectionist (10/10 XP)");
+
+  if (student.attendance && student.attendance.length >= 3) {
+    award("📚 Consistent Learner (3+ Classes)");
+  }
+
+  if (updated) {
+    student.badges = currentBadges;
+    await student.save();
+  }
+}
+
 async function seedDefaultAdmin() {
   try {
     const adminExists = await Student.findOne({ username: 'admin' });
@@ -126,30 +160,92 @@ async function seedDefaultAdmin() {
 async function generateWeeklyReports() {
   try {
     const students = await Student.find({ role: 'student', status: 'approved' });
-    let masterContent = "--- WEEKLY PERFORMANCE MASTER REPORT ---\nGenerated on: " + new Date().toLocaleString() + "\n\n";
+    let masterHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Weekly Master Report</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; }
+          .container { max-width: 800px; margin: auto; background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+          h1 { color: #38bdf8; text-align: center; }
+          .student-card { background: #0f172a; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid #10b981; }
+          .progress-bar-bg { background: #334155; border-radius: 8px; overflow: hidden; height: 16px; margin: 10px 0; }
+          .progress-bar-fill { background: linear-gradient(90deg, #38bdf8, #10b981); height: 100%; text-align: right; color: #000; font-size: 11px; font-weight: bold; padding-right: 6px; line-height: 16px; }
+          .badge { background: rgba(56,189,248,0.2); color: #38bdf8; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: inline-block; margin: 2px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📊 Weekly Performance Master Report</h1>
+          <p style="text-align:center; color:#94a3b8;">Generated on: ${new Date().toLocaleString()}</p>
+          <hr style="border:0; border-top:1px solid #334155; margin:20px 0;">
+    `;
 
     for (const student of students) {
       const results = await Result.find({ studentId: student._id }).populate('testId', 'title');
-      let studentText = `Student: ${student.username} (ID: ${student.studentIdTag || 'N/A'})\nTotal XP: ${student.xp}\nAttendance Count: ${student.attendance.length}\nTest Scores:\n`;
-      
-      results.forEach(r => {
-        const testTitle = r.testId ? r.testId.title : 'Test';
-        studentText += ` - ${testTitle}: ${r.score}/${r.totalQuestions} (XP Granted: ${r.grantedXpAmount || 0})\n`;
-      });
-      studentText += "----------------------------------------\n";
-      masterContent += studentText;
+      let xpPercentage = Math.min(100, Math.round((student.xp / 70) * 100));
 
-      const individualContent = `--- YOUR WEEKLY PERFORMANCE REPORT ---\nStudent: ${student.username}\nStudent ID: ${student.studentIdTag || 'N/A'}\nTotal XP: ${student.xp}\nAttendance Count: ${student.attendance.length}\n\nYour Test Scores:\n` + 
-        results.map(r => ` - ${r.testId ? r.testId.title : 'Test'}: ${r.score}/${r.totalQuestions}`).join('\n') + 
-        `\n\nKeep up the great work!`;
+      masterHtml += `
+        <div class="student-card">
+          <h3 style="margin:0 0 5px 0; color:#38bdf8;">${student.username} <span style="font-size:12px; color:#f59e0b;">(ID: ${student.studentIdTag || 'N/A'})</span></h3>
+          <p style="margin:4px 0; font-size:14px;">Total XP: <strong>${student.xp} / 70 max</strong> | Classes Attended: <strong>${student.attendance.length}</strong></p>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div></div>
+          <p style="margin:8px 0 4px 0; font-size:12px; color:#94a3b8;">Badges Earned:</p>
+          <div>${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge">${b}</span>`).join('') : '<span style="color:#64748b; font-size:12px;">None</span>'}</div>
+          <p style="margin:10px 0 4px 0; font-size:12px; color:#94a3b8;">Test Submissions:</p>
+          <ul style="margin:0; padding-left:18px; font-size:13px;">
+            ${results.map(r => `<li>${r.testId ? r.testId.title : 'Test'}: Score ${r.score}/${r.totalQuestions} | XP Granted: ${r.grantedXpAmount || 0}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+
+      const individualHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Your Weekly Report</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; }
+            .container { max-width: 700px; margin: auto; background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+            h1 { color: #38bdf8; text-align: center; }
+            .stat-box { background: #0f172a; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; border: 1px solid #334155; }
+            .progress-bar-bg { background: #334155; border-radius: 8px; overflow: hidden; height: 18px; margin: 15px 0; }
+            .progress-bar-fill { background: linear-gradient(90deg, #38bdf8, #10b981); height: 100%; text-align: right; color: #000; font-size: 12px; font-weight: bold; padding-right: 8px; line-height: 18px; }
+            .badge { background: rgba(56,189,248,0.2); color: #38bdf8; padding: 6px 12px; border-radius: 14px; font-size: 12px; display: inline-block; margin: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>⭐ Your Weekly Performance Report</h1>
+            <p style="text-align:center; color:#94a3b8;">Student: <strong>${student.username}</strong> (${student.studentIdTag || 'N/A'})</p>
+            <div class="stat-box">
+              <h2 style="margin:0; color:#f59e0b; font-size:32px;">${student.xp} XP</h2>
+              <p style="margin:5px 0 0 0; color:#94a3b8; font-size:13px;">Weekly Progress (Target: 70 XP)</p>
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div></div>
+            </div>
+            <h3 style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:8px;">🏅 Badges Earned</h3>
+            <div>${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge">${b}</span>`).join('') : '<span style="color:#94a3b8;">No badges unlocked yet. Keep going!</span>'}</div>
+            <h3 style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:8px; margin-top:25px;">📝 Test Results</h3>
+            <ul style="padding-left:18px;">
+              ${results.map(r => `<li style="margin-bottom:8px;"><strong>${r.testId ? r.testId.title : 'Test'}</strong>: Score ${r.score}/${r.totalQuestions} | XP Granted: <span style="color:#10b981;">${r.grantedXpAmount || 0} XP</span></li>`).join('')}
+            </ul>
+            <p style="text-align:center; margin-top:30px; color:#10b981; font-weight:bold;">Keep up the fantastic work!</p>
+          </div>
+        </body>
+        </html>
+      `;
 
       await WeeklyReport.deleteMany({ studentId: student._id, reportType: 'student' });
-      await WeeklyReport.create({ reportType: 'student', studentId: student._id, content: individualContent });
+      await WeeklyReport.create({ reportType: 'student', studentId: student._id, content: individualHtml });
     }
 
+    masterHtml += `</div></body></html>`;
     await WeeklyReport.deleteMany({ reportType: 'master' });
-    await WeeklyReport.create({ reportType: 'master', content: masterContent });
-    console.log("Weekly Sunday Master and Student Reports generated successfully!");
+    await WeeklyReport.create({ reportType: 'master', content: masterHtml });
+    console.log("Visual HTML Weekly Reports generated successfully!");
   } catch (err) {
     console.error("Error generating weekly reports:", err);
   }
@@ -238,6 +334,9 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       return res.json({ success: true, assigned: false, student });
     }
 
+    await checkAndAwardBadges(student._id);
+    const updatedStudent = await Student.findById(student._id);
+
     const classroom = await Classroom.findById(student.classroomId);
     const leaderboard = await Student.find({ classroomId: student.classroomId, status: 'approved' })
       .sort({ xp: -1 })
@@ -277,7 +376,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       success: true,
       assigned: true,
       classroom,
-      student,
+      student: updatedStudent,
       leaderboard,
       tests: availableTests,
       notes,
@@ -332,9 +431,17 @@ app.get('/api/tests/:id', async (req, res) => {
   }
 });
 
+// --- ONE-TIME EXAM SUBMISSION CHECK ---
 app.post('/api/exam/submit', async (req, res) => {
   try {
     const { userId, testId, answers, timeTaken } = req.body;
+    
+    // Strict check to ensure student hasn't already submitted this test
+    const existingSubmission = await Result.findOne({ studentId: userId, testId });
+    if (existingSubmission) {
+      return res.status(400).json({ success: false, message: 'You have already submitted this exam and cannot retake it.' });
+    }
+
     const test = await Test.findById(testId);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
 
@@ -352,8 +459,11 @@ app.post('/api/exam/submit', async (req, res) => {
       totalQuestions: test.questions.length,
       timeTaken,
       xpGranted: false,
-      grantedXpAmount: 0
+      grantedXpAmount: 0,
+      submittedAt: new Date()
     });
+
+    await checkAndAwardBadges(userId);
 
     res.json({ success: true, message: `Exam submitted successfully! Score: ${score}/${test.questions.length}. Waiting for teacher grading/XP grant.` });
   } catch (err) {
@@ -452,10 +562,11 @@ app.post('/api/admin/enroll', async (req, res) => {
       studentIdTag: studentIdTag,
       classroomId: classroomId,
       xp: 0,
+      badges: [],
       strikes: 0
     };
 
-    const newStudent = await Student.create(studentData);
+    await Student.create(studentData);
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
       const message = encodeURIComponent(`Hey! You have been enrolled in the Tuition Portal.\n\nPortal: ${portalUrl}\nUsername: ${username}\nPassword: ${password}`);
@@ -529,6 +640,7 @@ app.post('/api/admin/attendance-action', async (req, res) => {
       if (student) {
         student.attendance.push({ date: reqDoc.date, status: 'Present' });
         await student.save();
+        await checkAndAwardBadges(student._id);
       }
       res.json({ success: true, message: 'Attendance approved and marked!' });
     } else {
@@ -550,6 +662,7 @@ app.post('/api/admin/attendance', async (req, res) => {
     student.attendance = student.attendance.filter(a => a.date !== date);
     student.attendance.push({ date, status });
     await student.save();
+    await checkAndAwardBadges(studentId);
 
     res.json({ success: true, message: 'Attendance saved successfully!' });
   } catch (err) {
@@ -570,6 +683,7 @@ app.post('/api/admin/xp', async (req, res) => {
       student.xp = Math.max(0, student.xp - amount);
     }
     await student.save();
+    await checkAndAwardBadges(studentId);
 
     res.json({ success: true, message: `Student XP updated successfully!` });
   } catch (err) {
@@ -586,7 +700,6 @@ app.get('/api/admin/results', async (req, res) => {
   }
 });
 
-// --- GRANT EXAM XP ROUTE ---
 app.post('/api/admin/grant-exam-xp', async (req, res) => {
   try {
     const { resultId, xpAmount } = req.body;
@@ -601,7 +714,6 @@ app.post('/api/admin/grant-exam-xp', async (req, res) => {
     const student = await Student.findById(result.studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
 
-    // If already granted, subtract old and add new. If not granted, add new.
     const previousGranted = result.grantedXpAmount || 0;
     const netDifference = amount - previousGranted;
 
@@ -611,6 +723,8 @@ app.post('/api/admin/grant-exam-xp', async (req, res) => {
     result.xpGranted = true;
     result.grantedXpAmount = amount;
     await result.save();
+
+    await checkAndAwardBadges(student._id);
 
     res.json({ success: true, message: `Granted ${amount} XP successfully to ${student.username}!` });
   } catch (err) {
@@ -627,6 +741,7 @@ app.post('/api/admin/reset-exam', async (req, res) => {
       if (student) {
         student.xp = Math.max(0, student.xp - existingResult.grantedXpAmount);
         await student.save();
+        await checkAndAwardBadges(studentId);
       }
     }
     await Result.findOneAndDelete({ studentId, testId });
@@ -695,6 +810,7 @@ app.delete('/api/admin/test/:id', async (req, res) => {
           if (student) {
             student.xp = Math.max(0, student.xp - r.grantedXpAmount);
             await student.save();
+            await checkAndAwardBadges(r.studentId);
           }
         }
       }
@@ -749,8 +865,8 @@ app.get('/api/reports/download/:id', async (req, res) => {
     const report = await WeeklyReport.findById(req.params.id);
     if (!report) return res.status(404).send('Report not found.');
 
-    res.setHeader('Content-disposition', `attachment; filename=${report.reportType}-weekly-report.txt`);
-    res.setHeader('Content-type', 'text/plain');
+    res.setHeader('Content-disposition', `attachment; filename=${report.reportType}-weekly-report.html`);
+    res.setHeader('Content-type', 'text/html');
     res.send(report.content);
   } catch (err) {
     res.status(500).send('Error downloading report.');

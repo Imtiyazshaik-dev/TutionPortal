@@ -175,7 +175,19 @@
       margin-top: 6px;
     }
 
-    /* Leaderboard XP Color Classes */
+    .badge-pill {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-blue);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin: 4px;
+    }
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
@@ -241,13 +253,20 @@
             </div>
           </div>
           <div id="reportDownloadContainer" style="display:none; margin-top: 18px;">
-            <a id="reportDownloadBtn" href="#" style="display: block; background: var(--accent-purple); color: #fff; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold;">📥 Download Weekly Report</a>
+            <a id="reportDownloadBtn" href="#" style="display: block; background: var(--accent-purple); color: #fff; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold;">📥 Download Visual Weekly Report</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="color: #f59e0b;">🏅 My Achievements</h3>
+          <div id="badgesContainer" style="display: flex; flex-wrap: wrap; gap: 4px; min-height: 50px; align-items: center;">
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet. Keep participating!</p>
           </div>
         </div>
 
         <div class="card">
           <h3>🏆 Cohort Leaderboard</h3>
-          <div id="leaderboardContainer" style="max-height: 280px; overflow-y: auto;">
+          <div id="leaderboardContainer" style="max-height: 250px; overflow-y: auto;">
             <p style="color: var(--text-muted); font-size: 13px;">Loading leaderboard...</p>
           </div>
         </div>
@@ -328,6 +347,16 @@
         document.getElementById('statXp').innerText = student.xp || 0;
         document.getElementById('statAttendance').innerText = (student.attendance || []).length;
 
+        const badgesContainer = document.getElementById('badgesContainer');
+        badgesContainer.innerHTML = '';
+        if (student.badges && student.badges.length > 0) {
+          student.badges.forEach(b => {
+            badgesContainer.innerHTML += `<span class="badge-pill">${b}</span>`;
+          });
+        } else {
+          badgesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet. Keep participating!</p>`;
+        }
+
         if (!data.assigned || !data.classroom) {
           document.getElementById('statusNoticeCard').style.display = 'block';
           document.getElementById('mainDashboardContent').style.display = 'none';
@@ -356,7 +385,7 @@
             let btnHTML = '';
 
             if (isSubmitted) {
-              btnHTML = `<button class="action-btn" disabled style="background:#475569;">Attempted (Pending XP)</button>`;
+              btnHTML = `<button class="action-btn" disabled style="background:#475569;">Attempted & Locked</button>`;
             } else if (!test.isUnlocked) {
               btnHTML = `<button class="action-btn" disabled title="${test.statusMessage}">Locked</button>`;
             } else {
