@@ -17,180 +17,28 @@
       --text-muted: #94a3b8;
     }
 
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      font-family: 'Outfit', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
-    .portal-container {
-      max-width: 1050px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
-
-    .portal-header {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
-      padding: 20px 30px;
-      border-radius: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .portal-header h2 {
-      margin: 0 0 5px 0;
-      font-size: 22px;
-      background: linear-gradient(135deg, #fff, var(--accent-blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .btn-glass {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 10px 18px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-glass:hover {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-blue);
-      color: var(--accent-blue);
-    }
-
+    body { background-color: var(--bg-main); color: var(--text-main); font-family: 'Outfit', sans-serif; margin: 0; padding: 0; }
+    .portal-container { max-width: 1050px; margin: 30px auto; padding: 0 20px; }
+    .portal-header { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); padding: 20px 30px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+    .portal-header h2 { margin: 0 0 5px 0; font-size: 22px; background: linear-gradient(135deg, #fff, var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 18px; border-radius: 10px; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: 500; }
     .btn-danger { color: #ef4444 !important; }
-    .btn-danger:hover {
-      background: rgba(239, 68, 68, 0.15) !important;
-      border-color: #ef4444 !important;
-    }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
+    @media(min-width: 850px) { .dashboard-grid { grid-template-columns: 1.8fr 1fr; } }
+    .card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); padding: 24px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+    .card h3 { margin-top: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px; }
+    .item-row { background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .action-btn { padding: 8px 16px; font-size: 13px; border-radius: 8px; cursor: pointer; border: none; color: white; background: linear-gradient(135deg, #0284c7, #2563eb); font-weight: 600; }
+    
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 15px; }
+    .cal-day { padding: 8px 4px; text-align: center; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.03); }
+    .cal-present { background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.4); }
+    .cal-absent { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+    .cal-sunday { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
+    .cal-holiday { background: rgba(245, 158, 11, 0.25); color: #f59e0b; border-color: rgba(245, 158, 11, 0.5); }
 
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 25px;
-    }
-    @media(min-width: 850px) {
-      .dashboard-grid {
-        grid-template-columns: 1.8fr 1fr;
-      }
-    }
-
-    .card {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border-color);
-      padding: 24px;
-      border-radius: 20px;
-      margin-bottom: 25px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
-
-    .card h3 {
-      margin-top: 0;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
-      margin-bottom: 16px;
-    }
-
-    .item-row {
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid var(--border-color);
-      padding: 14px 18px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .action-btn {
-      padding: 8px 16px;
-      font-size: 13px;
-      border-radius: 8px;
-      cursor: pointer;
-      border: none;
-      color: white;
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      font-weight: 600;
-    }
-    .action-btn:disabled {
-      background: #334155;
-      color: var(--text-muted);
-      cursor: not-allowed;
-    }
-
-    .modal {
-      display: none; 
-      position: fixed; 
-      z-index: 1000; 
-      left: 0; top: 0; width: 100%; height: 100%; 
-      background-color: rgba(5, 8, 17, 0.8); 
-      backdrop-filter: blur(8px);
-      justify-content: center; 
-      align-items: center;
-    }
-    .modal-content {
-      background: #0f172a; 
-      padding: 30px; 
-      border-radius: 20px; 
-      width: 90%; 
-      max-width: 420px; 
-      border: 1px solid var(--border-color);
-      color: #fff;
-    }
-    .modal-content input {
-      width: 100%;
-      padding: 12px 14px;
-      background: rgba(15,23,42,0.8);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      color: #fff;
-      box-sizing: border-box;
-      margin-top: 6px;
-    }
-
-    .badge-pill {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--accent-blue);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin: 4px;
-    }
-    .xp-red { color: #ef4444; font-weight: bold; }
-    .xp-yellow { color: #f59e0b; font-weight: bold; }
-    .xp-green { color: #10b981; font-weight: bold; }
+    .badge-pill { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-blue); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; margin: 4px; }
   </style>
 </head>
 <body>
@@ -202,18 +50,11 @@
         <p id="studentTagDisplay" style="color: var(--accent-blue); font-size: 13px; margin: 0; font-weight: 500;"></p>
       </div>
       <div class="header-actions">
-        <button class="btn-glass" onclick="openProfileModal()">👤 Profile & Security</button>
         <a href="index.html" onclick="localStorage.clear()" class="btn-glass btn-danger">Log Out</a>
       </div>
     </div>
 
-    <div id="statusNoticeCard" class="card" style="display:none; text-align: center; border-color: #f59e0b;">
-      <h3 style="color: #f59e0b; justify-content: center;">⏳ Account Awaiting Activation</h3>
-      <p style="font-size: 14px; color: var(--text-muted); max-width: 500px; margin: 0 auto;">Your account is currently pending master admin approval or cohort assignment.</p>
-    </div>
-
-    <div id="mainDashboardContent" class="dashboard-grid">
-      
+    <div class="dashboard-grid">
       <div>
         <div id="liveClassBanner" class="card" style="display:none; background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15)); border-color: var(--accent-green);">
           <h3 style="color: var(--accent-green);">🔴 Live Class Active Now</h3>
@@ -226,16 +67,20 @@
 
         <div class="card">
           <h3>📝 Assessment Test Queue</h3>
-          <div id="testsListContainer">
-            <p style="color: var(--text-muted); font-size: 14px;">Loading tests...</p>
-          </div>
+          <div id="testsListContainer"><p style="color: var(--text-muted); font-size: 14px;">Loading tests...</p></div>
         </div>
 
         <div class="card">
           <h3>📂 Study Notes & Resources</h3>
-          <div id="notesListContainer">
-            <p style="color: var(--text-muted); font-size: 14px;">Loading notes...</p>
+          <div id="notesListContainer"><p style="color: var(--text-muted); font-size: 14px;">Loading notes...</p></div>
+        </div>
+
+        <div class="card">
+          <h3>📅 Attendance History Calendar</h3>
+          <div style="display: flex; gap: 15px; font-size: 11px; margin-bottom: 10px; color: var(--text-muted);">
+            <span>🟩 Present</span><span>🟥 Absent</span><span>⭐ Holiday</span><span>⚪ Sunday (S)</span>
           </div>
+          <div id="calendarGridContainer" class="calendar-grid"></div>
         </div>
       </div>
 
@@ -248,19 +93,16 @@
               <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Total XP</p>
             </div>
             <div>
-              <span id="statAttendance" style="font-size: 26px; font-weight: bold; color: var(--accent-green);">0</span>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Classes Attended</p>
+              <span id="statAttendance" style="font-size: 26px; font-weight: bold; color: var(--accent-green);">100%</span>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Attendance</p>
             </div>
-          </div>
-          <div id="reportDownloadContainer" style="display:none; margin-top: 18px;">
-            <a id="reportDownloadBtn" href="#" style="display: block; background: var(--accent-purple); color: #fff; padding: 10px; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: bold;">📥 Download Visual Weekly Report</a>
           </div>
         </div>
 
         <div class="card">
           <h3 style="color: #f59e0b;">🏅 My Achievements</h3>
           <div id="badgesContainer" style="display: flex; flex-wrap: wrap; gap: 4px; min-height: 50px; align-items: center;">
-            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet. Keep participating!</p>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet.</p>
           </div>
         </div>
 
@@ -271,30 +113,6 @@
           </div>
         </div>
       </div>
-
-    </div>
-  </div>
-
-  <div id="profileModal" class="modal">
-    <div class="modal-content">
-      <h3 style="color: var(--accent-blue); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">👤 Student Profile & Security</h3>
-      <p style="font-size: 14px; margin-bottom: 8px;"><strong>Username:</strong> <span id="modalUsername">---</span></p>
-      <p style="font-size: 14px; margin-bottom: 20px;"><strong>Student ID Tag:</strong> <span id="modalStudentTag" style="color:#f59e0b; font-weight: bold;">---</span></p>
-      
-      <h4 style="margin: 0 0 10px 0; font-size: 14px;">🔐 Change Account Password</h4>
-      <div style="margin-bottom: 12px;">
-        <label style="font-size: 12px; color: var(--text-muted);">Current Password</label>
-        <input type="password" id="oldPassword" placeholder="Enter current password" />
-      </div>
-      <div style="margin-bottom: 20px;">
-        <label style="font-size: 12px; color: var(--text-muted);">New Password</label>
-        <input type="password" id="newPassword" placeholder="Enter new password" />
-      </div>
-      
-      <div style="display: flex; gap: 10px;">
-        <button onclick="changeStudentPassword()" style="flex: 1; background: linear-gradient(135deg, #0284c7, #2563eb); padding: 12px; border: none; border-radius: 10px; color: #fff; font-weight: bold; cursor: pointer;">Update Password</button>
-        <button onclick="closeProfileModal()" style="background: #334155; padding: 12px 18px; border: none; border-radius: 10px; color: #fff; cursor: pointer;">Close</button>
-      </div>
     </div>
   </div>
 
@@ -303,64 +121,43 @@
     const studentId = localStorage.getItem('userId');
     let activeLiveClassId = null;
     let activeLiveClassTitle = '';
-    let studentProfileData = null;
 
-    if (!studentId) {
-      window.location.href = "index.html";
-    }
-
-    function getXpColorClass(xp) {
-      if (xp < 30) return 'xp-red';
-      if (xp > 45) return 'xp-green';
-      return 'xp-yellow';
-    }
-
-    function openProfileModal() {
-      if (studentProfileData) {
-        document.getElementById('modalUsername').innerText = studentProfileData.username;
-        document.getElementById('modalStudentTag').innerText = studentProfileData.studentIdTag || 'N/A';
-      }
-      document.getElementById('profileModal').style.display = 'flex';
-    }
-
-    function closeProfileModal() {
-      document.getElementById('profileModal').style.display = 'none';
-      document.getElementById('oldPassword').value = '';
-      document.getElementById('newPassword').value = '';
-    }
+    if (!studentId) { window.location.href = "index.html"; }
 
     async function fetchStudentClassroomData() {
       try {
         const res = await fetch(`/api/student/classroom-data/${studentId}`);
         const data = await res.json();
-
-        if (!data.success) {
-          alert(data.message || "Failed to load student data.");
-          return;
-        }
+        if (!data.success) return;
 
         const student = data.student;
-        studentProfileData = student;
-
         document.getElementById('welcomeTitle').innerText = `Welcome, ${student.username}`;
         document.getElementById('studentTagDisplay').innerText = `ID: ${student.studentIdTag || 'N/A'} | Cohort: ${data.classroom ? data.classroom.name : 'Unassigned'}`;
         document.getElementById('statXp').innerText = student.xp || 0;
-        document.getElementById('statAttendance').innerText = (student.attendance || []).length;
+        document.getElementById('statAttendance').innerText = `${data.attendanceStats.percentage}%`;
+
+        const calContainer = document.getElementById('calendarGridContainer');
+        calContainer.innerHTML = '';
+        const calMap = data.attendanceStats.calendarMap;
+        Object.keys(calMap).sort().forEach(dateStr => {
+          const status = calMap[dateStr];
+          let cssClass = 'cal-day';
+          let label = dateStr.slice(8);
+
+          if (status === 'Present') { cssClass += ' cal-present'; label += ' ✓'; }
+          else if (status === 'Absent') { cssClass += ' cal-absent'; label += ' ✗'; }
+          else if (status === 'Sunday') { cssClass += ' cal-sunday'; label += ' (S)'; }
+          else if (status === 'Holiday') { cssClass += ' cal-holiday'; label += ' 🎉'; }
+
+          calContainer.innerHTML += `<div class="${cssClass}" title="${dateStr}: ${status}">${label}</div>`;
+        });
 
         const badgesContainer = document.getElementById('badgesContainer');
         badgesContainer.innerHTML = '';
         if (student.badges && student.badges.length > 0) {
-          student.badges.forEach(b => {
-            badgesContainer.innerHTML += `<span class="badge-pill">${b}</span>`;
-          });
+          student.badges.forEach(b => { badgesContainer.innerHTML += `<span class="badge-pill">${b}</span>`; });
         } else {
-          badgesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet. Keep participating!</p>`;
-        }
-
-        if (!data.assigned || !data.classroom) {
-          document.getElementById('statusNoticeCard').style.display = 'block';
-          document.getElementById('mainDashboardContent').style.display = 'none';
-          return;
+          badgesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet.</p>`;
         }
 
         if (data.activeClass) {
@@ -371,118 +168,43 @@
           document.getElementById('liveClassMeetLink').href = data.activeClass.meetLink;
         }
 
-        if (data.hasReport && data.reportId) {
-          document.getElementById('reportDownloadContainer').style.display = 'block';
-          document.getElementById('reportDownloadBtn').href = `/api/reports/download/${data.reportId}`;
-        }
-
         const testsContainer = document.getElementById('testsListContainer');
         testsContainer.innerHTML = '';
-        
         if (data.tests && data.tests.length > 0) {
           data.tests.forEach(test => {
             const isSubmitted = data.submittedResults.includes(test._id.toString());
-            let btnHTML = '';
-
-            if (isSubmitted) {
-              btnHTML = `<button class="action-btn" disabled style="background:#475569;">Attempted & Locked</button>`;
-            } else if (!test.isUnlocked) {
-              btnHTML = `<button class="action-btn" disabled title="${test.statusMessage}">Locked</button>`;
-            } else {
-              btnHTML = `<button class="action-btn" onclick="loadTestExam('${test._id}')">Take Test</button>`;
-            }
-
-            testsContainer.innerHTML += `
-              <div class="item-row">
-                <div>
-                  <strong style="font-size: 15px;">${test.title}</strong><br>
-                  <span style="font-size: 12px; color: var(--text-muted);">Duration: ${test.durationMinutes} mins | <span style="color: ${test.isUnlocked ? '#10b981' : '#f59e0b'};">${test.statusMessage}</span></span>
-                </div>
-                <div>${btnHTML}</div>
-              </div>`;
+            let btnHTML = isSubmitted ? `<button class="action-btn" disabled style="background:#475569;">Attempted</button>` : `<button class="action-btn" onclick="loadTestExam('${test._id}')">Take Test</button>`;
+            testsContainer.innerHTML += `<div class="item-row"><div><strong>${test.title}</strong><br><span style="font-size:12px; color:var(--text-muted);">${test.statusMessage}</span></div><div>${btnHTML}</div></div>`;
           });
-        } else {
-          testsContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px; margin:0;">No assessment tests available right now.</p>`;
-        }
+        } else { testsContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px;">No assessment tests available.</p>`; }
 
         const notesContainer = document.getElementById('notesListContainer');
         notesContainer.innerHTML = '';
-
         if (data.notes && data.notes.length > 0) {
           data.notes.forEach(note => {
-            notesContainer.innerHTML += `
-              <div class="item-row">
-                <div><strong style="font-size: 14px;">${note.title}</strong></div>
-                <a href="${note.contentOrLink}" target="_blank" class="action-btn" style="text-decoration: none; background: #0284c7; padding: 6px 14px; font-size: 12px;">View / Download</a>
-              </div>`;
+            notesContainer.innerHTML += `<div class="item-row"><div><strong>${note.title}</strong></div><a href="${note.contentOrLink}" target="_blank" class="action-btn" style="background:#0284c7; text-decoration:none; padding:6px 12px; font-size:12px;">View</a></div>`;
           });
-        } else {
-          notesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px; margin:0;">No study materials uploaded yet.</p>`;
-        }
+        } else { notesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px;">No study notes.</p>`; }
 
         const lbContainer = document.getElementById('leaderboardContainer');
         lbContainer.innerHTML = '';
-
         if (data.leaderboard && data.leaderboard.length > 0) {
           data.leaderboard.forEach((lbStudent, index) => {
             const isMe = lbStudent._id === studentId;
-            const colorClass = getXpColorClass(lbStudent.xp);
-            lbContainer.innerHTML += `
-              <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: ${isMe ? 'rgba(56,189,248,0.1)' : 'transparent'}; border-bottom: 1px solid var(--border-color); font-size: 13px; border-radius: 8px;">
-                <span><strong>#${index + 1}</strong> ${lbStudent.username} ${isMe ? '(You)' : ''}</span>
-                <span class="${colorClass}">${lbStudent.xp} XP</span>
-              </div>`;
+            lbContainer.innerHTML += `<div style="display: flex; justify-content: space-between; padding: 10px; background: ${isMe ? 'rgba(56,189,248,0.1)' : 'transparent'}; border-bottom: 1px solid var(--border-color); font-size: 13px;"><span><strong>#${index + 1}</strong> ${lbStudent.username}</span><span><strong style="color:#10b981;">${lbStudent.attendancePercentage}%</strong> | ${lbStudent.xp} XP</span></div>`;
           });
-        } else {
-          lbContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px;">No leaderboard entries found.</p>`;
         }
-
-      } catch (err) {
-        console.error("Error loading student dashboard:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     async function requestAttendance() {
       if (!activeLiveClassId) return;
-      try {
-        const res = await fetch('/api/student/join-class', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: studentId, classId: activeLiveClassId, classTitle: activeLiveClassTitle })
-        });
-        const data = await res.json();
-        alert(data.message || "Attendance request sent to teacher!");
-      } catch (err) {
-        console.error(err);
-        alert("Failed to send attendance request.");
-      }
+      const res = await fetch('/api/student/join-class', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: studentId, classId: activeLiveClassId, classTitle: activeLiveClassTitle }) });
+      const data = await res.json();
+      alert(data.message);
     }
 
-    async function changeStudentPassword() {
-      const oldPassword = document.getElementById('oldPassword').value;
-      const newPassword = document.getElementById('newPassword').value;
-      if (!oldPassword || !newPassword) return alert("Please fill in both password fields.");
-
-      try {
-        const res = await fetch('/api/auth/change-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: studentId, oldPassword, newPassword })
-        });
-        const data = await res.json();
-        alert(data.message);
-        if (data.success) {
-          closeProfileModal();
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error updating password.");
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      fetchStudentClassroomData();
-    });
+    window.addEventListener('DOMContentLoaded', () => { fetchStudentClassroomData(); });
   </script>
 </body>
 </html>

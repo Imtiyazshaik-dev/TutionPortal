@@ -25,10 +25,8 @@
       border: none;
       color: white;
     }
-    .btn-edit { background: #3b82f6; }
     .btn-delete { background: #ef4444; }
     .btn-approve { background: #10b981; }
-    
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
@@ -37,9 +35,8 @@
 <body>
   <div class="container" style="max-width: 650px;">
     <h2>Admin Command Center</h2>
-    <p id="adminWelcomeText">Manage classroom cohorts, student rosters, tests, study notes, live classes, and attendance.</p>
+    <p id="adminWelcomeText">Manage classroom cohorts, student rosters, tests, attendance, and custom holidays.</p>
 
-    <!-- Profile & Password Change Section -->
     <div style="background:rgba(30,41,59,0.7); padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.1);">
       <h3 style="margin-top:0; color:#38bdf8; font-size:16px;">🔐 Admin Security & Password</h3>
       <div class="input-group">
@@ -53,41 +50,35 @@
       <button onclick="changePassword()" style="background:#0284c7; padding:8px 16px; font-size:14px;">Update Password</button>
     </div>
 
-    <!-- Weekly Master Report Banner -->
     <div id="adminReportBanner" style="background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #3b82f6; display:none;">
       <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Sunday Weekly Master HTML Report Ready</h3>
-      <p style="font-size:14px; margin-bottom:15px;">Download visual, color-coded weekly attendance and test results for all cohorts.</p>
+      <p style="font-size:14px; margin-bottom:15px;">Download visual weekly attendance and test results for all cohorts.</p>
       <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Visual HTML Report</a>
     </div>
 
-    <!-- Past Monthly Report Downloader Section -->
-    <div style="background:rgba(30,41,59,0.7); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.1);">
-      <h3 style="margin-top:0; color:#f59e0b; font-size:16px;">📅 Download Past Monthly HTML Report</h3>
-      <p style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Select any month and year to compile and download historical records.</p>
-      <div style="display:flex; gap:10px;">
-        <select id="reportMonthSelect" style="flex:1; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#fff; font-family:'Outfit';">
-          <option value="1">January</option>
-          <option value="2">February</option>
-          <option value="3">March</option>
-          <option value="4">April</option>
-          <option value="5">May</option>
-          <option value="6">June</option>
-          <option value="7">July</option>
-          <option value="8" selected>August</option>
-          <option value="9">September</option>
-          <option value="10">October</option>
-          <option value="11">November</option>
-          <option value="12">December</option>
-        </select>
-        <input type="number" id="reportYearInput" value="2026" style="width:90px; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#fff; font-family:'Outfit';" />
-        <button onclick="downloadMonthlyReport()" style="background:#10b981; padding:10px 16px; border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">Download</button>
+    <hr>
+
+    <h3>🌴 Manage Custom Holidays</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Mark specific dates as holidays so they are excluded from attendance percentage calculations.</p>
+    <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <div class="input-group">
+        <label>Holiday Date</label>
+        <input type="date" id="holidayDate" />
+      </div>
+      <div class="input-group">
+        <label>Holiday Title / Reason</label>
+        <input type="text" id="holidayTitle" placeholder="e.g. Festival Holiday" />
+      </div>
+      <button onclick="addHoliday()" style="background:#10b981; margin-bottom: 12px;">Add Custom Holiday</button>
+      <div id="holidaysListContainer" style="max-height: 150px; overflow-y: auto;">
+        <p style="color:#94a3b8; font-size:13px; margin:0;">Loading holidays...</p>
       </div>
     </div>
 
     <hr>
 
-    <h3>🏆 Student Leaderboard & Standings</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Live XP standings across all approved students.</p>
+    <h3>🏆 Student Leaderboard & Attendance Standings</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Live XP & Attendance percentage across all approved students.</p>
     <div id="adminLeaderboardContainer" style="max-height: 240px; overflow-y: auto; margin-bottom: 20px; background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px;">
       <p style="color: #94a3b8; font-size: 13px;">Loading leaderboard...</p>
     </div>
@@ -108,12 +99,12 @@
     <hr>
 
     <div id="masterApprovalSection" style="display:none;">
-      <h3>🧑‍🎓 Student Approval Queue (Master Admin Only)</h3>
+      <h3>🧑‍🎓 Student Approval Queue</h3>
       <div id="studentStatusList" style="max-height:220px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
       <hr>
     </div>
 
-    <h3>👥 Manage & Remove Approved Students</h3>
+    <h3>👥 Manage Approved Students</h3>
     <div id="approvedStudentsList" style="max-height:220px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
@@ -124,7 +115,6 @@
     <hr>
 
     <h3>📊 Student Test Submissions & Timestamps</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Review student test scores, submission times, and grant XP (Max 10 XP per test).</p>
     <div id="testStatsList" style="max-height:260px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
@@ -144,32 +134,22 @@
     </div>
     <button onclick="postLiveClass()">Publish Live Class Link</button>
 
-    <div style="margin-top:20px;">
-      <h4>📋 Manage Published Live Classes</h4>
-      <div id="manageClassesList" style="max-height:200px; overflow-y:auto;"></div>
-    </div>
-
     <hr>
 
-    <h3>Upload Study Notes to Classroom Repository</h3>
+    <h3>Upload Study Notes</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
       <select id="noteClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Note Title</label>
-      <input type="text" id="noteTitle" placeholder="e.g. Lecture 1 PDF / Slides" />
+      <input type="text" id="noteTitle" placeholder="e.g. Lecture 1 PDF" />
     </div>
     <div class="input-group">
       <label>Resource / Document URL</label>
       <input type="text" id="noteLink" placeholder="https://drive.google.com/..." />
     </div>
     <button onclick="uploadNote()">Publish Study Note</button>
-
-    <div style="margin-top:20px;">
-      <h4>📂 Manage Classroom Notes</h4>
-      <div id="manageNotesList" style="max-height:200px; overflow-y:auto;"></div>
-    </div>
 
     <hr>
 
@@ -183,40 +163,35 @@
       <input type="text" id="testTitle" placeholder="e.g. JavaScript Basics" />
     </div>
     <div class="input-group">
-      <label>Test Timer Duration (in Minutes)</label>
-      <input type="number" id="testDuration" value="15" placeholder="15" />
+      <label>Duration (Minutes)</label>
+      <input type="number" id="testDuration" value="15" />
     </div>
     <div class="input-group">
-      <label>Active Window Duration (in Hours from publication)</label>
-      <input type="number" id="testDurationHours" value="24" placeholder="24" />
+      <label>Active Window (Hours)</label>
+      <input type="number" id="testDurationHours" value="24" />
     </div>
     <div id="questionsContainer"></div>
     <button onclick="addQuestionField()" style="background:#334155; margin-bottom:10px;">+ Add Question</button>
     <button onclick="submitNewTest()">Publish Test</button>
 
-    <div style="margin-top:20px;">
-      <h4>📝 Manage Published Tests</h4>
-      <div id="manageTestsList" style="max-height:200px; overflow-y:auto;"></div>
-    </div>
-
     <hr>
 
-    <h3>Enroll New Student into Classroom & Send WhatsApp</h3>
+    <h3>Enroll New Student & Send WhatsApp</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
       <select id="enrollClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Username</label>
-      <input type="text" id="enrollUser" placeholder="Student username" />
+      <input type="text" id="enrollUser" placeholder="Username" />
     </div>
     <div class="input-group">
-      <label>Temporary Password</label>
-      <input type="text" id="enrollPass" placeholder="Temporary password" />
+      <label>Password</label>
+      <input type="text" id="enrollPass" placeholder="Password" />
     </div>
     <div class="input-group">
       <label>WhatsApp Number (e.g. 919876543210)</label>
-      <input type="text" id="enrollPhone" placeholder="Phone number" />
+      <input type="text" id="enrollPhone" placeholder="Phone" />
     </div>
     <button onclick="enrollStudent()">Enroll Student</button>
     <div id="whatsappLinkContainer" style="margin-top:10px;"></div>
@@ -241,26 +216,6 @@
     </div>
     <button onclick="submitAttendance()">Save Attendance</button>
 
-    <hr>
-
-    <h3>Award / Deduct Student XP Manually</h3>
-    <div class="input-group">
-      <label>Select Student</label>
-      <select id="xpStudentSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
-    </div>
-    <div class="input-group">
-      <label>Action Type</label>
-      <select id="xpActionType" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';">
-        <option value="add">Award XP (+)</option>
-        <option value="deduct">Deduct XP (-)</option>
-      </select>
-    </div>
-    <div class="input-group">
-      <label>XP Amount</label>
-      <input type="number" id="xpAmount" placeholder="50" />
-    </div>
-    <button onclick="submitXp()">Update Student XP</button>
-
     <div style="margin-top: 30px; text-align:center;">
       <a href="index.html" onclick="localStorage.clear()">Log Out</a>
     </div>
@@ -281,8 +236,7 @@
     async function changePassword() {
       const oldPassword = document.getElementById('oldPassword').value;
       const newPassword = document.getElementById('newPassword').value;
-      if (!oldPassword || !newPassword) return alert("Please fill in both password fields.");
-
+      if (!oldPassword || !newPassword) return alert("Fill in both password fields.");
       const res = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -290,10 +244,7 @@
       });
       const data = await res.json();
       alert(data.message);
-      if (data.success) {
-        document.getElementById('oldPassword').value = '';
-        document.getElementById('newPassword').value = '';
-      }
+      if(data.success) { document.getElementById('oldPassword').value = ''; document.getElementById('newPassword').value = ''; }
     }
 
     async function checkAdminReport() {
@@ -310,179 +261,116 @@
     function downloadAdminReport() {
       if(!adminReportId) return;
       window.location.href = `/api/reports/download/${adminReportId}`;
-      setTimeout(() => { document.getElementById('adminReportBanner').style.display = 'none'; }, 1500);
     }
 
-    function downloadMonthlyReport() {
-      const month = document.getElementById('reportMonthSelect').value;
-      const year = document.getElementById('reportYearInput').value;
-      if (!year) return alert("Enter a valid year.");
-      window.location.href = `/api/admin/monthly-report/${year}/${month}`;
-    }
-
-    async function createClassroomCohort() {
-      const name = document.getElementById('cohortName').value;
-      const description = document.getElementById('cohortDesc').value;
-      if(!name) return alert("Enter classroom name");
-
-      const res = await fetch('/api/admin/classrooms', {
+    async function addHoliday() {
+      const date = document.getElementById('holidayDate').value;
+      const title = document.getElementById('holidayTitle').value;
+      if (!date) return alert("Select a holiday date.");
+      const res = await fetch('/api/admin/holiday', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, adminId: currentAdminId })
+        body: JSON.stringify({ date, title })
       });
       const data = await res.json();
       alert(data.message);
       if(data.success) {
-        document.getElementById('cohortName').value = '';
-        document.getElementById('cohortDesc').value = '';
-        loadAdminData();
+        document.getElementById('holidayDate').value = '';
+        document.getElementById('holidayTitle').value = '';
+        loadHolidays();
       }
     }
 
-    async function loadClassroomSelects(classrooms) {
-      const selects = ['classLiveSelect', 'noteClassSelect', 'testClassSelect', 'enrollClassSelect'];
-      selects.forEach(id => {
-        const sel = document.getElementById(id);
-        if(sel) {
-          sel.innerHTML = '';
-          if(classrooms.length === 0) {
-            sel.innerHTML = `<option value="">No classrooms available</option>`;
-          } else {
-            classrooms.forEach(c => {
-              const creatorName = c.createdBy ? c.createdBy.username : '';
-              const label = creatorName ? `${c.name} (by ${creatorName})` : c.name;
-              sel.innerHTML += `<option value="${c._id}">${label}</option>`;
-            });
-          }
-        }
-      });
-    }
-
-    async function loadAttendanceRequests() {
+    async function loadHolidays() {
       try {
-        const res = await fetch('/api/admin/attendance-requests');
+        const res = await fetch('/api/admin/holidays');
         const data = await res.json();
-        const container = document.getElementById('attendanceRequestsList');
+        const container = document.getElementById('holidaysListContainer');
         container.innerHTML = '';
-
-        if(data.success && data.requests.length > 0) {
-          data.requests.forEach(req => {
-            const studentName = req.studentId ? req.studentId.username : 'Unknown';
-            const studentTag = req.studentId ? req.studentId.studentIdTag : 'N/A';
+        if(data.success && data.holidays.length > 0) {
+          data.holidays.forEach(h => {
             container.innerHTML += `
-              <div class="manage-list-item" style="background:rgba(15,23,42,0.7);">
-                <div><strong>${studentName}</strong> (${studentTag})<br><span style="font-size:12px; color:#38bdf8;">Class: ${req.classTitle}</span></div>
-                <div style="display:flex; gap:6px;">
-                  <button onclick="handleAttendanceRequest('${req._id}', 'approve')" class="action-btn" style="background:#10b981;">Approve</button>
-                  <button onclick="handleAttendanceRequest('${req._id}', 'reject')" class="action-btn btn-delete">Reject</button>
-                </div>
+              <div class="manage-list-item" style="padding: 8px 12px; margin-bottom: 4px;">
+                <span>🗓️ ${h.date} - <strong>${h.title}</strong></span>
+                <button onclick="deleteHoliday('${h._id}')" class="action-btn btn-delete" style="padding: 2px 8px;">🗑️</button>
               </div>`;
           });
         } else {
-          container.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No pending attendance requests.</p>';
+          container.innerHTML = '<p style="color:#94a3b8; font-size:13px; margin:0;">No custom holidays set.</p>';
         }
       } catch (err) { console.error(err); }
     }
 
-    async function handleAttendanceRequest(requestId, action) {
-      const res = await fetch('/api/admin/attendance-action', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, action })
-      });
-      const data = await res.json();
-      alert(data.message);
-      loadAttendanceRequests();
+    async function deleteHoliday(id) {
+      await fetch(`/api/admin/holiday/${id}`, { method: 'DELETE' });
+      loadHolidays();
     }
 
     async function loadAdminData() {
       await checkAdminReport();
-      await loadAttendanceRequests();
+      await loadHolidays();
 
       const resC = await fetch(`/api/classrooms/${currentAdminId}`);
       const dataC = await resC.json();
       if(dataC.success) {
-        loadClassroomSelects(dataC.classrooms);
+        const selects = ['classLiveSelect', 'noteClassSelect', 'testClassSelect', 'enrollClassSelect'];
+        selects.forEach(id => {
+          const sel = document.getElementById(id);
+          if(sel) {
+            sel.innerHTML = '';
+            dataC.classrooms.forEach(c => { sel.innerHTML += `<option value="${c._id}">${c.name}</option>`; });
+          }
+        });
       }
 
       const resPending = await fetch(`/api/admin/pending-students/${currentAdminId}`);
       const dataPending = await resPending.json();
-      
-      if(dataPending.success) {
+      if(dataPending.success && dataPending.students.length > 0) {
         document.getElementById('masterApprovalSection').style.display = 'block';
         const statusList = document.getElementById('studentStatusList');
         statusList.innerHTML = '';
-
-        if(dataPending.students.length > 0) {
-          dataPending.students.forEach(s => {
-            const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
-            statusList.innerHTML += `
-              <div class="manage-list-item">
-                <div>
-                  <strong>${s.username}</strong><br>
-                  <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span>
-                </div>
-                <div style="display:flex; gap:4px;">
-                  <button onclick="updateStatus('${s._id}', 'approved')" class="action-btn btn-approve">Approve</button>
-                  <button onclick="updateStatus('${s._id}', 'rejected')" class="action-btn btn-delete">Reject</button>
-                  <button onclick="deleteStudent('${s._id}')" class="action-btn" style="background:#64748b;" title="Delete">🗑️</button>
-                </div>
-              </div>`;
-          });
-        } else {
-          statusList.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No pending student requests in line.</p>';
-        }
+        dataPending.students.forEach(s => {
+          statusList.innerHTML += `
+            <div class="manage-list-item">
+              <div><strong>${s.username}</strong> <span style="font-size:11px; color:#38bdf8;">(${s.studentIdTag})</span></div>
+              <div style="display:flex; gap:4px;">
+                <button onclick="updateStatus('${s._id}', 'approved')" class="action-btn btn-approve">Approve</button>
+                <button onclick="updateStatus('${s._id}', 'rejected')" class="action-btn btn-delete">Reject</button>
+              </div>
+            </div>`;
+        });
       }
 
       const resApproved = await fetch(`/api/admin/approved-students/${currentAdminId}`);
       const dataApproved = await resApproved.json();
       const approvedContainer = document.getElementById('approvedStudentsList');
       approvedContainer.innerHTML = '';
-
       const attSelect = document.getElementById('attendanceStudentSelect');
       const xpSelect = document.getElementById('xpStudentSelect');
-      attSelect.innerHTML = ''; 
-      xpSelect.innerHTML = '';
+      attSelect.innerHTML = ''; xpSelect.innerHTML = '';
 
       const adminLbContainer = document.getElementById('adminLeaderboardContainer');
       adminLbContainer.innerHTML = '';
 
       if(dataApproved.success && dataApproved.students.length > 0) {
-        const sortedStudents = [...dataApproved.students].sort((a, b) => b.xp - a.xp);
-
-        sortedStudents.forEach((s, index) => {
-          const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
-          const colorClass = getXpColorClass(s.xp);
-          
+        const sorted = [...dataApproved.students].sort((a,b) => b.xp - a.xp);
+        sorted.forEach((s, idx) => {
           adminLbContainer.innerHTML += `
             <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
-              <span><strong>#${index + 1}</strong> ${s.username} <span style="font-size: 11px; color: #94a3b8;">(${cohortName})</span></span>
-              <span class="${colorClass}">${s.xp} XP</span>
+              <span><strong>#${idx+1}</strong> ${s.username}</span>
+              <span><strong style="color:#10b981;">${s.attendancePercentage}% Attendance</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
             </div>`;
         });
 
         dataApproved.students.forEach(s => {
-          const cohortName = s.classroomId ? s.classroomId.name : 'Unassigned';
-          const opt = `<option value="${s._id}">${s.username} (${cohortName})</option>`;
-          attSelect.innerHTML += opt; 
-          xpSelect.innerHTML += opt;
-
+          attSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`;
+          xpSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`;
           approvedContainer.innerHTML += `
             <div class="manage-list-item">
-              <div>
-                <strong>${s.username}</strong><br>
-                <span style="font-size:11px; color:#38bdf8;">ID: ${s.studentIdTag || 'N/A'}</span> | Cohort: <span style="color:#f59e0b;">${cohortName}</span> | XP: <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span>
-              </div>
-              <div>
-                <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete" title="Delete Student">🗑️ Delete</button>
-              </div>
+              <div><strong>${s.username}</strong> | XP: <span class="${getXpColorClass(s.xp)}">${s.xp}</span> | Att: <strong style="color:#10b981;">${s.attendancePercentage}%</strong></div>
+              <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete">🗑️ Delete</button>
             </div>`;
         });
-      } else {
-        adminLbContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No leaderboard data available.</p>';
-        approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No approved students found.</p>';
-        attSelect.innerHTML = '<option value="">No approved students available</option>';
-        xpSelect.innerHTML = '<option value="">No approved students available</option>';
       }
 
       const resResults = await fetch('/api/admin/results');
@@ -490,167 +378,35 @@
       if(dataResults.success) {
         const statsList = document.getElementById('testStatsList');
         statsList.innerHTML = '';
-        if(dataResults.results.length === 0) {
-          statsList.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No test submissions recorded.</p>';
-        } else {
-          dataResults.results.forEach(r => {
-            const studentId = r.studentId ? r.studentId._id : '';
-            const studentName = r.studentId ? r.studentId.username : 'Unknown';
-            const testId = r.testId ? r.testId._id : '';
-            const testTitle = r.testId ? r.testId.title : 'Deleted Test';
-            const isGranted = r.xpGranted;
-            const grantedVal = r.grantedXpAmount || 0;
-            const submittedTime = r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A';
-
-            statsList.innerHTML += `
-              <div style="padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                  <strong>${studentName}</strong> - <em>${testTitle}</em><br>
-                  <span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span> | 
-                  <span style="font-size:11px; color:#38bdf8;">Submitted: ${submittedTime}</span><br>
-                  <span style="font-size:11px; color:${isGranted ? '#38bdf8' : '#f59e0b'};">${isGranted ? `XP Granted: ${grantedVal}` : 'Pending XP Grant'}</span>
-                </div>
-                <div style="display:flex; gap:6px; align-items:center;">
-                  <input type="number" id="xpInput_${r._id}" value="${grantedVal || Math.min(10, r.score)}" min="0" max="10" style="width:50px; padding:4px; background:#1e293b; border:1px solid #334155; border-radius:4px; color:#fff;" />
-                  <button onclick="grantExamXp('${r._id}')" class="action-btn" style="background:#10b981;">Grant XP</button>
-                  <button onclick="resetStudentExam('${studentId}', '${testId}')" class="action-btn" style="background:#f59e0b;" title="Reset Exam">🔄</button>
-                </div>
-              </div>`;
-          });
-        }
+        dataResults.results.forEach(r => {
+          statsList.innerHTML += `
+            <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+              <div><strong>${r.studentId ? r.studentId.username : 'Unknown'}</strong> - <em>${r.testId ? r.testId.title : 'Test'}</em><br><span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span></div>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <input type="number" id="xpInput_${r._id}" value="${r.grantedXpAmount || Math.min(10, r.score)}" min="0" max="10" style="width:45px; background:#1e293b; color:#fff; border:1px solid #334155; border-radius:4px; padding:4px;" />
+                <button onclick="grantExamXp('${r._id}')" class="action-btn btn-approve">Grant</button>
+              </div>
+            </div>`;
+        });
       }
-
-      loadManagementLists();
     }
 
     async function grantExamXp(resultId) {
-      const xpInputVal = document.getElementById(`xpInput_${resultId}`).value;
-      const xpAmount = Number(xpInputVal);
-      if (xpAmount < 0 || xpAmount > 10) {
-        return alert("Total XP for any test must be between 0 and 10.");
-      }
-
-      const res = await fetch('/api/admin/grant-exam-xp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultId, xpAmount })
-      });
+      const xpAmount = Number(document.getElementById(`xpInput_${resultId}`).value);
+      const res = await fetch('/api/admin/grant-exam-xp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resultId, xpAmount }) });
       const data = await res.json();
       alert(data.message);
       loadAdminData();
     }
 
-    async function loadManagementLists() {
-      const resClass = await fetch('/api/admin/classes');
-      const dataClass = await resClass.json();
-      const classList = document.getElementById('manageClassesList');
-      classList.innerHTML = '';
-      if(dataClass.success && dataClass.classes.length > 0) {
-        dataClass.classes.forEach(c => {
-          const cohortName = c.classroomId ? c.classroomId.name : '';
-          classList.innerHTML += `
-            <div class="manage-list-item">
-              <div><strong>${c.title}</strong> <span style="font-size:11px; color:#f59e0b;">(${cohortName})</span></div>
-              <button onclick="deleteClass('${c._id}')" class="action-btn btn-delete">Delete</button>
-            </div>`;
-        });
-      } else { classList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No classes published.</p>'; }
-
-      const resNotes = await fetch('/api/admin/notes');
-      const dataNotes = await resNotes.json();
-      const notesList = document.getElementById('manageNotesList');
-      notesList.innerHTML = '';
-      if(dataNotes.success && dataNotes.notes.length > 0) {
-        dataNotes.notes.forEach(n => {
-          const cohortName = n.classroomId ? n.classroomId.name : '';
-          notesList.innerHTML += `
-            <div class="manage-list-item">
-              <div><strong>${n.title}</strong> <span style="font-size:11px; color:#f59e0b;">(${cohortName})</span></div>
-              <button onclick="deleteNote('${n._id}')" class="action-btn btn-delete">Delete</button>
-            </div>`;
-        });
-      } else { notesList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No notes uploaded.</p>'; }
-
-      const resTest = await fetch('/api/admin/tests');
-      const dataTest = await resTest.json();
-      const testList = document.getElementById('manageTestsList');
-      testList.innerHTML = '';
-      if(dataTest.success && dataTest.tests.length > 0) {
-        dataTest.tests.forEach(t => {
-          const cohortName = t.classroomId ? t.classroomId.name : '';
-          testList.innerHTML += `
-            <div class="manage-list-item">
-              <div><strong>${t.title}</strong> <span style="font-size:11px; color:#f59e0b;">(${cohortName})</span></div>
-              <button onclick="deleteTest('${t._id}')" class="action-btn btn-delete">Delete</button>
-            </div>`;
-        });
-      } else { testList.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No tests published.</p>'; }
-    }
-
-    async function postLiveClass() {
-      const classroomId = document.getElementById('classLiveSelect').value;
-      const title = document.getElementById('classTitle').value;
-      const meetLink = document.getElementById('meetLink').value;
-      const res = await fetch('/api/admin/class', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, meetLink })
-      });
-      const data = await res.json();
-      alert(data.message);
-      loadManagementLists();
-    }
-
-    async function uploadNote() {
-      const classroomId = document.getElementById('noteClassSelect').value;
-      const title = document.getElementById('noteTitle').value;
-      const contentOrLink = document.getElementById('noteLink').value;
-      const res = await fetch('/api/admin/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, contentOrLink })
-      });
-      const data = await res.json();
-      alert(data.message);
-      if(data.success) {
-        document.getElementById('noteTitle').value = '';
-        document.getElementById('noteLink').value = '';
-        loadManagementLists();
-      }
-    }
-
-    async function deleteNote(id) {
-      if(!confirm("Delete note?")) return;
-      await fetch(`/api/admin/note/${id}`, { method: 'DELETE' });
-      loadManagementLists();
-    }
-
-    async function deleteClass(id) {
-      await fetch(`/api/admin/class/${id}`, { method: 'DELETE' });
-      loadManagementLists();
-    }
-
-    async function deleteTest(id) {
-      await fetch(`/api/admin/test/${id}`, { method: 'DELETE' });
-      loadManagementLists();
-    }
-
     async function updateStatus(studentId, status) {
-      const res = await fetch('/api/admin/student-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, status, adminId: currentAdminId })
-      });
-      const data = await res.json();
-      alert(data.message);
+      await fetch('/api/admin/student-status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId, status }) });
       loadAdminData();
     }
 
     async function deleteStudent(studentId) {
-      if(!confirm("Are you sure you want to delete this student and all their records?")) return;
-      const res = await fetch(`/api/admin/student/${studentId}`, { method: 'DELETE' });
-      const data = await res.json();
-      alert(data.message);
+      if(!confirm("Delete student?")) return;
+      await fetch(`/api/admin/student/${studentId}`, { method: 'DELETE' });
       loadAdminData();
     }
 
@@ -659,117 +415,20 @@
       const username = document.getElementById('enrollUser').value;
       const password = document.getElementById('enrollPass').value;
       const phone = document.getElementById('enrollPhone').value;
-
-      const res = await fetch('/api/admin/enroll', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, phone, classroomId, adminId: currentAdminId })
-      });
+      const res = await fetch('/api/admin/enroll', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, phone, classroomId }) });
       const data = await res.json();
-      alert(data.message || "Student enrolled successfully!");
-      
-      if(data.success) {
-        document.getElementById('enrollUser').value = '';
-        document.getElementById('enrollPass').value = '';
-        document.getElementById('enrollPhone').value = '';
-        
-        if(data.whatsappUrl) {
-          document.getElementById('whatsappLinkContainer').innerHTML = `<a href="${data.whatsappUrl}" target="_blank" style="color:#10b981; font-weight:bold;">👉 Send WhatsApp Credential Message</a>`;
-        } else {
-          document.getElementById('whatsappLinkContainer').innerHTML = '';
-        }
-        loadAdminData();
-      }
+      alert(data.message);
+      if(data.success) { loadAdminData(); }
     }
 
     async function submitAttendance() {
       const studentId = document.getElementById('attendanceStudentSelect').value;
       const date = document.getElementById('attendanceDate').value;
       const status = document.getElementById('attendanceStatus').value;
-      const res = await fetch('/api/admin/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, date, status })
-      });
+      const res = await fetch('/api/admin/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ studentId, date, status }) });
       const data = await res.json();
       alert(data.message);
       loadAdminData();
-    }
-
-    async function submitXp() {
-      const studentId = document.getElementById('xpStudentSelect').value;
-      const action = document.getElementById('xpActionType').value;
-      const xpAmount = document.getElementById('xpAmount').value;
-      const res = await fetch('/api/admin/xp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studentId, xpAmount, action })
-      });
-      const data = await res.json();
-      alert(data.message);
-      loadAdminData();
-    }
-
-    async function resetStudentExam(studentId, testId) {
-      const res = await fetch("/api/admin/reset-exam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, testId })
-      });
-      const data = await res.json();
-      alert(data.message);
-      loadAdminData();
-    }
-
-    function addQuestionField() {
-      questionCount++;
-      const container = document.getElementById('questionsContainer');
-      const div = document.createElement('div');
-      div.className = 'question-block';
-      div.style.border = '1px solid rgba(255,255,255,0.1)';
-      div.style.padding = '15px'; div.style.borderRadius = '12px'; div.style.marginBottom = '15px';
-      div.innerHTML = `
-        <div class="input-group"><label>Question ${questionCount}</label><input type="text" class="q-text" placeholder="Question"></div>
-        <div class="input-group"><label>Option A</label><input type="text" class="q-opt" placeholder="A"></div>
-        <div class="input-group"><label>Option B</label><input type="text" class="q-opt" placeholder="B"></div>
-        <div class="input-group"><label>Option C</label><input type="text" class="q-opt" placeholder="C"></div>
-        <div class="input-group"><label>Option D</label><input type="text" class="q-opt" placeholder="D"></div>
-        <div class="input-group"><label>Correct Answer Text</label><input type="text" class="q-ans" placeholder="Exact option text"></div>`;
-      container.appendChild(div);
-    }
-
-    async function submitNewTest() {
-      const classroomId = document.getElementById('testClassSelect').value;
-      const title = document.getElementById('testTitle').value.trim();
-      const durationMinutes = Number(document.getElementById('testDuration').value) || 15;
-      const durationHours = Number(document.getElementById('testDurationHours').value) || 24;
-      
-      if (!title) return alert("Enter test title.");
-
-      const qElements = document.querySelectorAll('#questionsContainer .question-block');
-      if (qElements.length === 0) return alert("Add at least one question.");
-
-      const questions = [];
-      qElements.forEach((el) => {
-        questions.push({
-          questionText: el.querySelector('.q-text').value.trim(),
-          options: Array.from(el.querySelectorAll('.q-opt')).map(o => o.value.trim()),
-          correctAnswer: el.querySelector('.q-ans').value.trim()
-        });
-      });
-
-      const res = await fetch('/api/admin/tests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classroomId, title, durationMinutes, durationHours, questions })
-      });
-      const data = await res.json();
-      alert(data.message);
-      if(data.success) {
-        document.getElementById('testTitle').value = '';
-        document.getElementById('questionsContainer').innerHTML = '';
-        loadManagementLists();
-      }
     }
 
     window.addEventListener('DOMContentLoaded', () => { loadAdminData(); });
