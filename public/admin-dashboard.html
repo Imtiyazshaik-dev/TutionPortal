@@ -60,6 +60,30 @@
       <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Visual HTML Report</a>
     </div>
 
+    <!-- Past Monthly Report Downloader Section -->
+    <div style="background:rgba(30,41,59,0.7); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.1);">
+      <h3 style="margin-top:0; color:#f59e0b; font-size:16px;">📅 Download Past Monthly HTML Report</h3>
+      <p style="font-size:13px; color:#94a3b8; margin-bottom:12px;">Select any month and year to compile and download historical records.</p>
+      <div style="display:flex; gap:10px;">
+        <select id="reportMonthSelect" style="flex:1; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#fff; font-family:'Outfit';">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8" selected>August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="number" id="reportYearInput" value="2026" style="width:90px; padding:10px; background:#0f172a; border:1px solid #334155; border-radius:8px; color:#fff; font-family:'Outfit';" />
+        <button onclick="downloadMonthlyReport()" style="background:#10b981; padding:10px 16px; border:none; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">Download</button>
+      </div>
+    </div>
+
     <hr>
 
     <h3>🏆 Student Leaderboard & Standings</h3>
@@ -287,6 +311,13 @@
       if(!adminReportId) return;
       window.location.href = `/api/reports/download/${adminReportId}`;
       setTimeout(() => { document.getElementById('adminReportBanner').style.display = 'none'; }, 1500);
+    }
+
+    function downloadMonthlyReport() {
+      const month = document.getElementById('reportMonthSelect').value;
+      const year = document.getElementById('reportYearInput').value;
+      if (!year) return alert("Enter a valid year.");
+      window.location.href = `/api/admin/monthly-report/${year}/${month}`;
     }
 
     async function createClassroomCohort() {

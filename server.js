@@ -162,25 +162,28 @@ async function generateWeeklyReports() {
     const students = await Student.find({ role: 'student', status: 'approved' });
     let masterHtml = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
-        <title>Weekly Master Report</title>
+        <title>Weekly Master Report - Tuition Portal</title>
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; }
-          .container { max-width: 800px; margin: auto; background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
-          h1 { color: #38bdf8; text-align: center; }
-          .student-card { background: #0f172a; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 5px solid #10b981; }
-          .progress-bar-bg { background: #334155; border-radius: 8px; overflow: hidden; height: 16px; margin: 10px 0; }
-          .progress-bar-fill { background: linear-gradient(90deg, #38bdf8, #10b981); height: 100%; text-align: right; color: #000; font-size: 11px; font-weight: bold; padding-right: 6px; line-height: 16px; }
-          .badge { background: rgba(56,189,248,0.2); color: #38bdf8; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: inline-block; margin: 2px; }
+          body { font-family: 'Outfit', 'Segoe UI', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
+          .container { max-width: 850px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+          h1 { color: #fff; font-size: 26px; text-align: center; background: linear-gradient(135deg, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+          .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+          .student-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px; border-radius: 16px; margin-bottom: 20px; }
+          .student-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px; }
+          .progress-bar-bg { background: rgba(15, 23, 42, 0.8); border-radius: 10px; overflow: hidden; height: 18px; margin: 12px 0; border: 1px solid rgba(255,255,255,0.05); }
+          .progress-bar-fill { background: linear-gradient(90deg, #0284c7, #10b981); height: 100%; text-align: right; color: #fff; font-size: 11px; font-weight: bold; padding-right: 8px; line-height: 18px; }
+          .badge-tag { background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; margin: 3px; }
+          ul { margin: 8px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 13px; }
+          li { margin-bottom: 4px; }
         </style>
       </head>
       <body>
         <div class="container">
           <h1>📊 Weekly Performance Master Report</h1>
-          <p style="text-align:center; color:#94a3b8;">Generated on: ${new Date().toLocaleString()}</p>
-          <hr style="border:0; border-top:1px solid #334155; margin:20px 0;">
+          <div class="subtitle">Generated on: ${new Date().toLocaleString()}</div>
     `;
 
     for (const student of students) {
@@ -189,50 +192,74 @@ async function generateWeeklyReports() {
 
       masterHtml += `
         <div class="student-card">
-          <h3 style="margin:0 0 5px 0; color:#38bdf8;">${student.username} <span style="font-size:12px; color:#f59e0b;">(ID: ${student.studentIdTag || 'N/A'})</span></h3>
-          <p style="margin:4px 0; font-size:14px;">Total XP: <strong>${student.xp} / 70 max</strong> | Classes Attended: <strong>${student.attendance.length}</strong></p>
-          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div></div>
-          <p style="margin:8px 0 4px 0; font-size:12px; color:#94a3b8;">Badges Earned:</p>
-          <div>${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge">${b}</span>`).join('') : '<span style="color:#64748b; font-size:12px;">None</span>'}</div>
-          <p style="margin:10px 0 4px 0; font-size:12px; color:#94a3b8;">Test Submissions:</p>
-          <ul style="margin:0; padding-left:18px; font-size:13px;">
-            ${results.map(r => `<li>${r.testId ? r.testId.title : 'Test'}: Score ${r.score}/${r.totalQuestions} | XP Granted: ${r.grantedXpAmount || 0}</li>`).join('')}
-          </ul>
+          <div class="student-header">
+            <div>
+              <strong style="font-size: 18px; color: #fff;">${student.username}</strong> 
+              <span style="font-size: 12px; color: #f59e0b; margin-left: 8px;">ID: ${student.studentIdTag || 'N/A'}</span>
+            </div>
+            <div style="font-size: 14px; font-weight: bold; color: #10b981;">Total XP: ${student.xp} / 70 max</div>
+          </div>
+          <p style="margin: 0; font-size: 13px; color: #94a3b8;">Classes Attended: <strong style="color:#f8fafc;">${student.attendance.length}</strong></p>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div>
+          </div>
+          <div style="margin-top: 10px;">
+            <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Badges Earned:</span>
+            ${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge-tag">${b}</span>`).join('') : '<span style="font-size:12px; color:#64748b;">None yet</span>'}
+          </div>
+          <div style="margin-top: 12px;">
+            <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Test Breakdown:</span>
+            <ul>
+              ${results.length > 0 ? results.map(r => `<li><strong>${r.testId ? r.testId.title : 'Test'}</strong>: Score ${r.score}/${r.totalQuestions} | XP Granted: <span style="color:#10b981;">${r.grantedXpAmount || 0} XP</span></li>`).join('') : '<li style="color:#64748b;">No tests submitted this week.</li>'}
+            </ul>
+          </div>
         </div>
       `;
 
       const individualHtml = `
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
           <meta charset="UTF-8">
-          <title>Your Weekly Report</title>
+          <title>Your Weekly Performance Report</title>
           <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; }
-            .container { max-width: 700px; margin: auto; background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
-            h1 { color: #38bdf8; text-align: center; }
-            .stat-box { background: #0f172a; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; border: 1px solid #334155; }
-            .progress-bar-bg { background: #334155; border-radius: 8px; overflow: hidden; height: 18px; margin: 15px 0; }
-            .progress-bar-fill { background: linear-gradient(90deg, #38bdf8, #10b981); height: 100%; text-align: right; color: #000; font-size: 12px; font-weight: bold; padding-right: 8px; line-height: 18px; }
-            .badge { background: rgba(56,189,248,0.2); color: #38bdf8; padding: 6px 12px; border-radius: 14px; font-size: 12px; display: inline-block; margin: 4px; }
+            body { font-family: 'Outfit', 'Segoe UI', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
+            .container { max-width: 700px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+            h1 { color: #fff; font-size: 24px; text-align: center; background: linear-gradient(135deg, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+            .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
+            .stat-box { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 25px; }
+            .progress-bar-bg { background: rgba(15, 23, 42, 0.8); border-radius: 12px; overflow: hidden; height: 20px; margin: 15px 0 5px 0; border: 1px solid rgba(255,255,255,0.05); }
+            .progress-bar-fill { background: linear-gradient(90deg, #0284c7, #10b981); height: 100%; text-align: right; color: #fff; font-size: 12px; font-weight: bold; padding-right: 10px; line-height: 20px; }
+            .badge-tag { background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; display: inline-block; margin: 4px; }
+            ul { margin: 10px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 14px; }
+            li { margin-bottom: 8px; }
           </style>
         </head>
         <body>
           <div class="container">
             <h1>⭐ Your Weekly Performance Report</h1>
-            <p style="text-align:center; color:#94a3b8;">Student: <strong>${student.username}</strong> (${student.studentIdTag || 'N/A'})</p>
+            <div class="subtitle">Student: <strong>${student.username}</strong> (${student.studentIdTag || 'N/A'})</div>
+            
             <div class="stat-box">
-              <h2 style="margin:0; color:#f59e0b; font-size:32px;">${student.xp} XP</h2>
-              <p style="margin:5px 0 0 0; color:#94a3b8; font-size:13px;">Weekly Progress (Target: 70 XP)</p>
-              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div></div>
+              <span style="color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Weekly XP Goal (70 Max)</span>
+              <div style="font-size: 38px; font-weight: bold; color: #f59e0b; margin: 5px 0;">${student.xp} XP</div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div>
+              </div>
+              <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Classes Attended: <strong style="color:#10b981;">${student.attendance.length}</strong></div>
             </div>
-            <h3 style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:8px;">🏅 Badges Earned</h3>
-            <div>${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge">${b}</span>`).join('') : '<span style="color:#94a3b8;">No badges unlocked yet. Keep going!</span>'}</div>
-            <h3 style="color:#38bdf8; border-bottom:1px solid #334155; padding-bottom:8px; margin-top:25px;">📝 Test Results</h3>
-            <ul style="padding-left:18px;">
-              ${results.map(r => `<li style="margin-bottom:8px;"><strong>${r.testId ? r.testId.title : 'Test'}</strong>: Score ${r.score}/${r.totalQuestions} | XP Granted: <span style="color:#10b981;">${r.grantedXpAmount || 0} XP</span></li>`).join('')}
+
+            <h3 style="color: #38bdf8; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 15px;">🏅 Badges & Achievements</h3>
+            <div style="margin-bottom: 25px;">
+              ${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge-tag">${b}</span>`).join('') : '<span style="color:#94a3b8; font-size: 13px;">No badges unlocked yet. Keep participating!</span>'}
+            </div>
+
+            <h3 style="color: #38bdf8; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 15px;">📝 Test Submissions & Scores</h3>
+            <ul>
+              ${results.length > 0 ? results.map(r => `<li><strong>${r.testId ? r.testId.title : 'Test'}</strong>: Score ${r.score}/${r.totalQuestions} | XP Granted: <span style="color:#10b981; font-weight:bold;">${r.grantedXpAmount || 0} XP</span></li>`).join('') : '<li style="color:#94a3b8;">No tests submitted this week.</li>'}
             </ul>
-            <p style="text-align:center; margin-top:30px; color:#10b981; font-weight:bold;">Keep up the fantastic work!</p>
+
+            <div style="text-align: center; margin-top: 35px; color: #10b981; font-weight: 600; font-size: 14px;">Keep up the fantastic work! 🚀</div>
           </div>
         </body>
         </html>
@@ -258,6 +285,60 @@ setInterval(() => {
   }
 }, 24 * 60 * 60 * 1000);
 
+// --- MONTHLY REPORT ARCHIVE API ROUTE ---
+app.get('/api/admin/monthly-report/:year/:month', async (req, res) => {
+  try {
+    const { year, month } = req.params; // e.g. year = 2026, month = 08 (August)
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    const students = await Student.find({ role: 'student', status: 'approved' });
+    let monthlyHtml = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Monthly Performance Report - ${month}/${year}</title>
+        <style>
+          body { font-family: 'Outfit', 'Segoe UI', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
+          .container { max-width: 850px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+          h1 { color: #fff; font-size: 26px; text-align: center; background: linear-gradient(135deg, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+          .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+          .student-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px; border-radius: 16px; margin-bottom: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>📅 Monthly Performance Archive Report (${month}/${year})</h1>
+          <div class="subtitle">Compiled on: ${new Date().toLocaleString()}</div>
+    `;
+
+    for (const student of students) {
+      const results = await Result.find({ 
+        studentId: student._id, 
+        submittedAt: { $gte: startDate, $lt: endDate } 
+      }).populate('testId', 'title');
+
+      monthlyHtml += `
+        <div class="student-card">
+          <strong style="font-size: 18px; color: #fff;">${student.username}</strong> <span style="font-size: 12px; color: #f59e0b;">(ID: ${student.studentIdTag || 'N/A'})</span>
+          <p style="margin: 6px 0; font-size: 14px; color: #94a3b8;">Total Current XP: <strong style="color:#10b981;">${student.xp}</strong></p>
+          <p style="margin: 4px 0; font-size: 13px; color: #cbd5e1;">Tests Completed This Month: <strong>${results.length}</strong></p>
+        </div>
+      `;
+    }
+
+    monthlyHtml += `</div></body></html>`;
+
+    res.setHeader('Content-disposition', `attachment; filename=monthly-report-${year}-${month}.html`);
+    res.setHeader('Content-type', 'text/html');
+    res.send(monthlyHtml);
+  } catch (err) {
+    res.status(500).send('Error generating monthly report.');
+  }
+});
+
+// --- AUTHENTICATION ROUTES ---
 app.post('/api/auth', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -431,12 +512,10 @@ app.get('/api/tests/:id', async (req, res) => {
   }
 });
 
-// --- ONE-TIME EXAM SUBMISSION CHECK ---
 app.post('/api/exam/submit', async (req, res) => {
   try {
     const { userId, testId, answers, timeTaken } = req.body;
     
-    // Strict check to ensure student hasn't already submitted this test
     const existingSubmission = await Result.findOne({ studentId: userId, testId });
     if (existingSubmission) {
       return res.status(400).json({ success: false, message: 'You have already submitted this exam and cannot retake it.' });
