@@ -111,7 +111,7 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
-// --- ROBUST ATTENDANCE CALCULATION ENGINE ---
+// --- BULLETPROOF ATTENDANCE CALCULATION ENGINE ---
 async function calculateAttendanceStats(student) {
   try {
     const termStart = new Date('2026-08-01');
@@ -430,7 +430,21 @@ app.get('/api/admin/pending-students/:adminId', async (req, res) => {
 
 app.get('/api/admin/approved-students/:adminId', async (req, res) => {
   try {
-    const studentsRaw = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+    const adminUser = await Student.findById(req.params.adminId);
+    if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
+
+    let studentsRaw;
+    if (adminUser.username === 'admin') {
+      studentsRaw = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+    } else {
+      const teacherClassrooms = await Classroom.find({ createdBy: adminUser._id }).select('_id');
+      const classroomIds = teacherClassrooms.map(c => c._id);
+      studentsRaw = await Student.find({ role: 'student', status: 'approved', classroomId: { $in: classroomIds } }).populate('classroomId', 'name');
+      if (studentsRaw.length === 0) {
+        studentsRaw = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+      }
+    }
+
     const students = [];
     for (const s of studentsRaw) {
       const stats = await calculateAttendanceStats(s);
