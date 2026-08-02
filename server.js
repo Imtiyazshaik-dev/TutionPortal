@@ -13,11 +13,9 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to MongoDB Atlas
 mongoose.connect(MONGO_URI)
   .then(async () => {
     console.log("MongoDB Connected Successfully via Mongoose!");
-    console.log("Connected to Database Name:", mongoose.connection.name);
     await seedDefaultAdmin();
   })
   .catch(err => console.error("MongoDB Connection Error:", err));
@@ -40,7 +38,13 @@ const studentSchema = new mongoose.Schema({
   xp: { type: Number, default: 0 },
   attendance: [{ date: String, status: String }],
   badges: [String],
-  strikes: { type: Number, default: 0 }
+  strikes: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const holidaySchema = new mongoose.Schema({
+  date: { type: String, required: true, unique: true }, // Format: YYYY-MM-DD
+  title: { type: String, default: 'Holiday' }
 });
 
 const testSchema = new mongoose.Schema({
@@ -99,12 +103,58 @@ const weeklyReportSchema = new mongoose.Schema({
 
 const Classroom = mongoose.model('Classroom', classroomSchema);
 const Student = mongoose.model('Student', studentSchema);
+const Holiday = mongoose.model('Holiday', holidaySchema);
 const Test = mongoose.model('Test', testSchema);
 const Result = mongoose.model('Result', resultSchema);
 const LiveClass = mongoose.model('LiveClass', liveClassSchema);
 const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestSchema);
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
+
+// --- INDIVIDUAL ENROLLMENT-BASED ATTENDANCE ENGINE ---
+async function calculateAttendanceStats(student) {
+  const termStart = new Date('2026-08-01');
+  let studentEnrollDate = student.createdAt ? new Date(student.createdAt) : new Date('2026-08-01');
+  
+  // Start tracking from whichever is later: term start or student join date
+  let startDate = studentEnrollDate > termStart ? studentEnrollDate : termStart;
+  startDate.setHours(0,0,0,0);
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const holidays = await Holiday.find({});
+  const holidaySet = new Set(holidays.map(h => h.date));
+
+  let totalWorkingDays = 0;
+  let totalPresent = 0;
+  const calendarMap = {};
+
+  let curr = new Date(startDate);
+  while (curr <= today) {
+    const dateStr = curr.toISOString().split('T')[0];
+    const dayOfWeek = curr.getDay(); // 0 = Sunday
+
+    if (dayOfWeek === 0) {
+      calendarMap[dateStr] = 'Sunday';
+    } else if (holidaySet.has(dateStr)) {
+      calendarMap[dateStr] = 'Holiday';
+    } else {
+      totalWorkingDays++;
+      const record = student.attendance.find(a => a.date === dateStr);
+      if (record && record.status === 'Present') {
+        totalPresent++;
+        calendarMap[dateStr] = 'Present';
+      } else {
+        calendarMap[dateStr] = 'Absent';
+      }
+    }
+    curr.setDate(curr.getDate() + 1);
+  }
+
+  const percentage = totalWorkingDays > 0 ? ((totalPresent / totalWorkingDays) * 100).toFixed(1) : '100.0';
+  return { percentage: Number(percentage), totalWorkingDays, totalPresent, calendarMap };
+}
 
 async function checkAndAwardBadges(studentId) {
   const student = await Student.findById(studentId);
@@ -129,7 +179,8 @@ async function checkAndAwardBadges(studentId) {
   const perfectTests = await Result.findOne({ studentId: student._id, grantedXpAmount: 10 });
   if (perfectTests) award("⭐ Perfectionist (10/10 XP)");
 
-  if (student.attendance && student.attendance.length >= 3) {
+  const attStats = await calculateAttendanceStats(student);
+  if (attStats.totalPresent >= 3) {
     award("📚 Consistent Learner (3+ Classes)");
   }
 
@@ -150,14 +201,11 @@ async function seedDefaultAdmin() {
         status: 'approved',
         studentIdTag: 'ADMIN-001'
       });
-      console.log("Default master admin account created: admin / adminpassword123");
+      console.log("Default master admin created.");
     }
-  } catch (err) {
-    console.error("Error seeding admin:", err);
-  }
+  } catch (err) { console.error(err); }
 }
 
-// Helper builder for Visual HTML Reports
 async function buildMasterReportHtml() {
   const students = await Student.find({ role: 'student', status: 'approved' });
   let masterHtml = `
@@ -167,52 +215,25 @@ async function buildMasterReportHtml() {
       <meta charset="UTF-8">
       <title>Weekly Master Report - Tuition Portal</title>
       <style>
-        body { font-family: 'Outfit', 'Segoe UI', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
-        .container { max-width: 850px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-        h1 { color: #fff; font-size: 26px; text-align: center; background: linear-gradient(135deg, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+        body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
+        .container { max-width: 850px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); }
+        h1 { color: #fff; font-size: 26px; text-align: center; }
         .student-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px; border-radius: 16px; margin-bottom: 20px; }
-        .student-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px; }
-        .progress-bar-bg { background: rgba(15, 23, 42, 0.8); border-radius: 10px; overflow: hidden; height: 18px; margin: 12px 0; border: 1px solid rgba(255,255,255,0.05); }
-        .progress-bar-fill { background: linear-gradient(90deg, #0284c7, #10b981); height: 100%; text-align: right; color: #fff; font-size: 11px; font-weight: bold; padding-right: 8px; line-height: 18px; }
-        .badge-tag { background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; margin: 3px; }
-        ul { margin: 8px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 13px; }
-        li { margin-bottom: 4px; }
       </style>
     </head>
     <body>
       <div class="container">
         <h1>📊 Weekly Performance Master Report</h1>
-        <div class="subtitle">Generated on: ${new Date().toLocaleString()}</div>
+        <p style="text-align:center; color:#94a3b8;">Generated on: ${new Date().toLocaleString()}</p>
   `;
 
   for (const student of students) {
-    const results = await Result.find({ studentId: student._id }).populate('testId', 'title');
-    let xpPercentage = Math.min(100, Math.round((student.xp / 70) * 100));
-
+    const attStats = await calculateAttendanceStats(student);
     masterHtml += `
       <div class="student-card">
-        <div class="student-header">
-          <div>
-            <strong style="font-size: 18px; color: #fff;">${student.username}</strong> 
-            <span style="font-size: 12px; color: #f59e0b; margin-left: 8px;">ID: ${student.studentIdTag || 'N/A'}</span>
-          </div>
-          <div style="font-size: 14px; font-weight: bold; color: #10b981;">Total XP: ${student.xp} / 70 max</div>
-        </div>
-        <p style="margin: 0; font-size: 13px; color: #94a3b8;">Classes Attended: <strong style="color:#f8fafc;">${student.attendance.length}</strong></p>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div>
-        </div>
-        <div style="margin-top: 10px;">
-          <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Badges Earned:</span>
-          ${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge-tag">${b}</span>`).join('') : '<span style="font-size:12px; color:#64748b;">None yet</span>'}
-        </div>
-        <div style="margin-top: 12px;">
-          <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Test Breakdown:</span>
-          <ul>
-            ${results.length > 0 ? results.map(r => `<li><strong>${r.testId ? r.testId.title : 'Test'}</strong>: Score ${r.score}/${r.totalQuestions} | XP Granted: <span style="color:#10b981;">${r.grantedXpAmount || 0} XP</span></li>`).join('') : '<li style="color:#64748b;">No tests submitted this week.</li>'}
-          </ul>
-        </div>
+        <h3>${student.username} <span style="font-size:12px; color:#f59e0b;">(ID: ${student.studentIdTag || 'N/A'})</span></h3>
+        <p>Total XP: <strong>${student.xp} / 70</strong> | Attendance: <strong style="color:#10b981;">${attStats.percentage}%</strong></p>
+        <p>Badges: ${(student.badges || []).join(', ') || 'None'}</p>
       </div>
     `;
   }
@@ -223,9 +244,7 @@ async function buildMasterReportHtml() {
 async function buildStudentReportHtml(studentId) {
   const student = await Student.findById(studentId);
   if (!student) return '';
-
-  const results = await Result.find({ studentId: student._id }).populate('testId', 'title');
-  let xpPercentage = Math.min(100, Math.round((student.xp / 70) * 100));
+  const attStats = await calculateAttendanceStats(student);
 
   return `
     <!DOCTYPE html>
@@ -234,154 +253,35 @@ async function buildStudentReportHtml(studentId) {
       <meta charset="UTF-8">
       <title>Your Weekly Performance Report</title>
       <style>
-        body { font-family: 'Outfit', 'Segoe UI', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
-        .container { max-width: 700px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-        h1 { color: #fff; font-size: 24px; text-align: center; background: linear-gradient(135deg, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
-        .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
-        .stat-box { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 24px; border-radius: 16px; text-align: center; margin-bottom: 25px; }
-        .progress-bar-bg { background: rgba(15, 23, 42, 0.8); border-radius: 12px; overflow: hidden; height: 20px; margin: 15px 0 5px 0; border: 1px solid rgba(255,255,255,0.05); }
-        .progress-bar-fill { background: linear-gradient(90deg, #0284c7, #10b981); height: 100%; text-align: right; color: #fff; font-size: 12px; font-weight: bold; padding-right: 10px; line-height: 20px; }
-        .badge-tag { background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; padding: 6px 14px; border-radius: 16px; font-size: 12px; font-weight: 600; display: inline-block; margin: 4px; }
-        ul { margin: 10px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 14px; }
-        li { margin-bottom: 8px; }
+        body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; padding: 40px 20px; }
+        .container { max-width: 700px; margin: auto; background: rgba(15, 23, 42, 0.85); padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); }
+        h1 { color: #38bdf8; text-align: center; }
       </style>
     </head>
     <body>
       <div class="container">
         <h1>⭐ Your Weekly Performance Report</h1>
-        <div class="subtitle">Student: <strong>${student.username}</strong> (${student.studentIdTag || 'N/A'})</div>
-        
-        <div class="stat-box">
-          <span style="color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Weekly XP Goal (70 Max)</span>
-          <div style="font-size: 38px; font-weight: bold; color: #f59e0b; margin: 5px 0;">${student.xp} XP</div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: ${xpPercentage}%;">${xpPercentage}%</div>
-          </div>
-          <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Classes Attended: <strong style="color:#10b981;">${student.attendance.length}</strong></div>
-        </div>
-
-        <h3 style="color: #38bdf8; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 15px;">🏅 Badges & Achievements</h3>
-        <div style="margin-bottom: 25px;">
-          ${(student.badges && student.badges.length > 0) ? student.badges.map(b => `<span class="badge-tag">${b}</span>`).join('') : '<span style="color:#94a3b8; font-size: 13px;">No badges unlocked yet. Keep participating!</span>'}
-        </div>
-
-        <h3 style="color: #38bdf8; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 15px;">📝 Test Submissions & Scores</h3>
-        <ul>
-          ${results.length > 0 ? results.map(r => `<li><strong>${r.testId ? r.testId.title : 'Test'}</strong>: Score ${r.score}/${r.totalQuestions} | XP Granted: <span style="color:#10b981; font-weight:bold;">${r.grantedXpAmount || 0} XP</span></li>`).join('') : '<li style="color:#94a3b8;">No tests submitted this week.</li>'}
-        </ul>
-
-        <div style="text-align: center; margin-top: 35px; color: #10b981; font-weight: 600; font-size: 14px;">Keep up the fantastic work! 🚀</div>
+        <p style="text-align:center; color:#94a3b8;">Student: <strong>${student.username}</strong> (${student.studentIdTag || 'N/A'})</p>
+        <p style="text-align:center; font-size:24px; color:#f59e0b;">${student.xp} XP | Attendance: <strong style="color:#10b981;">${attStats.percentage}%</strong></p>
+        <h3>🏅 Badges:</h3>
+        <p>${(student.badges || []).join(', ') || 'No badges yet.'}</p>
       </div>
     </body>
     </html>
   `;
 }
 
-async function generateWeeklyReports() {
-  try {
-    const students = await Student.find({ role: 'student', status: 'approved' });
-    const masterHtml = await buildMasterReportHtml();
-
-    await WeeklyReport.deleteMany({ reportType: 'master' });
-    await WeeklyReport.create({ reportType: 'master', content: masterHtml });
-
-    for (const student of students) {
-      const studentHtml = await buildStudentReportHtml(student._id);
-      await WeeklyReport.deleteMany({ studentId: student._id, reportType: 'student' });
-      await WeeklyReport.create({ reportType: 'student', studentId: student._id, content: studentHtml });
-    }
-    console.log("Visual HTML Weekly Reports generated successfully!");
-  } catch (err) {
-    console.error("Error generating weekly reports:", err);
-  }
-}
-
-setInterval(() => {
-  const now = new Date();
-  if (now.getDay() === 0) {
-    generateWeeklyReports();
-  }
-}, 24 * 60 * 60 * 1000);
-
-// --- MONTHLY REPORT ARCHIVE API ROUTE WITH DATA VALIDATION ---
-app.get('/api/admin/monthly-report/:year/:month', async (req, res) => {
-  try {
-    const { year, month } = req.params;
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 1);
-
-    // Prevent querying future months where no data exists
-    if (startDate > new Date()) {
-      return res.status(400).send('<!DOCTYPE html><html><body style="background:#090d16;color:#fff;font-family:sans-serif;text-align:center;padding-top:50px;"><h2>⚠️ No Data Found</h2><p>Cannot generate reports for future months.</p></body></html>');
-    }
-
-    const students = await Student.find({ role: 'student', status: 'approved' });
-    const totalSubmissions = await Result.countDocuments({ submittedAt: { $gte: startDate, $lt: endDate } });
-
-    if (students.length === 0 || totalSubmissions === 0) {
-      return res.status(404).send('<!DOCTYPE html><html><body style="background:#090d16;color:#fff;font-family:sans-serif;text-align:center;padding-top:50px;"><h2>⚠️ No Data Found</h2><p>No student activity or test submissions recorded for this month.</p></body></html>');
-    }
-
-    let monthlyHtml = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <title>Monthly Performance Report - ${month}/${year}</title>
-        <style>
-          body { font-family: 'Outfit', 'Segoe UI', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 40px 20px; }
-          .container { max-width: 850px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 40px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-          h1 { color: #fff; font-size: 26px; text-align: center; background: linear-gradient(135deg, #fff, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
-          .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
-          .student-card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 22px; border-radius: 16px; margin-bottom: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>📅 Monthly Performance Archive Report (${month}/${year})</h1>
-          <div class="subtitle">Compiled on: ${new Date().toLocaleString()}</div>
-    `;
-
-    for (const student of students) {
-      const results = await Result.find({ 
-        studentId: student._id, 
-        submittedAt: { $gte: startDate, $lt: endDate } 
-      }).populate('testId', 'title');
-
-      if (results.length > 0) {
-        monthlyHtml += `
-          <div class="student-card">
-            <strong style="font-size: 18px; color: #fff;">${student.username}</strong> <span style="font-size: 12px; color: #f59e0b;">(ID: ${student.studentIdTag || 'N/A'})</span>
-            <p style="margin: 6px 0; font-size: 14px; color: #94a3b8;">Total XP: <strong style="color:#10b981;">${student.xp}</strong></p>
-            <p style="margin: 4px 0; font-size: 13px; color: #cbd5e1;">Tests Completed This Month: <strong>${results.length}</strong></p>
-          </div>
-        `;
-      }
-    }
-
-    monthlyHtml += `</div></body></html>`;
-
-    res.setHeader('Content-disposition', `attachment; filename=monthly-report-${year}-${month}.html`);
-    res.setHeader('Content-type', 'text/html');
-    res.send(monthlyHtml);
-  } catch (err) {
-    res.status(500).send('Error generating monthly report.');
-  }
-});
-
-// --- AUTHENTICATION & OTHER ROUTES ---
+// --- API ROUTES ---
 app.post('/api/auth', async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await Student.findOne({ username, password });
-    if (!user) return res.status(401).json({ success: false, message: 'Invalid username or password.' });
+    if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     if (user.role === 'student' && user.status !== 'approved') {
-      return res.status(403).json({ success: false, message: `Your account status is currently ${user.status}.` });
+      return res.status(403).json({ success: false, message: `Account status is ${user.status}.` });
     }
     res.json({ success: true, userId: user._id, role: user.role, username: user.username });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/auth/change-password', async (req, res) => {
@@ -391,10 +291,8 @@ app.post('/api/auth/change-password', async (req, res) => {
     if (!user || user.password !== oldPassword) return res.status(400).json({ success: false, message: 'Incorrect old password.' });
     user.password = newPassword;
     await user.save();
-    res.json({ success: true, message: 'Password updated successfully!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Password updated!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/classrooms/:adminId', async (req, res) => {
@@ -403,19 +301,15 @@ app.get('/api/classrooms/:adminId', async (req, res) => {
     if (!adminUser) return res.status(404).json({ success: false, message: 'Admin not found.' });
     let classrooms = adminUser.username === 'admin' ? await Classroom.find().populate('createdBy', 'username').sort({ createdAt: -1 }) : await Classroom.find({ $or: [{ createdBy: adminUser._id }, { createdBy: { $exists: false } }] }).populate('createdBy', 'username').sort({ createdAt: -1 });
     res.json({ success: true, classrooms });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/classrooms', async (req, res) => {
   try {
     const { name, description, adminId } = req.body;
     await Classroom.create({ name, description, createdBy: adminId });
-    res.json({ success: true, message: 'Classroom cohort created successfully!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Classroom cohort created!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/student/classroom-data/:id', async (req, res) => {
@@ -426,45 +320,48 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
 
     await checkAndAwardBadges(student._id);
     const updatedStudent = await Student.findById(student._id);
+    const attStats = await calculateAttendanceStats(updatedStudent);
+
     const classroom = await Classroom.findById(student.classroomId);
-    const leaderboard = await Student.find({ classroomId: student.classroomId, status: 'approved' }).sort({ xp: -1 }).select('username xp studentIdTag');
+    const leaderboardRaw = await Student.find({ classroomId: student.classroomId, status: 'approved' }).sort({ xp: -1 }).select('username xp studentIdTag attendance createdAt');
+    
+    const leaderboard = [];
+    for (const s of leaderboardRaw) {
+      const stats = await calculateAttendanceStats(s);
+      leaderboard.push({
+        _id: s._id,
+        username: s.username,
+        xp: s.xp,
+        studentIdTag: s.studentIdTag,
+        attendancePercentage: stats.percentage
+      });
+    }
+
     const allTests = await Test.find({ classroomId: student.classroomId }).sort({ _id: -1 });
     const now = new Date().getTime();
-
     const availableTests = allTests.map(test => {
       const createdTime = test.createdAt ? new Date(test.createdAt).getTime() : test._id.getTimestamp().getTime();
-      const expirationHours = test.durationHours || 24;
-      const expirationTime = createdTime + (expirationHours * 60 * 60 * 1000);
-      return { _id: test._id, title: test.title, durationMinutes: test.durationMinutes, isUnlocked: now <= expirationTime, statusMessage: now <= expirationTime ? `Active (${expirationHours}h Window)` : "Expired & Locked" };
+      const expirationTime = createdTime + ((test.durationHours || 24) * 60 * 60 * 1000);
+      return { _id: test._id, title: test.title, durationMinutes: test.durationMinutes, isUnlocked: now <= expirationTime, statusMessage: now <= expirationTime ? `Active (${test.durationHours || 24}h Window)` : "Expired & Locked" };
     });
 
     const notes = await Note.find({ classroomId: student.classroomId }).sort({ uploadedAt: -1 });
     const activeClass = await LiveClass.findOne({ classroomId: student.classroomId, isActive: true });
     const submittedResults = await Result.find({ studentId: student._id });
-    
-    // Dynamic generation check for student report HTML
-    let report = await WeeklyReport.findOne({ studentId: student._id, reportType: 'student' });
-    if (!report) {
-      const htmlContent = await buildStudentReportHtml(student._id);
-      report = await WeeklyReport.create({ reportType: 'student', studentId: student._id, content: htmlContent });
-    }
 
     res.json({
       success: true,
       assigned: true,
       classroom,
       student: updatedStudent,
+      attendanceStats: attStats,
       leaderboard,
       tests: availableTests,
       notes,
       activeClass,
-      submittedResults: submittedResults.map(r => r.testId.toString()),
-      hasReport: !!report,
-      reportId: report ? report._id : null
+      submittedResults: submittedResults.map(r => r.testId.toString())
     });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/student/join-class', async (req, res) => {
@@ -476,9 +373,7 @@ app.post('/api/student/join-class', async (req, res) => {
       await AttendanceRequest.create({ studentId: userId, classId, classTitle: classTitle || 'Live Class Session', date: today });
     }
     res.json({ success: true, message: 'Attendance request sent!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/tests/:id', async (req, res) => {
@@ -486,33 +381,25 @@ app.get('/api/tests/:id', async (req, res) => {
     const test = await Test.findById(req.params.id);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
     res.json({ success: true, test });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/exam/submit', async (req, res) => {
   try {
     const { userId, testId, answers, timeTaken } = req.body;
     const existingSubmission = await Result.findOne({ studentId: userId, testId });
-    if (existingSubmission) {
-      return res.status(400).json({ success: false, message: 'You have already submitted this exam and cannot retake it.' });
-    }
+    if (existingSubmission) return res.status(400).json({ success: false, message: 'Already submitted.' });
 
     const test = await Test.findById(testId);
     if (!test) return res.status(404).json({ success: false, message: 'Test not found.' });
 
     let score = 0;
-    test.questions.forEach((q, idx) => {
-      if (answers[idx] === q.correctAnswer) score++;
-    });
+    test.questions.forEach((q, idx) => { if (answers[idx] === q.correctAnswer) score++; });
 
     await Result.create({ studentId: userId, testId, score, totalQuestions: test.questions.length, timeTaken, xpGranted: false, grantedXpAmount: 0, submittedAt: new Date() });
     await checkAndAwardBadges(userId);
-    res.json({ success: true, message: `Exam submitted successfully! Score: ${score}/${test.questions.length}.` });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: `Exam submitted! Score: ${score}/${test.questions.length}.` });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/exam/strike', async (req, res) => {
@@ -522,47 +409,51 @@ app.post('/api/exam/strike', async (req, res) => {
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
     student.strikes += 1;
     await student.save();
-    res.json({ success: true, terminated: student.strikes >= 3, message: student.strikes >= 3 ? 'Maximum tab-switch violations reached!' : `Warning! Strike ${student.strikes}/3.` });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, terminated: student.strikes >= 3, message: student.strikes >= 3 ? 'Max violations reached!' : `Warning! Strike ${student.strikes}/3.` });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/pending-students/:adminId', async (req, res) => {
   try {
     const pendingStudents = await Student.find({ role: 'student', status: 'pending' }).populate('classroomId', 'name');
     res.json({ success: true, students: pendingStudents });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/approved-students/:adminId', async (req, res) => {
   try {
-    const approvedStudents = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
-    res.json({ success: true, students: approvedStudents });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    const studentsRaw = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
+    const students = [];
+    for (const s of studentsRaw) {
+      const stats = await calculateAttendanceStats(s);
+      students.push({
+        _id: s._id,
+        username: s.username,
+        studentIdTag: s.studentIdTag,
+        classroomId: s.classroomId,
+        xp: s.xp,
+        attendancePercentage: stats.percentage
+      });
+    }
+    res.json({ success: true, students });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
     const existing = await Student.findOne({ username });
-    if (existing) return res.status(400).json({ success: false, message: 'Username already exists' });
+    if (existing) return res.status(400).json({ success: false, message: 'Username exists' });
 
     const studentIdTag = `STU-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
-    await Student.create({ username: username.trim(), password, role: 'student', status: 'pending', studentIdTag, classroomId, xp: 0, badges: [], strikes: 0 });
+    await Student.create({ username: username.trim(), password, role: 'student', status: 'pending', studentIdTag, classroomId, xp: 0, badges: [], strikes: 0, createdAt: new Date() });
     
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
       whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(`Hey! You have been enrolled in Tuition Portal.\nUsername: ${username}\nPassword: ${password}`)}`;
     }
-    res.json({ success: true, message: 'Student enrolled successfully!', whatsappUrl });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Student enrolled!', whatsappUrl });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/student-status', async (req, res) => {
@@ -571,30 +462,49 @@ app.post('/api/admin/student-status', async (req, res) => {
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
     student.status = status;
+    student.createdAt = new Date(); // Update official join date upon approval
     await student.save();
-    res.json({ success: true, message: `Student status updated to ${status}.` });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: `Status updated to ${status}.` });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.delete('/api/admin/student/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
     await Result.deleteMany({ studentId: req.params.id });
-    res.json({ success: true, message: 'Student account deleted.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Student deleted.' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// --- ADMIN HOLIDAY ROUTES ---
+app.post('/api/admin/holiday', async (req, res) => {
+  try {
+    const { date, title } = req.body;
+    if (!date) return res.status(400).json({ success: false, message: 'Date required.' });
+    await Holiday.findOneAndUpdate({ date }, { date, title: title || 'Holiday' }, { upsert: true, new: true });
+    res.json({ success: true, message: 'Holiday marked successfully!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.get('/api/admin/holidays', async (req, res) => {
+  try {
+    const holidays = await Holiday.find({}).sort({ date: 1 });
+    res.json({ success: true, holidays });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.delete('/api/admin/holiday/:id', async (req, res) => {
+  try {
+    await Holiday.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Holiday removed.' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/attendance-requests', async (req, res) => {
   try {
     const requests = await AttendanceRequest.find({ status: 'pending' }).populate('studentId', 'username studentIdTag');
     res.json({ success: true, requests });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/attendance-action', async (req, res) => {
@@ -608,15 +518,14 @@ app.post('/api/admin/attendance-action', async (req, res) => {
     if (action === 'approve') {
       const student = await Student.findById(reqDoc.studentId);
       if (student) {
+        student.attendance = student.attendance.filter(a => a.date !== reqDoc.date);
         student.attendance.push({ date: reqDoc.date, status: 'Present' });
         await student.save();
         await checkAndAwardBadges(student._id);
       }
     }
-    res.json({ success: true, message: `Attendance request ${action}ed!` });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: `Request ${action}ed!` });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/attendance', async (req, res) => {
@@ -628,10 +537,8 @@ app.post('/api/admin/attendance', async (req, res) => {
     student.attendance.push({ date, status });
     await student.save();
     await checkAndAwardBadges(studentId);
-    res.json({ success: true, message: 'Attendance saved successfully!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Attendance saved!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/xp', async (req, res) => {
@@ -642,19 +549,15 @@ app.post('/api/admin/xp', async (req, res) => {
     student.xp = action === 'add' ? student.xp + Number(xpAmount) : Math.max(0, student.xp - Number(xpAmount));
     await student.save();
     await checkAndAwardBadges(studentId);
-    res.json({ success: true, message: 'Student XP updated successfully!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'XP updated!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/results', async (req, res) => {
   try {
     const results = await Result.find().populate('studentId', 'username studentIdTag').populate('testId', 'title');
     res.json({ success: true, results });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/grant-exam-xp', async (req, res) => {
@@ -664,7 +567,7 @@ app.post('/api/admin/grant-exam-xp', async (req, res) => {
     if (!result) return res.status(404).json({ success: false, message: 'Result not found.' });
 
     const amount = Number(xpAmount) || 0;
-    if (amount > 10) return res.status(400).json({ success: false, message: 'Max total XP for any test is 10.' });
+    if (amount > 10) return res.status(400).json({ success: false, message: 'Max XP is 10.' });
 
     const student = await Student.findById(result.studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
@@ -678,9 +581,7 @@ app.post('/api/admin/grant-exam-xp', async (req, res) => {
     await checkAndAwardBadges(student._id);
 
     res.json({ success: true, message: `Granted ${amount} XP successfully!` });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/reset-exam', async (req, res) => {
@@ -696,10 +597,8 @@ app.post('/api/admin/reset-exam', async (req, res) => {
       }
     }
     await Result.findOneAndDelete({ studentId, testId });
-    res.json({ success: true, message: 'Exam submission reset.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Exam reset.' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/class', async (req, res) => {
@@ -708,46 +607,36 @@ app.post('/api/admin/class', async (req, res) => {
     await LiveClass.updateMany({ classroomId }, { isActive: false });
     await LiveClass.create({ classroomId, title, meetLink, isActive: true });
     res.json({ success: true, message: 'Live class published!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/classes', async (req, res) => {
   try {
     const classes = await LiveClass.find().populate('classroomId', 'name').sort({ createdAt: -1 });
     res.json({ success: true, classes });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.delete('/api/admin/class/:id', async (req, res) => {
   try {
     await LiveClass.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Class deleted.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/tests', async (req, res) => {
   try {
     const { classroomId, title, durationMinutes, durationHours, questions } = req.body;
     await Test.create({ classroomId, title, durationMinutes, durationHours: durationHours || 24, questions });
-    res.json({ success: true, message: 'Test published successfully!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+    res.json({ success: true, message: 'Test published!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/tests', async (req, res) => {
   try {
     const tests = await Test.find().populate('classroomId', 'name');
     res.json({ success: true, tests });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.delete('/api/admin/test/:id', async (req, res) => {
@@ -755,9 +644,7 @@ app.delete('/api/admin/test/:id', async (req, res) => {
     await Test.findByIdAndDelete(req.params.id);
     await Result.deleteMany({ testId: req.params.id });
     res.json({ success: true, message: 'Test deleted.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.post('/api/admin/notes', async (req, res) => {
@@ -765,27 +652,21 @@ app.post('/api/admin/notes', async (req, res) => {
     const { classroomId, title, contentOrLink } = req.body;
     await Note.create({ classroomId, title, contentOrLink });
     res.json({ success: true, message: 'Note uploaded!' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/notes', async (req, res) => {
   try {
     const notes = await Note.find().populate('classroomId', 'name').sort({ uploadedAt: -1 });
     res.json({ success: true, notes });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.delete('/api/admin/note/:id', async (req, res) => {
   try {
     await Note.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Note deleted.' });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/admin/reports-check', async (req, res) => {
@@ -797,25 +678,18 @@ app.get('/api/admin/reports-check', async (req, res) => {
     }
     const report = await WeeklyReport.findOne({ reportType: 'master' });
     res.json({ success: true, hasReport: !!report, reportId: report ? report._id : null });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
 app.get('/api/reports/download/:id', async (req, res) => {
   try {
-    let report = await WeeklyReport.findById(req.params.id);
+    const report = await WeeklyReport.findById(req.params.id);
     if (!report) return res.status(404).send('Report not found.');
-
-    // Ensure dynamic re-rendering on download for fresh data & styles
     let htmlOutput = report.reportType === 'master' ? await buildMasterReportHtml() : await buildStudentReportHtml(report.studentId);
-
     res.setHeader('Content-disposition', `attachment; filename=${report.reportType}-weekly-report.html`);
     res.setHeader('Content-type', 'text/html');
     res.send(htmlOutput);
-  } catch (err) {
-    res.status(500).send('Error downloading report.');
-  }
+  } catch (err) { res.status(500).send('Error downloading report.'); }
 });
 
 app.get('*', (req, res) => {
@@ -823,16 +697,11 @@ app.get('*', (req, res) => {
 });
 
 const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://www.tutorpoint.page";
-
 setInterval(() => {
   const protocol = RENDER_URL.startsWith('https') ? https : http;
-  protocol.get(`${RENDER_URL}`, (res) => {
-    console.log(`Keep-alive ping sent. Status: ${res.statusCode}`);
-  }).on('error', (err) => {
-    console.error("Keep-alive ping error:", err.message);
-  });
+  protocol.get(`${RENDER_URL}`, (res) => {}).on('error', (err) => {});
 }, 10 * 60 * 1000);
 
 app.listen(PORT, () => {
-  console.log(`Server running smoothly on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
