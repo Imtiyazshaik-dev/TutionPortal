@@ -131,7 +131,7 @@ async function calculateAttendanceStats(student) {
     const calendarMap = {};
 
     let curr = new Date(startDate);
-    while (curr <= today) {
+    while (curr.getTime() <= today.getTime()) {
       const year = curr.getFullYear();
       const month = String(curr.getMonth() + 1).padStart(2, '0');
       const day = String(curr.getDate()).padStart(2, '0');
