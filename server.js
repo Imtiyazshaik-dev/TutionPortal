@@ -117,9 +117,9 @@ async function calculateAttendanceStats(student) {
     const termStart = new Date('2026-08-01');
     termStart.setHours(0,0,0,0);
     
-    // Dynamic today date calculation
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    // Fixed local date calculation to reliably include today
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const holidays = await Holiday.find({});
     const holidaySet = new Set(holidays.map(h => h.date));
@@ -339,7 +339,8 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
 app.post('/api/student/join-class', async (req, res) => {
   try {
     const { userId, classId, classTitle } = req.body;
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const existingReq = await AttendanceRequest.findOne({ studentId: userId, classId, date: today });
     if (!existingReq) {
       await AttendanceRequest.create({ studentId: userId, classId, classTitle: classTitle || 'Live Class Session', date: today });
