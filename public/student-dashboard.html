@@ -3,71 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard - Tuition Portal</title>
+  <title>Student Dashboard</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* Your original custom styles can go here */
-  </style>
 </head>
 <body>
-  <!-- YOUR ORIGINAL STUDENT PORTAL UI CONTENT HERE -->
-  <div class="container" style="max-width: 700px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <div>
-        <h2 id="welcomeText" style="margin: 0; color: #38bdf8;">Student Portal</h2>
-        <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;"></p>
-      </div>
-      <a href="index.html" onclick="localStorage.clear()" style="background: #ef4444; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">Log Out</a>
+  <div class="container" style="max-width: 600px;">
+    <h2>Student Portal</h2>
+    <p id="studentWelcome">Welcome, Student</p>
+
+    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <h3>📅 Attendance Calendar</h3>
+      <div id="attendanceText" style="margin-bottom: 10px; font-size: 14px; color: #10b981;">Loading attendance...</div>
+      <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
     </div>
 
-    <!-- Attendance & Stats Section -->
-    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-      <h3 style="margin-top: 0; color: #fff; font-size: 16px;">📅 Attendance & Calendar</h3>
-      <p id="attendanceSummaryText" style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">Loading attendance stats...</p>
-      <div id="calendarContainer" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px;"></div>
+    <div id="liveClassBox" style="display:none; background: rgba(16,185,129,0.1); border: 1px solid #10b981; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <h3 style="color:#10b981; margin-top:0;">🔴 Active Live Class</h3>
+      <p id="liveClassTitle" style="font-size:14px;"></p>
+      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="display:inline-block; background:#10b981; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:13px;">Join Class & Mark Attendance</a>
     </div>
 
-    <!-- Live Class Section -->
-    <div id="liveClassSection" class="portal-section" style="display:none; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-      <h3 style="margin-top: 0; color: #10b981; font-size: 16px;">🔴 Live Class Active</h3>
-      <p id="liveClassTitleText" style="font-size: 14px; margin-bottom: 10px;"></p>
-      <a id="liveClassLinkBtn" href="#" target="_blank" onclick="joinLiveClass()" style="display:inline-block; background:#10b981; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Join Google Meet & Mark Attendance</a>
+    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <h3>🏆 Cohort Leaderboard</h3>
+      <div id="leaderboardList" style="max-height: 150px; overflow-y: auto;"></div>
     </div>
 
-    <!-- Leaderboard & XP -->
-    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-      <h3 style="margin-top: 0; color: #f59e0b; font-size: 16px;">🏆 Cohort Leaderboard & XP</h3>
-      <div id="leaderboardListContainer" style="max-height: 180px; overflow-y: auto;">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading leaderboard...</p>
-      </div>
+    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <h3>📝 Tests</h3>
+      <div id="testsList"></div>
     </div>
 
-    <!-- Assessment Tests -->
-    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-      <h3 style="margin-top: 0; color: #38bdf8; font-size: 16px;">📝 Assessment Tests</h3>
-      <div id="testsListContainer">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading tests...</p>
-      </div>
+    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <h3>📚 Study Notes</h3>
+      <div id="notesList"></div>
     </div>
 
-    <!-- Study Notes -->
-    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
-      <h3 style="margin-top: 0; color: #a855f7; font-size: 16px;">📚 Study Resources & Notes</h3>
-      <div id="notesListContainer">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading study notes...</p>
-      </div>
+    <div style="text-align:center;">
+      <a href="index.html" onclick="localStorage.clear()" style="color:#ef4444; text-decoration:none; font-weight:bold;">Log Out</a>
     </div>
   </div>
 
   <script>
-    let activeClassIdVal = null;
-    let activeClassTitleVal = '';
+    let currentLiveClassId = null;
+    let currentLiveClassTitle = '';
 
-    async function loadStudentPortalData() {
+    async function loadStudentData() {
       const studentId = localStorage.getItem('userId');
-      const role = localStorage.getItem('role');
-
-      if (!studentId || role !== 'student') {
+      if (!studentId) {
         window.location.href = 'index.html';
         return;
       }
@@ -77,132 +59,84 @@
         const data = await res.json();
 
         if (data.success && data.student) {
-          document.getElementById('welcomeText').innerText = `Welcome, ${data.student.username}`;
-          document.getElementById('studentMeta').innerText = `ID Tag: ${data.student.studentIdTag || 'N/A'} | XP: ${data.student.xp} XP`;
+          document.getElementById('studentWelcome').innerText = `Welcome, ${data.student.username} (${data.student.studentIdTag || ''}) - XP: ${data.student.xp}`;
 
-          // Render Calendar & Attendance (Updates automatically as working days increase)
           if (data.attendanceStats) {
             const stats = data.attendanceStats;
-            document.getElementById('attendanceSummaryText').innerHTML = `Overall Attendance: <strong style="color:#10b981;">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
+            document.getElementById('attendanceText').innerHTML = `Attendance: <strong>${stats.percentage}%</strong> (${stats.totalPresent}/${stats.totalWorkingDays})`;
             
-            const calContainer = document.getElementById('calendarContainer');
-            calContainer.innerHTML = '';
-            
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
             if (stats.calendarMap) {
-              Object.keys(stats.calendarMap).sort().forEach(dateStr => {
-                const status = stats.calendarMap[dateStr];
-                let bgStyle = 'background: rgba(30, 41, 59, 0.5);';
-                let textCol = 'color: #fff;';
-                let shortDate = dateStr.slice(8);
+              Object.keys(stats.calendarMap).sort().forEach(date => {
+                const status = stats.calendarMap[date];
+                let bg = 'rgba(255,255,255,0.05)';
+                let color = '#fff';
+                if (status === 'Present') { bg = 'rgba(16,185,129,0.2)'; color = '#10b981'; }
+                else if (status === 'Absent') { bg = 'rgba(239,68,68,0.2)'; color = '#ef4444'; }
+                else if (status === 'Holiday') { bg = 'rgba(59,130,246,0.2)'; color = '#3b82f6'; }
+                else if (status === 'Sunday') { bg = 'transparent'; color = '#64748b'; }
 
-                if (status === 'Present') {
-                  bgStyle = 'background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981;';
-                  textCol = 'color: #10b981;';
-                } else if (status === 'Absent') {
-                  bgStyle = 'background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444;';
-                  textCol = 'color: #ef4444;';
-                } else if (status === 'Holiday') {
-                  bgStyle = 'background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6;';
-                  textCol = 'color: #3b82f6;';
-                } else if (status === 'Sunday') {
-                  bgStyle = 'background: rgba(100, 116, 139, 0.2);';
-                  textCol = 'color: #94a3b8;';
-                }
-
-                calContainer.innerHTML += `<div style="${bgStyle} ${textCol} padding: 8px; text-align: center; border-radius: 6px; font-size: 12px;" title="${dateStr}: ${status}">${shortDate}<br><span style="font-size:9px;">${status.slice(0,3)}</span></div>`;
+                grid.innerHTML += `<div style="background:${bg}; color:${color}; padding:6px; text-align:center; border-radius:4px; font-size:11px;" title="${date}: ${status}">${date.slice(8)}<br><span style="font-size:8px;">${status.slice(0,3)}</span></div>`;
               });
             }
           }
 
-          // Render Live Class Box
           if (data.activeClass) {
-            activeClassIdVal = data.activeClass._id;
-            activeClassTitleVal = data.activeClass.title;
-            document.getElementById('liveClassSection').style.display = 'block';
-            document.getElementById('liveClassTitleText').innerText = data.activeClass.title;
-            document.getElementById('liveClassLinkBtn').href = data.activeClass.meetLink;
+            currentLiveClassId = data.activeClass._id;
+            currentLiveClassTitle = data.activeClass.title;
+            document.getElementById('liveClassBox').style.display = 'block';
+            document.getElementById('liveClassTitle').innerText = data.activeClass.title;
+            document.getElementById('liveClassBtn').href = data.activeClass.meetLink;
           } else {
-            document.getElementById('liveClassSection').style.display = 'none';
+            document.getElementById('liveClassBox').style.display = 'none';
           }
 
-          // Render Leaderboard
+          const lb = document.getElementById('leaderboardList');
+          lb.innerHTML = '';
           if (data.leaderboard) {
-            const lbContainer = document.getElementById('leaderboardListContainer');
-            lbContainer.innerHTML = '';
-            data.leaderboard.forEach((s, idx) => {
-              lbContainer.innerHTML += `
-                <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
-                  <span><strong>#${idx+1}</strong> ${s.username}</span>
-                  <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span style="color:#f59e0b;">${s.xp} XP</span></span>
-                </div>`;
+            data.leaderboard.forEach((s, i) => {
+              lb.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>#${i+1} ${s.username}</span><span>${s.xp} XP | ${s.attendancePercentage}%</span></div>`;
             });
           }
 
-          // Render Tests
+          const tests = document.getElementById('testsList');
+          tests.innerHTML = '';
+          const submitted = new Set(data.submittedResults || []);
           if (data.tests) {
-            const testContainer = document.getElementById('testsListContainer');
-            testContainer.innerHTML = '';
-            const submittedSet = new Set(data.submittedResults || []);
-
-            if (data.tests.length === 0) {
-              testContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No tests available right now.</p>';
-            } else {
-              data.tests.forEach(test => {
-                const isDone = submittedSet.has(test._id);
-                let actionHtml = '';
-                if (isDone) {
-                  actionHtml = '<span style="color:#10b981; font-weight:bold; font-size:12px;">✅ Completed</span>';
-                } else if (test.isUnlocked) {
-                  actionHtml = `<a href="exam.html?id=${test._id}" style="background:#38bdf8; color:#0f172a; padding:6px 12px; border-radius:6px; font-weight:bold; text-decoration:none; font-size:12px;">Take Test</a>`;
-                } else {
-                  actionHtml = '<span style="color:#ef4444; font-size:12px;">🔒 Locked / Expired</span>';
-                }
-
-                testContainer.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
-                    <div><strong>${test.title}</strong><br><span style="font-size:11px; color:#94a3b8;">${test.statusMessage}</span></div>
-                    <div>${actionHtml}</div>
-                  </div>`;
-              });
-            }
+            data.tests.forEach(t => {
+              let action = submitted.has(t._id) ? '<span style="color:#10b981;">Completed</span>' : (t.isUnlocked ? `<a href="exam.html?id=${t._id}" style="color:#38bdf8;">Take Test</a>` : '<span style="color:#ef4444;">Locked</span>');
+              tests.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>${t.title}</span><span>${action}</span></div>`;
+            });
           }
 
-          // Render Notes
+          const notes = document.getElementById('notesList');
+          notes.innerHTML = '';
           if (data.notes) {
-            const notesContainer = document.getElementById('notesListContainer');
-            notesContainer.innerHTML = '';
-            if (data.notes.length === 0) {
-              notesContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No study resources published yet.</p>';
-            } else {
-              data.notes.forEach(note => {
-                notesContainer.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
-                    <span>📄 ${note.title}</span>
-                    <a href="${note.contentOrLink}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">View Resource</a>
-                  </div>`;
-              });
-            }
+            data.notes.forEach(n => {
+              notes.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>${n.title}</span><a href="${n.contentOrLink}" target="_blank" style="color:#38bdf8;">View</a></div>`;
+            });
           }
         }
       } catch (err) {
-        console.error("Student portal sync error:", err);
+        console.error(err);
       }
     }
 
-    async function joinLiveClass() {
-      const userId = localStorage.getItem('userId');
-      if (activeClassIdVal && userId) {
+    async function markAttendance() {
+      const studentId = localStorage.getItem('userId');
+      if (currentLiveClassId && studentId) {
         await fetch('/api/student/join-class', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, classId: activeClassIdVal, classTitle: activeClassTitleVal })
+          body: JSON.stringify({ userId: studentId, classId: currentLiveClassId, classTitle: currentLiveClassTitle })
         });
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadStudentPortalData();
-      setInterval(loadStudentPortalData, 15000);
+      loadStudentData();
+      setInterval(loadStudentData, 15000);
     });
   </script>
 </body>
