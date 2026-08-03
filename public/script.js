@@ -18,30 +18,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const observer = new MutationObserver(fixTouchEvents);
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // If we are on the student portal dashboard, render teacher remarks if present
-  const studentRemarksBox = document.getElementById('studentLiveRemarksContainer');
+  // Live Auto-Refresh Polling for Student Portal (Every 15s)
   const currentStudentId = localStorage.getItem('userId');
   const userRole = localStorage.getItem('role');
-
-  if (studentRemarksBox && currentStudentId && userRole === 'student') {
-    fetch(`/api/student/classroom-data/${currentStudentId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.student && data.student.remarks && data.student.remarks.trim() !== '') {
-          studentRemarksBox.style.display = 'block';
-          studentRemarksBox.innerHTML = `
-            <div style="background:rgba(56,189,248,0.15); border:1px solid #38bdf8; padding:15px; border-radius:12px; margin-bottom:20px;">
-              <h4 style="margin:0 0 6px 0; color:#38bdf8; font-size:15px;">💬 Teacher's Remarks (For Parents):</h4>
-              <p style="margin:0; font-size:14px; line-height:1.4; color:#f8fafc;">${data.student.remarks}</p>
-            </div>
-          `;
-        }
-      })
-      .catch(err => console.error(err));
+  if (currentStudentId && userRole === 'student') {
+    setInterval(() => {
+      fetch(`/api/student/classroom-data/${currentStudentId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && typeof loadStudentData === 'function') {
+            loadStudentData();
+          }
+        })
+        .catch(err => console.error("Auto-refresh sync error:", err));
+    }, 15000);
   }
 });
 
-// Global Question Field Generator for Assessment Creation
+// Global Question Field Generator with Separate Option Inputs
 function addQuestionField() {
   const container = document.getElementById('questionsContainer');
   if (!container) return;
@@ -52,23 +46,34 @@ function addQuestionField() {
   const div = document.createElement('div');
   div.className = 'input-group';
   div.style.background = 'rgba(30,41,59,0.5)';
-  div.style.padding = '12px';
+  div.style.padding = '15px';
   div.style.borderRadius = '10px';
-  div.style.marginBottom = '12px';
+  div.style.marginBottom = '15px';
   div.style.border = '1px solid rgba(255,255,255,0.05)';
 
   div.innerHTML = `
-    <label style="color:#38bdf8;">Question ${qId}</label>
-    <input type="text" id="qText_${qId}" placeholder="Enter question text" style="margin-bottom:8px;" />
-    <label style="font-size:12px; color:#94a3b8;">Options (Comma separated or 4 lines)</label>
-    <input type="text" id="qOpts_${qId}" placeholder="Option A, Option B, Option C, Option D" style="margin-bottom:8px;" />
-    <label style="font-size:12px; color:#94a3b8;">Correct Answer</label>
-    <input type="text" id="qAns_${qId}" placeholder="Must match one exact option string" />
+    <label style="color:#38bdf8; font-weight:bold; margin-bottom:6px; display:block;">Question ${qId}</label>
+    <input type="text" id="qText_${qId}" placeholder="Enter question text" style="margin-bottom:10px;" />
+    
+    <label style="font-size:12px; color:#94a3b8; margin-bottom:4px; display:block;">Option 1</label>
+    <input type="text" id="qOpt1_${qId}" placeholder="Enter Option A" style="margin-bottom:8px;" />
+
+    <label style="font-size:12px; color:#94a3b8; margin-bottom:4px; display:block;">Option 2</label>
+    <input type="text" id="qOpt2_${qId}" placeholder="Enter Option B" style="margin-bottom:8px;" />
+
+    <label style="font-size:12px; color:#94a3b8; margin-bottom:4px; display:block;">Option 3</label>
+    <input type="text" id="qOpt3_${qId}" placeholder="Enter Option C" style="margin-bottom:8px;" />
+
+    <label style="font-size:12px; color:#94a3b8; margin-bottom:4px; display:block;">Option 4</label>
+    <input type="text" id="qOpt4_${qId}" placeholder="Enter Option D" style="margin-bottom:10px;" />
+
+    <label style="font-size:12px; color:#38bdf8; margin-bottom:4px; display:block;">Correct Answer (Exact match to one option above)</label>
+    <input type="text" id="qAns_${qId}" placeholder="e.g. Option A text" />
   `;
   container.appendChild(div);
 }
 
-// Global Assessment Test Submission Publisher
+// Global Assessment Test Submission Publisher with Separate Option Fields
 async function submitNewTest() {
   const classroomId = document.getElementById('testClassSelect').value;
   const title = document.getElementById('testTitle').value;
@@ -80,11 +85,20 @@ async function submitNewTest() {
   const questions = [];
   for (let i = 1; i <= (window.questionCount || 0); i++) {
     const qTextEl = document.getElementById(`qText_${i}`);
-    const qOptsEl = document.getElementById(`qOpts_${i}`);
+    const opt1 = document.getElementById(`qOpt1_${i}`);
+    const opt2 = document.getElementById(`qOpt2_${i}`);
+    const opt3 = document.getElementById(`qOpt3_${i}`);
+    const opt4 = document.getElementById(`qOpt4_${i}`);
     const qAnsEl = document.getElementById(`qAns_${i}`);
 
     if (qTextEl && qTextEl.value.trim() !== '') {
-      const options = qOptsEl.value.split(',').map(o => o.trim()).filter(o => o !== '');
+      const options = [
+        opt1 ? opt1.value.trim() : '',
+        opt2 ? opt2.value.trim() : '',
+        opt3 ? opt3.value.trim() : '',
+        opt4 ? opt4.value.trim() : ''
+      ].filter(o => o !== '');
+
       questions.push({
         questionText: qTextEl.value.trim(),
         options: options,

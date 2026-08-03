@@ -61,8 +61,8 @@
 
     <hr>
 
-    <h3>💬 Teacher Remarks for Parents</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Add custom notes/feedback for any student. This will show on their live portal and in downloaded reports.</p>
+    <h3>💬 Teacher Remarks for Reports</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Add custom notes/feedback for any student. This will appear inside downloaded weekly reports.</p>
     <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
       <div class="input-group">
         <label>Select Student</label>
@@ -544,7 +544,7 @@
         populateExistingRemark();
       } else {
         adminLbContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No leaderboard data available.</p>';
-        approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;"></p>';
+        approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No approved students found.</p>';
       }
 
       const resResults = await fetch('/api/admin/results');

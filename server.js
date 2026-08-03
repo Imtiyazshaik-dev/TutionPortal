@@ -112,12 +112,10 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
-// --- BULLETPROOF ATTENDANCE CALCULATION ENGINE ---
 async function calculateAttendanceStats(student) {
   try {
     const termStart = new Date('2026-08-01');
     termStart.setHours(0,0,0,0);
-
     const today = new Date('2026-08-03');
     today.setHours(0,0,0,0);
 
@@ -136,7 +134,6 @@ async function calculateAttendanceStats(student) {
       const dateStr = `${year}-${month}-${day}`;
       
       const dayOfWeek = curr.getDay();
-
       if (dayOfWeek === 0) {
         calendarMap[dateStr] = 'Sunday';
       } else if (holidaySet.has(dateStr)) {
@@ -157,7 +154,6 @@ async function calculateAttendanceStats(student) {
     const percentage = totalWorkingDays > 0 ? Number(((totalPresent / totalWorkingDays) * 100).toFixed(1)) : 100.0;
     return { percentage, totalWorkingDays, totalPresent, calendarMap };
   } catch (err) {
-    console.error("Attendance calculation error:", err);
     return { percentage: 0, totalWorkingDays: 0, totalPresent: 0, calendarMap: {} };
   }
 }
@@ -186,9 +182,7 @@ async function checkAndAwardBadges(studentId) {
   if (perfectTests) award("⭐ Perfectionist (10/10 XP)");
 
   const attStats = await calculateAttendanceStats(student);
-  if (attStats.totalPresent >= 3) {
-    award("📚 Consistent Learner (3+ Classes)");
-  }
+  if (attStats.totalPresent >= 3) award("📚 Consistent Learner (3+ Classes)");
 
   if (updated) {
     student.badges = currentBadges;
@@ -207,7 +201,6 @@ async function seedDefaultAdmin() {
         status: 'approved',
         studentIdTag: 'ADMIN-001'
       });
-      console.log("Default master admin created.");
     }
   } catch (err) { console.error(err); }
 }
@@ -246,40 +239,6 @@ async function buildMasterReportHtml() {
   }
   masterHtml += `</div></body></html>`;
   return masterHtml;
-}
-
-async function buildStudentReportHtml(studentId) {
-  const student = await Student.findById(studentId);
-  if (!student) return '';
-  const attStats = await calculateAttendanceStats(student);
-
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Your Weekly Performance Report</title>
-      <style>
-        body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; padding: 40px 20px; }
-        .container { max-width: 700px; margin: auto; background: rgba(15, 23, 42, 0.85); padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.08); }
-        h1 { color: #38bdf8; text-align: center; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h1>⭐ Your Weekly Performance Report</h1>
-        <p style="text-align:center; color:#94a3b8;">Student: <strong>${student.username}</strong> (${student.studentIdTag || 'N/A'})</p>
-        <p style="text-align:center; font-size:24px; color:#f59e0b;">${student.xp} XP | Attendance: <strong style="color:#10b981;">${attStats.percentage}%</strong></p>
-        <h3>🏅 Badges:</h3>
-        <p>${(student.badges || []).join(', ') || 'No badges yet.'}</p>
-        <div style="background:rgba(56,189,248,0.15); padding:15px; border-radius:12px; border-left:4px solid #38bdf8; margin-top:20px;">
-          <h3 style="margin-top:0; color:#38bdf8;">💬 Teacher's Remarks (For Parents):</h3>
-          <p style="font-size:15px; line-height:1.5; margin-bottom:0;">${student.remarks || 'No remarks provided this week.'}</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
 }
 
 // --- API ROUTES ---
@@ -477,9 +436,7 @@ app.post('/api/admin/enroll', async (req, res) => {
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
       let cleanPhone = phone.replace(/\D/g, '');
-      if (cleanPhone.length === 10) {
-        cleanPhone = '91' + cleanPhone;
-      }
+      if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
       const message = `Hey! You have been enrolled in Tuition Portal.\nYour login credentials:\nUsername: ${username}\nPassword: ${password}`;
       whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     }
@@ -507,7 +464,6 @@ app.delete('/api/admin/student/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// --- ADMIN PASSWORD RESET ROUTE ---
 app.post('/api/admin/reset-password', async (req, res) => {
   try {
     const { studentId, newPassword } = req.body;
@@ -519,7 +475,6 @@ app.post('/api/admin/reset-password', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// --- ADMIN REMARKS ROUTES (SAVE & DELETE) ---
 app.post('/api/admin/remarks', async (req, res) => {
   try {
     const { studentId, remarks } = req.body;
@@ -541,7 +496,6 @@ app.delete('/api/admin/remarks/:studentId', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// --- ADMIN HOLIDAY ROUTES ---
 app.post('/api/admin/holiday', async (req, res) => {
   try {
     const { date, title } = req.body;
@@ -757,8 +711,8 @@ app.get('/api/reports/download/:id', async (req, res) => {
   try {
     const report = await WeeklyReport.findById(req.params.id);
     if (!report) return res.status(404).send('Report not found.');
-    let htmlOutput = report.reportType === 'master' ? await buildMasterReportHtml() : await buildStudentReportHtml(report.studentId);
-    res.setHeader('Content-disposition', `attachment; filename=${report.reportType}-weekly-report.html`);
+    let htmlOutput = await buildMasterReportHtml();
+    res.setHeader('Content-disposition', `attachment; filename=master-weekly-report.html`);
     res.setHeader('Content-type', 'text/html');
     res.send(htmlOutput);
   } catch (err) { res.status(500).send('Error downloading report.'); }
