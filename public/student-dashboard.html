@@ -3,208 +3,220 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Portal - Tuition Hub</title>
+  <title>Student Dashboard - Tuition Portal</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    :root {
-      --bg-main: #090d16;
-      --card-bg: rgba(15, 23, 42, 0.75);
-      --border-color: rgba(255, 255, 255, 0.08);
-      --accent-blue: #38bdf8;
-      --accent-green: #10b981;
-      --accent-purple: #8b5cf6;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
+    .portal-section {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 20px;
     }
-
-    body { background-color: var(--bg-main); color: var(--text-main); font-family: 'Outfit', sans-serif; margin: 0; padding: 0; }
-    .portal-container { max-width: 1050px; margin: 30px auto; padding: 0 20px; }
-    .portal-header { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); padding: 20px 30px; border-radius: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-    .portal-header h2 { margin: 0 0 5px 0; font-size: 22px; background: linear-gradient(135deg, #fff, var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
-    .btn-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 18px; border-radius: 10px; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: 500; }
-    .btn-danger { color: #ef4444 !important; }
-    .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
-    @media(min-width: 850px) { .dashboard-grid { grid-template-columns: 1.8fr 1fr; } }
-    .card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); padding: 24px; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
-    .card h3 { margin-top: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px; }
-    .item-row { background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border-color); padding: 14px 18px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-    .action-btn { padding: 8px 16px; font-size: 13px; border-radius: 8px; cursor: pointer; border: none; color: white; background: linear-gradient(135deg, #0284c7, #2563eb); font-weight: 600; }
-    
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 15px; }
-    .cal-day { padding: 8px 4px; text-align: center; border-radius: 8px; font-size: 11px; font-weight: 600; background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.03); }
-    .cal-present { background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.4); }
-    .cal-absent { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
-    .cal-sunday { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; }
-    .cal-holiday { background: rgba(245, 158, 11, 0.25); color: #f59e0b; border-color: rgba(245, 158, 11, 0.5); }
-
-    .badge-pill { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-blue); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; margin: 4px; }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .calendar-day {
+      background: rgba(30, 41, 59, 0.5);
+      padding: 8px;
+      text-align: center;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    .day-present { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+    .day-absent { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+    .day-holiday { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #3b82f6; }
+    .day-sunday { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
   </style>
 </head>
 <body>
-  <div class="portal-container">
-    
-    <div class="portal-header">
+  <div class="container" style="max-width: 700px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <div>
-        <h2 id="welcomeTitle">Welcome, Student</h2>
-        <p id="studentTagDisplay" style="color: var(--accent-blue); font-size: 13px; margin: 0; font-weight: 500;"></p>
+        <h2 id="welcomeText" style="margin: 0; color: #38bdf8;">Student Portal</h2>
+        <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;"></p>
       </div>
-      <div class="header-actions">
-        <a href="index.html" onclick="localStorage.clear()" class="btn-glass btn-danger">Log Out</a>
+      <a href="index.html" onclick="localStorage.clear()" style="background: #ef4444; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">Log Out</a>
+    </div>
+
+    <!-- Attendance & Stats Section -->
+    <div class="portal-section">
+      <h3 style="margin-top: 0; color: #fff; font-size: 16px;">📅 Attendance & Calendar</h3>
+      <p id="attendanceSummaryText" style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">Loading attendance stats...</p>
+      <div id="calendarContainer" class="calendar-grid"></div>
+    </div>
+
+    <!-- Live Class Section -->
+    <div id="liveClassSection" class="portal-section" style="display:none;">
+      <h3 style="margin-top: 0; color: #10b981; font-size: 16px;">🔴 Live Class Active</h3>
+      <p id="liveClassTitleText" style="font-size: 14px; margin-bottom: 10px;"></p>
+      <a id="liveClassLinkBtn" href="#" target="_blank" onclick="joinLiveClass()" style="display:inline-block; background:#10b981; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Join Google Meet & Mark Attendance</a>
+    </div>
+
+    <!-- Leaderboard & XP -->
+    <div class="portal-section">
+      <h3 style="margin-top: 0; color: #f59e0b; font-size: 16px;">🏆 Cohort Leaderboard & XP</h3>
+      <div id="leaderboardListContainer" style="max-height: 180px; overflow-y: auto;">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading leaderboard...</p>
       </div>
     </div>
 
-    <div class="dashboard-grid">
-      <div>
-        <div id="liveClassBanner" class="card" style="display:none; background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15)); border-color: var(--accent-green);">
-          <h3 style="color: var(--accent-green);">🔴 Live Class Active Now</h3>
-          <p id="liveClassTitle" style="font-size: 16px; font-weight: 600; margin-bottom: 15px;"></p>
-          <div style="display: flex; gap: 12px;">
-            <a id="liveClassMeetLink" href="#" target="_blank" style="background: var(--accent-green); color: #fff; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 13px;">Join Google Meet</a>
-            <button onclick="requestAttendance()" class="action-btn" style="background: #3b82f6;">Request Attendance</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>📝 Assessment Test Queue</h3>
-          <div id="testsListContainer"><p style="color: var(--text-muted); font-size: 14px;">Loading tests...</p></div>
-        </div>
-
-        <div class="card">
-          <h3>📂 Study Notes & Resources</h3>
-          <div id="notesListContainer"><p style="color: var(--text-muted); font-size: 14px;">Loading notes...</p></div>
-        </div>
-
-        <div class="card">
-          <h3>📅 Attendance History Calendar</h3>
-          <div style="display: flex; gap: 15px; font-size: 11px; margin-bottom: 10px; color: var(--text-muted);">
-            <span>🟩 Present</span><span>🟥 Absent</span><span>⭐ Holiday</span><span>⚪ Sunday (S)</span>
-          </div>
-          <div id="calendarGridContainer" class="calendar-grid"></div>
-        </div>
+    <!-- Assessment Tests -->
+    <div class="portal-section">
+      <h3 style="margin-top: 0; color: #38bdf8; font-size: 16px;">📝 Assessment Tests</h3>
+      <div id="testsListContainer">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading tests...</p>
       </div>
+    </div>
 
-      <div>
-        <div class="card" style="text-align: center;">
-          <h3 style="justify-content: center; color: var(--accent-blue);">⭐ Performance Stats</h3>
-          <div style="display: flex; justify-content: space-around; margin: 15px 0;">
-            <div>
-              <span id="statXp" style="font-size: 26px; font-weight: bold; color: #f59e0b;">0</span>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Total XP</p>
-            </div>
-            <div>
-              <span id="statAttendance" style="font-size: 26px; font-weight: bold; color: var(--accent-green);">100%</span>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Attendance</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3 style="color: #f59e0b;">🏅 My Achievements</h3>
-          <div id="badgesContainer" style="display: flex; flex-wrap: wrap; gap: 4px; min-height: 50px; align-items: center;">
-            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet.</p>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>🏆 Cohort Leaderboard</h3>
-          <div id="leaderboardContainer" style="max-height: 250px; overflow-y: auto;">
-            <p style="color: var(--text-muted); font-size: 13px;">Loading leaderboard...</p>
-          </div>
-        </div>
+    <!-- Study Notes -->
+    <div class="portal-section">
+      <h3 style="margin-top: 0; color: #a855f7; font-size: 16px;">📚 Study Resources & Notes</h3>
+      <div id="notesListContainer">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading study notes...</p>
       </div>
     </div>
   </div>
 
-  <script src="script.js"></script>
   <script>
-    const studentId = localStorage.getItem('userId');
-    let activeLiveClassId = null;
-    let activeLiveClassTitle = '';
+    let activeClassIdVal = null;
+    let activeClassTitleVal = '';
 
-    if (!studentId) { window.location.href = "index.html"; }
+    async function loadStudentPortalData() {
+      const studentId = localStorage.getItem('userId');
+      const role = localStorage.getItem('role');
 
-    async function fetchStudentClassroomData() {
+      if (!studentId || role !== 'student') {
+        window.location.href = 'index.html';
+        return;
+      }
+
       try {
         const res = await fetch(`/api/student/classroom-data/${studentId}`);
         const data = await res.json();
-        if (!data.success) return;
 
-        const student = data.student;
-        document.getElementById('welcomeTitle').innerText = `Welcome, ${student.username}`;
-        document.getElementById('studentTagDisplay').innerText = `ID: ${student.studentIdTag || 'N/A'} | Cohort: ${data.classroom ? data.classroom.name : 'Unassigned'}`;
-        document.getElementById('statXp').innerText = student.xp || 0;
-        document.getElementById('statAttendance').innerText = `${data.attendanceStats.percentage}%`;
+        if (data.success && data.student) {
+          document.getElementById('welcomeText').innerText = `Welcome, ${data.student.username}`;
+          document.getElementById('studentMeta').innerText = `ID Tag: ${data.student.studentIdTag || 'N/A'} | XP: ${data.student.xp} XP`;
 
-        const calContainer = document.getElementById('calendarGridContainer');
-        calContainer.innerHTML = '';
-        const calMap = data.attendanceStats.calendarMap;
-        Object.keys(calMap).sort().forEach(dateStr => {
-          const status = calMap[dateStr];
-          let cssClass = 'cal-day';
-          let label = dateStr.slice(8);
+          // Render Calendar & Attendance
+          if (data.attendanceStats) {
+            const stats = data.attendanceStats;
+            document.getElementById('attendanceSummaryText').innerHTML = `Overall Attendance: <strong style="color:#10b981;">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
+            
+            const calContainer = document.getElementById('calendarContainer');
+            calContainer.innerHTML = '';
+            
+            if (stats.calendarMap) {
+              Object.keys(stats.calendarMap).sort().forEach(dateStr => {
+                const status = stats.calendarMap[dateStr];
+                let cssClass = 'calendar-day';
+                let shortDate = dateStr.slice(8); // Day number e.g. "04"
 
-          if (status === 'Present') { cssClass += ' cal-present'; label += ' ✓'; }
-          else if (status === 'Absent') { cssClass += ' cal-absent'; label += ' ✗'; }
-          else if (status === 'Sunday') { cssClass += ' cal-sunday'; label += ' (S)'; }
-          else if (status === 'Holiday') { cssClass += ' cal-holiday'; label += ' 🎉'; }
+                if (status === 'Present') cssClass += ' day-present';
+                else if (status === 'Absent') cssClass += ' day-absent';
+                else if (status === 'Holiday') cssClass += ' day-holiday';
+                else if (status === 'Sunday') cssClass += ' day-sunday';
 
-          calContainer.innerHTML += `<div class="${cssClass}" title="${dateStr}: ${status}">${label}</div>`;
+                calContainer.innerHTML += `<div class="${cssClass}" title="${dateStr}: ${status}">${shortDate}<br><span style="font-size:9px;">${status.slice(0,3)}</span></div>`;
+              });
+            }
+          }
+
+          // Render Live Class Box
+          if (data.activeClass) {
+            activeClassIdVal = data.activeClass._id;
+            activeClassTitleVal = data.activeClass.title;
+            document.getElementById('liveClassSection').style.display = 'block';
+            document.getElementById('liveClassTitleText').innerText = data.activeClass.title;
+            document.getElementById('liveClassLinkBtn').href = data.activeClass.meetLink;
+          } else {
+            document.getElementById('liveClassSection').style.display = 'none';
+          }
+
+          // Render Leaderboard
+          if (data.leaderboard) {
+            const lbContainer = document.getElementById('leaderboardListContainer');
+            lbContainer.innerHTML = '';
+            data.leaderboard.forEach((s, idx) => {
+              lbContainer.innerHTML += `
+                <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
+                  <span><strong>#${idx+1}</strong> ${s.username}</span>
+                  <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span style="color:#f59e0b;">${s.xp} XP</span></span>
+                </div>`;
+            });
+          }
+
+          // Render Tests
+          if (data.tests) {
+            const testContainer = document.getElementById('testsListContainer');
+            testContainer.innerHTML = '';
+            const submittedSet = new Set(data.submittedResults || []);
+
+            if (data.tests.length === 0) {
+              testContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No tests available right now.</p>';
+            } else {
+              data.tests.forEach(test => {
+                const isDone = submittedSet.has(test._id);
+                let actionHtml = '';
+                if (isDone) {
+                  actionHtml = '<span style="color:#10b981; font-weight:bold; font-size:12px;">✅ Completed</span>';
+                } else if (test.isUnlocked) {
+                  actionHtml = `<a href="exam.html?id=${test._id}" style="background:#38bdf8; color:#0f172a; padding:6px 12px; border-radius:6px; font-weight:bold; text-decoration:none; font-size:12px;">Take Test</a>`;
+                } else {
+                  actionHtml = '<span style="color:#ef4444; font-size:12px;">🔒 Locked / Expired</span>';
+                }
+
+                testContainer.innerHTML += `
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
+                    <div><strong>${test.title}</strong><br><span style="font-size:11px; color:#94a3b8;">${test.statusMessage}</span></div>
+                    <div>${actionHtml}</div>
+                  </div>`;
+              });
+            }
+          }
+
+          // Render Notes
+          if (data.notes) {
+            const notesContainer = document.getElementById('notesListContainer');
+            notesContainer.innerHTML = '';
+            if (data.notes.length === 0) {
+              notesContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No study resources published yet.</p>';
+            } else {
+              data.notes.forEach(note => {
+                notesContainer.innerHTML += `
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px;">
+                    <span>📄 ${note.title}</span>
+                    <a href="${note.contentOrLink}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">View Resource</a>
+                  </div>`;
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Student portal sync error:", err);
+      }
+    }
+
+    async function joinLiveClass() {
+      const userId = localStorage.getItem('userId');
+      if (activeClassIdVal && userId) {
+        await fetch('/api/student/join-class', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, classId: activeClassIdVal, classTitle: activeClassTitleVal })
         });
-
-        const badgesContainer = document.getElementById('badgesContainer');
-        badgesContainer.innerHTML = '';
-        if (student.badges && student.badges.length > 0) {
-          student.badges.forEach(b => { badgesContainer.innerHTML += `<span class="badge-pill">${b}</span>`; });
-        } else {
-          badgesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 13px; margin: 0;">No badges unlocked yet.</p>`;
-        }
-
-        if (data.activeClass) {
-          activeLiveClassId = data.activeClass._id;
-          activeLiveClassTitle = data.activeClass.title;
-          document.getElementById('liveClassBanner').style.display = 'block';
-          document.getElementById('liveClassTitle').innerText = data.activeClass.title;
-          document.getElementById('liveClassMeetLink').href = data.activeClass.meetLink;
-        }
-
-        const testsContainer = document.getElementById('testsListContainer');
-        testsContainer.innerHTML = '';
-        if (data.tests && data.tests.length > 0) {
-          data.tests.forEach(test => {
-            const isSubmitted = data.submittedResults.includes(test._id.toString());
-            let btnHTML = isSubmitted ? `<button class="action-btn" disabled style="background:#475569;">Attempted</button>` : `<button class="action-btn" onclick="loadTestExam('${test._id}')">Take Test</button>`;
-            testsContainer.innerHTML += `<div class="item-row"><div><strong>${test.title}</strong><br><span style="font-size:12px; color:var(--text-muted);">${test.statusMessage}</span></div><div>${btnHTML}</div></div>`;
-          });
-        } else { testsContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px;">No assessment tests available.</p>`; }
-
-        const notesContainer = document.getElementById('notesListContainer');
-        notesContainer.innerHTML = '';
-        if (data.notes && data.notes.length > 0) {
-          data.notes.forEach(note => {
-            notesContainer.innerHTML += `<div class="item-row"><div><strong>${note.title}</strong></div><a href="${note.contentOrLink}" target="_blank" class="action-btn" style="background:#0284c7; text-decoration:none; padding:6px 12px; font-size:12px;">View</a></div>`;
-          });
-        } else { notesContainer.innerHTML = `<p style="color: var(--text-muted); font-size: 14px;">No study notes.</p>`; }
-
-        const lbContainer = document.getElementById('leaderboardContainer');
-        lbContainer.innerHTML = '';
-        if (data.leaderboard && data.leaderboard.length > 0) {
-          data.leaderboard.forEach((lbStudent, index) => {
-            const isMe = lbStudent._id === studentId;
-            lbContainer.innerHTML += `<div style="display: flex; justify-content: space-between; padding: 10px; background: ${isMe ? 'rgba(56,189,248,0.1)' : 'transparent'}; border-bottom: 1px solid var(--border-color); font-size: 13px;"><span><strong>#${index + 1}</strong> ${lbStudent.username}</span><span><strong style="color:#10b981;">${lbStudent.attendancePercentage}%</strong> | ${lbStudent.xp} XP</span></div>`;
-          });
-        }
-      } catch (err) { console.error(err); }
+      }
     }
 
-    async function requestAttendance() {
-      if (!activeLiveClassId) return;
-      const res = await fetch('/api/student/join-class', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: studentId, classId: activeLiveClassId, classTitle: activeLiveClassTitle }) });
-      const data = await res.json();
-      alert(data.message);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => { fetchStudentClassroomData(); });
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStudentPortalData();
+      // Auto-refresh polling every 15 seconds for real-time calendar and XP updates
+      setInterval(loadStudentPortalData, 15000);
+    });
   </script>
 </body>
 </html>
