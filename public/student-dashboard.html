@@ -18,6 +18,10 @@
     .day-sunday { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
     .btn-action { background: #38bdf8; color: #0f172a; padding: 6px 14px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 13px; display: inline-block; }
     .btn-action:hover { background: #7dd3fc; }
+    .xp-red { color: #ef4444; font-weight: bold; }
+    .xp-yellow { color: #f59e0b; font-weight: bold; }
+    .xp-green { color: #10b981; font-weight: bold; }
+    .badge-chip { display: inline-block; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin: 4px; }
   </style>
 </head>
 <body>
@@ -37,6 +41,14 @@
       <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="background: #10b981; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">Join Class & Mark Attendance</a>
     </div>
 
+    <!-- Badges Section -->
+    <div class="card">
+      <h3>🏅 Unlocked Achievements & Badges</h3>
+      <div id="badgesContainer">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading badges...</p>
+      </div>
+    </div>
+
     <!-- Attendance & Calendar -->
     <div class="card">
       <h3>📅 Attendance & Calendar</h3>
@@ -46,7 +58,10 @@
 
     <!-- Cohort Leaderboard -->
     <div class="card">
-      <h3>🏆 Cohort Leaderboard</h3>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0;">🏆 Cohort Leaderboard</h3>
+        <span id="studentRankBadge" style="font-size: 12px; background: rgba(56,189,248,0.15); color: #38bdf8; padding: 4px 10px; border-radius: 20px; font-weight: bold; border: 1px solid rgba(56,189,248,0.3);">Your Rank: --</span>
+      </div>
       <div id="leaderboardList" style="max-height: 180px; overflow-y: auto;">
         <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading leaderboard...</p>
       </div>
@@ -73,6 +88,12 @@
     let currentLiveClassId = null;
     let currentLiveClassTitle = '';
 
+    function getXpColorClass(xp) {
+      if (xp < 30) return 'xp-red';
+      if (xp > 45) return 'xp-green';
+      return 'xp-yellow';
+    }
+
     async function loadStudentData() {
       const studentId = localStorage.getItem('userId');
       if (!studentId) {
@@ -87,6 +108,18 @@
         if (data.success && data.student) {
           document.getElementById('studentWelcome').innerText = `Welcome, ${data.student.username}`;
           document.getElementById('studentMeta').innerText = `ID Tag: ${data.student.studentIdTag || 'N/A'} | XP: ${data.student.xp} XP`;
+
+          // Render Badges
+          const badgeContainer = document.getElementById('badgesContainer');
+          badgeContainer.innerHTML = '';
+          const badges = data.student.badges || [];
+          if (badges.length > 0) {
+            badges.forEach(badge => {
+              badgeContainer.innerHTML += `<span class="badge-chip">✨ ${badge}</span>`;
+            });
+          } else {
+            badgeContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No badges unlocked yet. Complete tasks or earn XP to unlock achievements!</p>';
+          }
 
           // Attendance & Calendar
           if (data.attendanceStats) {
@@ -122,15 +155,23 @@
             document.getElementById('liveClassBox').style.display = 'none';
           }
 
-          // Leaderboard
+          // Leaderboard & Rank
           const lb = document.getElementById('leaderboardList');
           lb.innerHTML = '';
           if (data.leaderboard) {
+            const userIndex = data.leaderboard.findIndex(s => s._id === studentId);
+            if (userIndex !== -1) {
+              document.getElementById('studentRankBadge').innerText = `Your Rank: #${userIndex + 1}`;
+            }
+
             data.leaderboard.forEach((s, i) => {
+              const isCurrentStudent = s._id === studentId;
+              const rowBg = isCurrentStudent ? 'background: rgba(56, 189, 248, 0.1); padding: 4px 6px; border-radius: 6px;' : '';
+              
               lb.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                  <span><strong>#${i+1}</strong> ${s.username}</span>
-                  <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span style="color:#f59e0b;">${s.xp} XP</span></span>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); ${rowBg}">
+                  <span><strong>#${i+1}</strong> ${s.username} ${isCurrentStudent ? '(You)' : ''}</span>
+                  <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
                 </div>`;
             });
           }
@@ -195,7 +236,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       loadStudentData();
-      setInterval(loadStudentData, 15000); // Polling auto-refresh every 15 seconds
+      setInterval(loadStudentData, 3000);
     });
   </script>
 </body>
