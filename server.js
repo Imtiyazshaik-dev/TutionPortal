@@ -519,7 +519,7 @@ app.post('/api/admin/reset-password', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// --- ADMIN REMARKS ROUTE ---
+// --- ADMIN REMARKS ROUTES (SAVE & DELETE) ---
 app.post('/api/admin/remarks', async (req, res) => {
   try {
     const { studentId, remarks } = req.body;
@@ -528,6 +528,16 @@ app.post('/api/admin/remarks', async (req, res) => {
     student.remarks = remarks;
     await student.save();
     res.json({ success: true, message: 'Teacher remarks saved successfully!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+app.delete('/api/admin/remarks/:studentId', async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+    student.remarks = '';
+    await student.save();
+    res.json({ success: true, message: 'Teacher remarks deleted successfully!' });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 

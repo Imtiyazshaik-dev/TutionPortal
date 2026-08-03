@@ -3,27 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tuition Portal - Login</title>
+  <title>Student Portal - Tuition Portal</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container" style="max-width: 400px; margin-top: 80px;">
-    <h2>Tuition Portal Login</h2>
-    <p>Sign in to access your classroom cohort, live sessions, study materials, and assessments.</p>
+  <div class="container" style="max-width: 650px;">
+    <h2>Student Dashboard</h2>
+    <p id="welcomeText">Welcome to your classroom portal.</p>
 
-    <form id="authForm">
-      <div class="input-group">
-        <label>Username</label>
-        <input type="text" id="username" placeholder="Enter your username" required />
-      </div>
-      <div class="input-group">
-        <label>Password</label>
-        <input type="password" id="password" placeholder="Enter your password" required />
-      </div>
-      <button type="submit">Log In</button>
-    </form>
+    <!-- Student Live Teacher Remarks Box -->
+    <div id="studentLiveRemarksContainer" style="display: none;"></div>
+
+    <div id="studentPortalContent">
+      <p style="color:#94a3b8; text-align:center;">Loading your classroom portal...</p>
+    </div>
+
+    <div style="margin-top: 30px; text-align:center;">
+      <a href="index.html" onclick="localStorage.clear()">Log Out</a>
+    </div>
   </div>
 
   <script src="script.js"></script>
+  <script>
+    const studentId = localStorage.getItem('userId');
+    const role = localStorage.getItem('role');
+
+    if (!studentId || role !== 'student') {
+      window.location.href = 'index.html';
+    }
+
+    async function loadStudentData() {
+      try {
+        const res = await fetch(`/api/student/classroom-data/${studentId}`);
+        const data = await res.json();
+
+        const container = document.getElementById('studentPortalContent');
+        const remarksBox = document.getElementById('studentLiveRemarksContainer');
+
+        if (data.success && data.student) {
+          document.getElementById('welcomeText').innerText = `Welcome back, ${data.student.username} (${data.student.studentIdTag || 'Student'})`;
+
+          // Render Live Teacher Remarks if available
+          if (data.student.remarks && data.student.remarks.trim() !== '') {
+            remarksBox.style.display = 'block';
+            remarksBox.innerHTML = `
+              <div style="background:rgba(56,189,248,0.15); border:1px solid #38bdf8; padding:15px; border-radius:12px; margin-bottom:20px;">
+                <h4 style="margin:0 0 6px 0; color:#38bdf8; font-size:15px;">💬 Teacher's Remarks (For Parents):</h4>
+                <p style="margin:0; font-size:14px; line-height:1.4; color:#f8fafc;">${data.student.remarks}</p>
+              </div>
+            `;
+          } else {
+            remarksBox.style.display = 'none';
+          }
+
+          if (!data.assigned) {
+            container.innerHTML = `
+              <div style="background:rgba(30,41,59,0.5); padding:20px; border-radius:12px; text-align:center;">
+                <h3>⏳ Approval Pending / Unassigned</h3>
+                <p style="color:#94a3b8; font-size:14px;">Your account is awaiting cohort assignment or master admin approval.</p>
+              </div>
+            `;
+            return;
+          }
+
+          // Build Main Dashboard View
+          let html = `
+            <div style="background:rgba(30,41,59,0.6); padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.05);">
+              <h3 style="margin-top:0; color:#38bdf8; font-size:16px;">🏫 Classroom: ${data.classroom.name}</h3>
+              <p style="font-size:14px; color:#94a3b8; margin-bottom:8px;">${data.classroom.description || ''}</p>
+              <div style="display:flex; justify-content:space-between; font-size:14px; background:rgba(15,23,42,0.4); padding:10px; border-radius:8px;">
+                <span>⭐ Total XP: <strong style="color:#f59e0b;">${data.student.xp}</strong></span>
+                <span>📚 Attendance: <strong style="color:#10b981;">${data.attendanceStats.percentage}%</strong></span>
+              </div>
+            </div>
+          `;
+
+          // Live Class Section
+          if (data.activeClass) {
+            html += `
+              <div style="background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(59,130,246,0.2)); padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #10b981;">
+                <h3 style="color:#10b981; margin-top:0; font-size:16px;">🔴 Live Class Active Now</h3>
+                <p style="font-size:14px; margin-bottom:10px;">${data.activeClass.title}</p>
+                <a href="${data.activeClass.meetLink}" target="_blank" onclick="requestAttendance('${data.activeClass._id}', '${data.activeClass.title}')" style="display:inline-block; background:#10b981; color:#fff; padding:8px 16px; border-radius:6px; font-weight:bold; text-decoration:none; font-size:13px;">Join Google Meet & Mark Attendance</a>
+              </div>
+            `;
+          }
+
+          // Tests Section
+          html += `<h3 style="font-size:16px;">📝 Assessment Tests</h3>`;
+          if (data.tests.length === 0) {
+            html += `<p style="color:#94a3b8; font-size:13px;">No tests published yet.</p>`;
+          } else {
+            data.tests.forEach(test => {
+              const isSubmitted = data.submittedResults.includes(test._id);
+              html += `
+                <div class="manage-list-item" style="font-size:13px;">
+                  <div><strong>${test.title}</strong><br><span style="font-size:11px; color:#94a3b8;">${test.statusMessage}</span></div>
+                  <div>
+                    ${isSubmitted ? '<span style="color:#10b981; font-weight:bold;">Submitted ✅</span>' : (test.isUnlocked ? `<a href="exam.html?id=${test._id}" style="background:#3b82f6; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; font-size:12px;">Take Test</a>` : '<span style="color:#ef4444;">Locked 🔒</span>')}
+                  </div>
+                </div>
+              `;
+            });
+          }
+
+          // Study Notes Section
+          html += `<h3 style="font-size:16px; margin-top:20px;">📚 Study Resources & Notes</h3>`;
+          if (data.notes.length === 0) {
+            html += `<p style="color:#94a3b8; font-size:13px;">No notes published yet.</p>`;
+          } else {
+            data.notes.forEach(note => {
+              html += `
+                <div class="manage-list-item" style="font-size:13px;">
+                  <span>📄 ${note.title}</span>
+                  <a href="${note.contentOrLink}" target="_blank" style="background:#0284c7; color:#fff; padding:4px 10px; border-radius:6px; text-decoration:none; font-size:12px;">Open Link</a>
+                </div>
+              `;
+            });
+          }
+
+          container.innerHTML = html;
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function requestAttendance(classId, classTitle) {
+      await fetch('/api/student/join-class', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: studentId, classId, classTitle })
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStudentData();
+      // Auto-refresh polling every 15 seconds for real-time updates
+      setInterval(loadStudentData, 15000);
+    });
+  </script>
 </body>
 </html>
