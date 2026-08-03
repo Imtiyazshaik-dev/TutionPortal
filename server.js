@@ -476,7 +476,9 @@ app.post('/api/admin/enroll', async (req, res) => {
     
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
-      whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(`Hey! You have been enrolled in Tuition Portal.\nUsername: ${username}\nPassword: ${password}`)}`;
+      const cleanPhone = phone.replace(/\D/g, '');
+      const message = `Hey! You have been enrolled in Tuition Portal.\nYour login credentials:\nUsername: ${username}\nPassword: ${password}`;
+      whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     }
     res.json({ success: true, message: 'Student enrolled!', whatsappUrl });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
