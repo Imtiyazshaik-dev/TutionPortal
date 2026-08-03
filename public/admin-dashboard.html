@@ -24,9 +24,11 @@
       cursor: pointer;
       border: none;
       color: white;
+      touch-action: manipulation;
     }
     .btn-delete { background: #ef4444; }
     .btn-approve { background: #10b981; }
+    .btn-warning { background: #f59e0b; }
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
@@ -52,14 +54,29 @@
 
     <div id="adminReportBanner" style="background:linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); padding:20px; border-radius:16px; margin-bottom:20px; border:1px solid #3b82f6; display:none;">
       <h3 style="color:#3b82f6; margin-bottom:5px;">📥 Sunday Weekly Master HTML Report Ready</h3>
-      <p style="font-size:14px; margin-bottom:15px;">Download visual weekly attendance and test results for all cohorts.</p>
+      <p style="font-size:14px; margin-bottom:15px;">Download visual weekly attendance, test results, and teacher remarks for all cohorts.</p>
       <a id="adminReportBtn" href="#" onclick="downloadAdminReport()" style="display:inline-block; background:#3b82f6; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Download Visual HTML Report</a>
     </div>
 
     <hr>
 
+    <h3>💬 Teacher Remarks for Parents</h3>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Add custom notes/feedback for any student. This will show on their portal and in downloaded reports.</p>
+    <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <div class="input-group">
+        <label>Select Student</label>
+        <select id="remarksStudentSelect" onchange="populateExistingRemark()" style="width:100%; padding:14px; background:rgba(30,41,59,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      </div>
+      <div class="input-group">
+        <label>Remarks for Parents</label>
+        <textarea id="studentRemarksInput" rows="3" placeholder="e.g. Great progress in math this week, but needs to focus more on consistency." style="width:100%; background:rgba(30,41,59,0.6); border:1px solid #334155; border-radius:10px; color:#fff; padding:12px; font-family:'Outfit'; box-sizing:border-box;"></textarea>
+      </div>
+      <button onclick="saveStudentRemarks()" style="background:#38bdf8; color:#0f172a; font-weight:bold;">Save Teacher Remarks</button>
+    </div>
+
+    <hr>
+
     <h3>🌴 Manage Custom Holidays</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Mark specific dates as holidays so they are excluded from attendance percentage calculations.</p>
     <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
       <div class="input-group">
         <label>Holiday Date</label>
@@ -78,7 +95,6 @@
     <hr>
 
     <h3>🏆 Student Leaderboard & Attendance Standings</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Live XP & Attendance percentage across all approved students.</p>
     <div id="adminLeaderboardContainer" style="max-height: 240px; overflow-y: auto; margin-bottom: 20px; background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px;">
       <p style="color: #94a3b8; font-size: 13px;">Loading leaderboard...</p>
     </div>
@@ -114,7 +130,25 @@
 
     <hr>
 
-    <h3>📊 Student Test Submissions & Timestamps</h3>
+    <h3>⭐ Manual XP Management (Add / Deduct)</h3>
+    <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+      <div class="input-group">
+        <label>Select Student</label>
+        <select id="xpStudentSelect" style="width:100%; padding:14px; background:rgba(30,41,59,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      </div>
+      <div class="input-group">
+        <label>XP Amount</label>
+        <input type="number" id="xpAmountInput" placeholder="e.g. 5" min="1" />
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="modifyStudentXp('add')" style="background:#10b981;">➕ Add XP</button>
+        <button onclick="modifyStudentXp('deduct')" style="background:#ef4444;">➖ Deduct XP</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <h3>📊 Student Test Submissions & Exam Reset</h3>
     <div id="testStatsList" style="max-height:260px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
@@ -231,6 +265,7 @@
     const currentAdminId = localStorage.getItem('userId');
     let questionCount = 0;
     let adminReportId = null;
+    let cachedStudentsData = [];
 
     function getXpColorClass(xp) {
       if (xp < 30) return 'xp-red';
@@ -344,6 +379,60 @@
       loadAdminData();
     }
 
+    function populateExistingRemark() {
+      const studentId = document.getElementById('remarksStudentSelect').value;
+      const student = cachedStudentsData.find(s => s._id === studentId);
+      const remarkInput = document.getElementById('studentRemarksInput');
+      if (student) {
+        remarkInput.value = student.remarks || '';
+      } else {
+        remarkInput.value = '';
+      }
+    }
+
+    async function saveStudentRemarks() {
+      const studentId = document.getElementById('remarksStudentSelect').value;
+      const remarks = document.getElementById('studentRemarksInput').value;
+      if (!studentId) return alert("Please select a student.");
+      const res = await fetch('/api/admin/remarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, remarks })
+      });
+      const data = await res.json();
+      alert(data.message);
+      loadAdminData();
+    }
+
+    async function modifyStudentXp(action) {
+      const studentId = document.getElementById('xpStudentSelect').value;
+      const xpAmount = document.getElementById('xpAmountInput').value;
+      if (!studentId || !xpAmount) return alert("Select a student and enter XP amount.");
+      const res = await fetch('/api/admin/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, xpAmount, action })
+      });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        document.getElementById('xpAmountInput').value = '';
+        loadAdminData();
+      }
+    }
+
+    async function resetExam(studentId, testId) {
+      if (!confirm("Are you sure you want to reset this exam submission?")) return;
+      const res = await fetch('/api/admin/reset-exam', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, testId })
+      });
+      const data = await res.json();
+      alert(data.message);
+      loadAdminData();
+    }
+
     async function loadAdminData() {
       await checkAdminReport();
       await loadHolidays();
@@ -384,14 +473,21 @@
       const dataApproved = await resApproved.json();
       const approvedContainer = document.getElementById('approvedStudentsList');
       approvedContainer.innerHTML = '';
+      
       const attSelect = document.getElementById('attendanceStudentSelect');
       if (attSelect) attSelect.innerHTML = '';
+      const xpSelect = document.getElementById('xpStudentSelect');
+      if (xpSelect) xpSelect.innerHTML = '';
+      const remarksSelect = document.getElementById('remarksStudentSelect');
+      if (remarksSelect) remarksSelect.innerHTML = '';
 
       const adminLbContainer = document.getElementById('adminLeaderboardContainer');
       adminLbContainer.innerHTML = '';
 
       if(dataApproved.success && dataApproved.students.length > 0) {
+        cachedStudentsData = dataApproved.students;
         const sorted = [...dataApproved.students].sort((a,b) => b.xp - a.xp);
+        
         sorted.forEach((s, idx) => {
           adminLbContainer.innerHTML += `
             <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px;">
@@ -402,12 +498,16 @@
 
         dataApproved.students.forEach(s => {
           if (attSelect) attSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`;
+          if (xpSelect) xpSelect.innerHTML += `<option value="${s._id}">${s.username} (${s.xp} XP)</option>`;
+          if (remarksSelect) remarksSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`;
+          
           approvedContainer.innerHTML += `
             <div class="manage-list-item">
               <div><strong>${s.username}</strong> | XP: <span class="${getXpColorClass(s.xp)}">${s.xp}</span> | Att: <strong style="color:#10b981;">${s.attendancePercentage}%</strong></div>
               <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete">🗑️ Delete</button>
             </div>`;
         });
+        populateExistingRemark();
       } else {
         adminLbContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No leaderboard data available.</p>';
         approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No approved students found.</p>';
@@ -422,12 +522,15 @@
           statsList.innerHTML = '<p style="color:#94a3b8; font-size:13px; margin:0;">No submissions recorded.</p>';
         } else {
           dataResults.results.forEach(r => {
+            const stuId = r.studentId ? r.studentId._id : '';
+            const tstId = r.testId ? r.testId._id : '';
             statsList.innerHTML += `
               <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:13px; display:flex; justify-content:space-between; align-items:center;">
                 <div><strong>${r.studentId ? r.studentId.username : 'Unknown'}</strong> - <em>${r.testId ? r.testId.title : 'Test'}</em><br><span style="font-size:11px; color:#10b981;">Score: ${r.score}/${r.totalQuestions}</span></div>
                 <div style="display:flex; gap:6px; align-items:center;">
                   <input type="number" id="xpInput_${r._id}" value="${r.grantedXpAmount || Math.min(10, r.score)}" min="0" max="10" style="width:45px; background:#1e293b; color:#fff; border:1px solid #334155; border-radius:4px; padding:4px;" />
                   <button onclick="grantExamXp('${r._id}')" class="action-btn btn-approve">Grant</button>
+                  <button onclick="resetExam('${stuId}', '${tstId}')" class="action-btn btn-warning">Reset</button>
                 </div>
               </div>`;
           });

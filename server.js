@@ -39,6 +39,7 @@ const studentSchema = new mongoose.Schema({
   attendance: [{ date: String, status: String }],
   badges: [String],
   strikes: { type: Number, default: 0 },
+  remarks: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -134,7 +135,7 @@ async function calculateAttendanceStats(student) {
       const day = String(curr.getDate()).padStart(2, '0');
       const dateStr = `${year}-${month}-${day}`;
       
-      const dayOfWeek = curr.getDay(); // 0 = Sunday
+      const dayOfWeek = curr.getDay();
 
       if (dayOfWeek === 0) {
         calendarMap[dateStr] = 'Sunday';
@@ -239,6 +240,7 @@ async function buildMasterReportHtml() {
         <h3>${student.username} <span style="font-size:12px; color:#f59e0b;">(ID: ${student.studentIdTag || 'N/A'})</span></h3>
         <p>Total XP: <strong>${student.xp} / 70</strong> | Attendance: <strong style="color:#10b981;">${attStats.percentage}%</strong></p>
         <p>Badges: ${(student.badges || []).join(', ') || 'None'}</p>
+        <p style="background:rgba(56,189,248,0.1); padding:10px; border-radius:8px; border-left:3px solid #38bdf8; font-size:14px;"><strong>💬 Teacher's Remarks for Parents:</strong> ${student.remarks || 'No remarks provided yet.'}</p>
       </div>
     `;
   }
@@ -270,6 +272,10 @@ async function buildStudentReportHtml(studentId) {
         <p style="text-align:center; font-size:24px; color:#f59e0b;">${student.xp} XP | Attendance: <strong style="color:#10b981;">${attStats.percentage}%</strong></p>
         <h3>🏅 Badges:</h3>
         <p>${(student.badges || []).join(', ') || 'No badges yet.'}</p>
+        <div style="background:rgba(56,189,248,0.15); padding:15px; border-radius:12px; border-left:4px solid #38bdf8; margin-top:20px;">
+          <h3 style="margin-top:0; color:#38bdf8;">💬 Teacher's Remarks (For Parents):</h3>
+          <p style="font-size:15px; line-height:1.5; margin-bottom:0;">${student.remarks || 'No remarks provided this week.'}</p>
+        </div>
       </div>
     </body>
     </html>
@@ -451,7 +457,8 @@ app.get('/api/admin/approved-students/:adminId', async (req, res) => {
         studentIdTag: s.studentIdTag,
         classroomId: s.classroomId,
         xp: s.xp,
-        attendancePercentage: stats.percentage
+        attendancePercentage: stats.percentage,
+        remarks: s.remarks || ''
       });
     }
     res.json({ success: true, students });
@@ -465,7 +472,7 @@ app.post('/api/admin/enroll', async (req, res) => {
     if (existing) return res.status(400).json({ success: false, message: 'Username exists' });
 
     const studentIdTag = `STU-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
-    await Student.create({ username: username.trim(), password, role: 'student', status: 'pending', studentIdTag, classroomId, xp: 0, badges: [], strikes: 0, createdAt: new Date() });
+    await Student.create({ username: username.trim(), password, role: 'student', status: 'pending', studentIdTag, classroomId, xp: 0, badges: [], strikes: 0, remarks: '', createdAt: new Date() });
     
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
@@ -492,6 +499,18 @@ app.delete('/api/admin/student/:id', async (req, res) => {
     await Student.findByIdAndDelete(req.params.id);
     await Result.deleteMany({ studentId: req.params.id });
     res.json({ success: true, message: 'Student deleted.' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// --- ADMIN REMARKS ROUTE ---
+app.post('/api/admin/remarks', async (req, res) => {
+  try {
+    const { studentId, remarks } = req.body;
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+    student.remarks = remarks;
+    await student.save();
+    res.json({ success: true, message: 'Teacher remarks saved successfully!' });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
