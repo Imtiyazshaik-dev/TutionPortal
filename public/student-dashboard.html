@@ -3,43 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard</title>
+  <title>Student Dashboard - Tuition Portal</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 650px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 30px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+    h2, h3 { color: #fff; margin-top: 0; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; }
+    .calendar-day { padding: 8px; text-align: center; border-radius: 6px; font-size: 12px; font-weight: bold; }
+    .day-present { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
+    .day-absent { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
+    .day-holiday { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #3b82f6; }
+    .day-sunday { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+    .btn-action { background: #38bdf8; color: #0f172a; padding: 6px 14px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 13px; display: inline-block; }
+    .btn-action:hover { background: #7dd3fc; }
+  </style>
 </head>
 <body>
-  <div class="container" style="max-width: 600px;">
-    <h2>Student Portal</h2>
-    <p id="studentWelcome">Welcome, Student</p>
-
-    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-      <h3>📅 Attendance Calendar</h3>
-      <div id="attendanceText" style="margin-bottom: 10px; font-size: 14px; color: #10b981;">Loading attendance...</div>
-      <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+      <div>
+        <h2 id="studentWelcome" style="margin: 0; color: #38bdf8;">Student Portal</h2>
+        <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;"></p>
+      </div>
+      <a href="index.html" onclick="localStorage.clear()" style="background: #ef4444; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">Log Out</a>
     </div>
 
-    <div id="liveClassBox" style="display:none; background: rgba(16,185,129,0.1); border: 1px solid #10b981; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-      <h3 style="color:#10b981; margin-top:0;">🔴 Active Live Class</h3>
-      <p id="liveClassTitle" style="font-size:14px;"></p>
-      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="display:inline-block; background:#10b981; color:#fff; padding:8px 16px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:13px;">Join Class & Mark Attendance</a>
+    <!-- Live Class Box -->
+    <div id="liveClassBox" class="card" style="display:none; border-color: #10b981; background: rgba(16, 185, 129, 0.08);">
+      <h3 style="color: #10b981; margin-bottom: 8px;">🔴 Active Live Class</h3>
+      <p id="liveClassTitle" style="font-size: 14px; margin-bottom: 15px; color: #cbd5e1;"></p>
+      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="background: #10b981; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">Join Class & Mark Attendance</a>
     </div>
 
-    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+    <!-- Attendance & Calendar -->
+    <div class="card">
+      <h3>📅 Attendance & Calendar</h3>
+      <p id="attendanceText" style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">Loading attendance...</p>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </div>
+
+    <!-- Cohort Leaderboard -->
+    <div class="card">
       <h3>🏆 Cohort Leaderboard</h3>
-      <div id="leaderboardList" style="max-height: 150px; overflow-y: auto;"></div>
+      <div id="leaderboardList" style="max-height: 180px; overflow-y: auto;">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading leaderboard...</p>
+      </div>
     </div>
 
-    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-      <h3>📝 Tests</h3>
-      <div id="testsList"></div>
+    <!-- Tests Section -->
+    <div class="card">
+      <h3>📝 Assessment Tests</h3>
+      <div id="testsList">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading tests...</p>
+      </div>
     </div>
 
-    <div style="background: rgba(30,41,59,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-      <h3>📚 Study Notes</h3>
-      <div id="notesList"></div>
-    </div>
-
-    <div style="text-align:center;">
-      <a href="index.html" onclick="localStorage.clear()" style="color:#ef4444; text-decoration:none; font-weight:bold;">Log Out</a>
+    <!-- Study Notes -->
+    <div class="card">
+      <h3>📚 Study Resources & Notes</h3>
+      <div id="notesList">
+        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading resources...</p>
+      </div>
     </div>
   </div>
 
@@ -59,29 +85,33 @@
         const data = await res.json();
 
         if (data.success && data.student) {
-          document.getElementById('studentWelcome').innerText = `Welcome, ${data.student.username} (${data.student.studentIdTag || ''}) - XP: ${data.student.xp}`;
+          document.getElementById('studentWelcome').innerText = `Welcome, ${data.student.username}`;
+          document.getElementById('studentMeta').innerText = `ID Tag: ${data.student.studentIdTag || 'N/A'} | XP: ${data.student.xp} XP`;
 
+          // Attendance & Calendar
           if (data.attendanceStats) {
             const stats = data.attendanceStats;
-            document.getElementById('attendanceText').innerHTML = `Attendance: <strong>${stats.percentage}%</strong> (${stats.totalPresent}/${stats.totalWorkingDays})`;
+            document.getElementById('attendanceText').innerHTML = `Overall Attendance: <strong style="color:#10b981;">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
             
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
             if (stats.calendarMap) {
               Object.keys(stats.calendarMap).sort().forEach(date => {
                 const status = stats.calendarMap[date];
-                let bg = 'rgba(255,255,255,0.05)';
-                let color = '#fff';
-                if (status === 'Present') { bg = 'rgba(16,185,129,0.2)'; color = '#10b981'; }
-                else if (status === 'Absent') { bg = 'rgba(239,68,68,0.2)'; color = '#ef4444'; }
-                else if (status === 'Holiday') { bg = 'rgba(59,130,246,0.2)'; color = '#3b82f6'; }
-                else if (status === 'Sunday') { bg = 'transparent'; color = '#64748b'; }
+                let cssClass = 'calendar-day';
+                let shortDate = date.slice(8);
 
-                grid.innerHTML += `<div style="background:${bg}; color:${color}; padding:6px; text-align:center; border-radius:4px; font-size:11px;" title="${date}: ${status}">${date.slice(8)}<br><span style="font-size:8px;">${status.slice(0,3)}</span></div>`;
+                if (status === 'Present') cssClass += ' day-present';
+                else if (status === 'Absent') cssClass += ' day-absent';
+                else if (status === 'Holiday') cssClass += ' day-holiday';
+                else if (status === 'Sunday') cssClass += ' day-sunday';
+
+                grid.innerHTML += `<div class="${cssClass}" title="${date}: ${status}">${shortDate}<br><span style="font-size:9px;">${status.slice(0,3)}</span></div>`;
               });
             }
           }
 
+          // Live Class
           if (data.activeClass) {
             currentLiveClassId = data.activeClass._id;
             currentLiveClassTitle = data.activeClass.title;
@@ -92,34 +122,63 @@
             document.getElementById('liveClassBox').style.display = 'none';
           }
 
+          // Leaderboard
           const lb = document.getElementById('leaderboardList');
           lb.innerHTML = '';
           if (data.leaderboard) {
             data.leaderboard.forEach((s, i) => {
-              lb.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>#${i+1} ${s.username}</span><span>${s.xp} XP | ${s.attendancePercentage}%</span></div>`;
+              lb.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                  <span><strong>#${i+1}</strong> ${s.username}</span>
+                  <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span style="color:#f59e0b;">${s.xp} XP</span></span>
+                </div>`;
             });
           }
 
+          // Tests
           const tests = document.getElementById('testsList');
           tests.innerHTML = '';
           const submitted = new Set(data.submittedResults || []);
           if (data.tests) {
-            data.tests.forEach(t => {
-              let action = submitted.has(t._id) ? '<span style="color:#10b981;">Completed</span>' : (t.isUnlocked ? `<a href="exam.html?id=${t._id}" style="color:#38bdf8;">Take Test</a>` : '<span style="color:#ef4444;">Locked</span>');
-              tests.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>${t.title}</span><span>${action}</span></div>`;
-            });
+            if (data.tests.length === 0) {
+              tests.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No tests available.</p>';
+            } else {
+              data.tests.forEach(t => {
+                let actionHtml = '';
+                if (submitted.has(t._id)) {
+                  actionHtml = '<span style="color:#10b981; font-weight:bold; font-size:12px;">✅ Completed</span>';
+                } else {
+                  actionHtml = `<a href="exam.html?id=${t._id}" class="btn-action">Take Test</a>`;
+                }
+
+                tests.innerHTML += `
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <div><strong>${t.title}</strong><br><span style="font-size:11px; color:#94a3b8;">${t.statusMessage}</span></div>
+                    <div>${actionHtml}</div>
+                  </div>`;
+              });
+            }
           }
 
+          // Study Notes
           const notes = document.getElementById('notesList');
           notes.innerHTML = '';
           if (data.notes) {
-            data.notes.forEach(n => {
-              notes.innerHTML += `<div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05);"><span>${n.title}</span><a href="${n.contentOrLink}" target="_blank" style="color:#38bdf8;">View</a></div>`;
-            });
+            if (data.notes.length === 0) {
+              notes.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No resources uploaded yet.</p>';
+            } else {
+              data.notes.forEach(n => {
+                notes.innerHTML += `
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <span>📄 ${n.title}</span>
+                    <a href="${n.contentOrLink}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">View Resource</a>
+                  </div>`;
+              });
+            }
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error loading student portal:", err);
       }
     }
 
