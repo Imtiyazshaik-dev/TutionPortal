@@ -29,6 +29,7 @@
     .btn-delete { background: #ef4444; }
     .btn-approve { background: #10b981; }
     .btn-warning { background: #f59e0b; }
+    .btn-info { background: #0284c7; }
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
@@ -61,7 +62,7 @@
     <hr>
 
     <h3>💬 Teacher Remarks for Parents</h3>
-    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Add custom notes/feedback for any student. This will show on their portal and in downloaded reports.</p>
+    <p style="font-size: 13px; color: #94a3b8; margin-top: -5px;">Add custom notes/feedback for any student. This will show on their live portal and in downloaded reports.</p>
     <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
       <div class="input-group">
         <label>Select Student</label>
@@ -120,8 +121,8 @@
       <hr>
     </div>
 
-    <h3>👥 Manage Approved Students</h3>
-    <div id="approvedStudentsList" style="max-height:220px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
+    <h3>👥 Manage Approved Students & Reset Passwords</h3>
+    <div id="approvedStudentsList" style="max-height:250px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
 
@@ -404,6 +405,18 @@
       loadAdminData();
     }
 
+    async function resetStudentPassword(studentId, username) {
+      const newPassword = prompt(`Enter new password for ${username}:`, "student123");
+      if (!newPassword) return;
+      const res = await fetch('/api/admin/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, newPassword })
+      });
+      const data = await res.json();
+      alert(data.message);
+    }
+
     async function modifyStudentXp(action) {
       const studentId = document.getElementById('xpStudentSelect').value;
       const xpAmount = document.getElementById('xpAmountInput').value;
@@ -504,7 +517,10 @@
           approvedContainer.innerHTML += `
             <div class="manage-list-item">
               <div><strong>${s.username}</strong> | XP: <span class="${getXpColorClass(s.xp)}">${s.xp}</span> | Att: <strong style="color:#10b981;">${s.attendancePercentage}%</strong></div>
-              <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete">🗑️ Delete</button>
+              <div style="display:flex; gap:6px;">
+                <button onclick="resetStudentPassword('${s._id}', '${s.username}')" class="action-btn btn-info" title="Reset Password">🔑 Password</button>
+                <button onclick="deleteStudent('${s._id}')" class="action-btn btn-delete">🗑️ Delete</button>
+              </div>
             </div>`;
         });
         populateExistingRemark();

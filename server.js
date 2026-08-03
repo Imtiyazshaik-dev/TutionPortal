@@ -507,6 +507,18 @@ app.delete('/api/admin/student/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+// --- ADMIN PASSWORD RESET ROUTE ---
+app.post('/api/admin/reset-password', async (req, res) => {
+  try {
+    const { studentId, newPassword } = req.body;
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+    student.password = newPassword || 'student123';
+    await student.save();
+    res.json({ success: true, message: `Password reset successfully for ${student.username}!` });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 // --- ADMIN REMARKS ROUTE ---
 app.post('/api/admin/remarks', async (req, res) => {
   try {
