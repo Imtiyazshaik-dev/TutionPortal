@@ -116,7 +116,9 @@ async function calculateAttendanceStats(student) {
   try {
     const termStart = new Date('2026-08-01');
     termStart.setHours(0,0,0,0);
-    const today = new Date('2026-08-03');
+    
+    // Dynamic today date calculation
+    const today = new Date();
     today.setHours(0,0,0,0);
 
     const holidays = await Holiday.find({});
