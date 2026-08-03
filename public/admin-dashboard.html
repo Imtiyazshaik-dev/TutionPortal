@@ -153,7 +153,7 @@
 
     <hr>
 
-    <h3>Create Assessment Test</h3>
+    <h3>Create & Manage Assessment Tests</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
       <select id="testClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
@@ -172,7 +172,12 @@
     </div>
     <div id="questionsContainer"></div>
     <button onclick="addQuestionField()" style="background:#334155; margin-bottom:10px;">+ Add Question</button>
-    <button onclick="submitNewTest()">Publish Test</button>
+    <button onclick="submitNewTest()" style="margin-bottom: 20px;">Publish Test</button>
+
+    <h4>Published Tests Roster</h4>
+    <div id="adminTestsList" style="max-height: 220px; overflow-y: auto; margin-bottom: 20px; background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px;">
+      <p style="color: #94a3b8; font-size: 13px;">Loading tests...</p>
+    </div>
 
     <hr>
 
@@ -308,9 +313,41 @@
       loadAdminData();
     }
 
+    async function loadAdminTests() {
+      try {
+        const res = await fetch('/api/admin/tests');
+        const data = await res.json();
+        const container = document.getElementById('adminTestsList');
+        container.innerHTML = '';
+        if (data.success && data.tests.length > 0) {
+          data.tests.forEach(test => {
+            container.innerHTML += `
+              <div class="manage-list-item">
+                <div><strong>${test.title}</strong> <span style="font-size:11px; color:#38bdf8;">(${test.classroomId ? test.classroomId.name : 'Cohort'})</span></div>
+                <div style="display:flex; gap:6px;">
+                  <button onclick="deleteTest('${test._id}')" class="action-btn btn-delete">🗑️ Delete</button>
+                </div>
+              </div>`;
+          });
+        } else {
+          container.innerHTML = '<p style="color:#94a3b8; font-size:13px; margin:0;">No tests published yet.</p>';
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function deleteTest(testId) {
+      if (!confirm("Are you sure you want to delete this test and all its submissions?")) return;
+      const res = await fetch(`/api/admin/test/${testId}`, { method: 'DELETE' });
+      const data = await res.json();
+      alert(data.message);
+      loadAdminTests();
+      loadAdminData();
+    }
+
     async function loadAdminData() {
       await checkAdminReport();
       await loadHolidays();
+      await loadAdminTests();
 
       const resC = await fetch(`/api/classrooms/${currentAdminId}`);
       const dataC = await resC.json();
