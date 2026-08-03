@@ -6,33 +6,11 @@
   <title>Student Dashboard - Tuition Portal</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    .portal-section {
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 20px;
-      border-radius: 16px;
-      margin-bottom: 20px;
-    }
-    .calendar-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-      margin-top: 10px;
-    }
-    .calendar-day {
-      background: rgba(30, 41, 59, 0.5);
-      padding: 8px;
-      text-align: center;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-    .day-present { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
-    .day-absent { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
-    .day-holiday { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #3b82f6; }
-    .day-sunday { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+    /* Your original custom styles can go here */
   </style>
 </head>
 <body>
+  <!-- YOUR ORIGINAL STUDENT PORTAL UI CONTENT HERE -->
   <div class="container" style="max-width: 700px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <div>
@@ -43,21 +21,21 @@
     </div>
 
     <!-- Attendance & Stats Section -->
-    <div class="portal-section">
+    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #fff; font-size: 16px;">📅 Attendance & Calendar</h3>
       <p id="attendanceSummaryText" style="font-size: 14px; color: #cbd5e1; margin-bottom: 10px;">Loading attendance stats...</p>
-      <div id="calendarContainer" class="calendar-grid"></div>
+      <div id="calendarContainer" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px;"></div>
     </div>
 
     <!-- Live Class Section -->
-    <div id="liveClassSection" class="portal-section" style="display:none;">
+    <div id="liveClassSection" class="portal-section" style="display:none; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #10b981; font-size: 16px;">🔴 Live Class Active</h3>
       <p id="liveClassTitleText" style="font-size: 14px; margin-bottom: 10px;"></p>
       <a id="liveClassLinkBtn" href="#" target="_blank" onclick="joinLiveClass()" style="display:inline-block; background:#10b981; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">Join Google Meet & Mark Attendance</a>
     </div>
 
     <!-- Leaderboard & XP -->
-    <div class="portal-section">
+    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #f59e0b; font-size: 16px;">🏆 Cohort Leaderboard & XP</h3>
       <div id="leaderboardListContainer" style="max-height: 180px; overflow-y: auto;">
         <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading leaderboard...</p>
@@ -65,7 +43,7 @@
     </div>
 
     <!-- Assessment Tests -->
-    <div class="portal-section">
+    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #38bdf8; font-size: 16px;">📝 Assessment Tests</h3>
       <div id="testsListContainer">
         <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading tests...</p>
@@ -73,7 +51,7 @@
     </div>
 
     <!-- Study Notes -->
-    <div class="portal-section">
+    <div class="portal-section" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px;">
       <h3 style="margin-top: 0; color: #a855f7; font-size: 16px;">📚 Study Resources & Notes</h3>
       <div id="notesListContainer">
         <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading study notes...</p>
@@ -102,7 +80,7 @@
           document.getElementById('welcomeText').innerText = `Welcome, ${data.student.username}`;
           document.getElementById('studentMeta').innerText = `ID Tag: ${data.student.studentIdTag || 'N/A'} | XP: ${data.student.xp} XP`;
 
-          // Render Calendar & Attendance
+          // Render Calendar & Attendance (Updates automatically as working days increase)
           if (data.attendanceStats) {
             const stats = data.attendanceStats;
             document.getElementById('attendanceSummaryText').innerHTML = `Overall Attendance: <strong style="color:#10b981;">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
@@ -113,15 +91,25 @@
             if (stats.calendarMap) {
               Object.keys(stats.calendarMap).sort().forEach(dateStr => {
                 const status = stats.calendarMap[dateStr];
-                let cssClass = 'calendar-day';
-                let shortDate = dateStr.slice(8); // Day number e.g. "04"
+                let bgStyle = 'background: rgba(30, 41, 59, 0.5);';
+                let textCol = 'color: #fff;';
+                let shortDate = dateStr.slice(8);
 
-                if (status === 'Present') cssClass += ' day-present';
-                else if (status === 'Absent') cssClass += ' day-absent';
-                else if (status === 'Holiday') cssClass += ' day-holiday';
-                else if (status === 'Sunday') cssClass += ' day-sunday';
+                if (status === 'Present') {
+                  bgStyle = 'background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981;';
+                  textCol = 'color: #10b981;';
+                } else if (status === 'Absent') {
+                  bgStyle = 'background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444;';
+                  textCol = 'color: #ef4444;';
+                } else if (status === 'Holiday') {
+                  bgStyle = 'background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6;';
+                  textCol = 'color: #3b82f6;';
+                } else if (status === 'Sunday') {
+                  bgStyle = 'background: rgba(100, 116, 139, 0.2);';
+                  textCol = 'color: #94a3b8;';
+                }
 
-                calContainer.innerHTML += `<div class="${cssClass}" title="${dateStr}: ${status}">${shortDate}<br><span style="font-size:9px;">${status.slice(0,3)}</span></div>`;
+                calContainer.innerHTML += `<div style="${bgStyle} ${textCol} padding: 8px; text-align: center; border-radius: 6px; font-size: 12px;" title="${dateStr}: ${status}">${shortDate}<br><span style="font-size:9px;">${status.slice(0,3)}</span></div>`;
               });
             }
           }
@@ -214,7 +202,6 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       loadStudentPortalData();
-      // Auto-refresh polling every 15 seconds for real-time calendar and XP updates
       setInterval(loadStudentPortalData, 15000);
     });
   </script>
