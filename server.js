@@ -476,7 +476,10 @@ app.post('/api/admin/enroll', async (req, res) => {
     
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
-      const cleanPhone = phone.replace(/\D/g, '');
+      let cleanPhone = phone.replace(/\D/g, '');
+      if (cleanPhone.length === 10) {
+        cleanPhone = '91' + cleanPhone;
+      }
       const message = `Hey! You have been enrolled in Tuition Portal.\nYour login credentials:\nUsername: ${username}\nPassword: ${password}`;
       whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     }
