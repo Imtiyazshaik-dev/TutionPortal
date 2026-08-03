@@ -28,13 +28,17 @@
 
   <script>
     async function handleLogin() {
-      const username = document.getElementById('loginUser').value.trim();
-      const password = document.getElementById('loginPass').value.trim();
+      const usernameField = document.getElementById('loginUser');
+      const passwordField = document.getElementById('loginPass');
       const errorDiv = document.getElementById('loginErrorMsg');
-      errorDiv.innerText = '';
+      
+      const username = usernameField ? usernameField.value.trim() : '';
+      const password = passwordField ? passwordField.value.trim() : '';
+      
+      if (errorDiv) errorDiv.innerText = '';
 
       if (!username || !password) {
-        errorDiv.innerText = 'Please enter both username and password.';
+        if (errorDiv) errorDiv.innerText = 'Please enter both username and password.';
         return;
       }
 
@@ -54,14 +58,15 @@
           if (data.role === 'admin') {
             window.location.href = 'admin-dashboard.html';
           } else {
-            window.location.href = 'student.html';
+            window.location.href = 'student-dashboard.html'; 
           }
         } else {
-          errorDiv.innerText = data.message || 'Invalid credentials.';
+          if (errorDiv) errorDiv.innerText = data.message || 'Invalid credentials.';
+          console.warn("Login failed:", data.message);
         }
       } catch (err) {
-        console.error(err);
-        errorDiv.innerText = 'Server connection error. Please try again.';
+        console.error("Login network/server error:", err);
+        if (errorDiv) errorDiv.innerText = 'Server connection error. Please try again.';
       }
     }
   </script>
