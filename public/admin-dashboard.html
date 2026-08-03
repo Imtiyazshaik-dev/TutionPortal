@@ -267,7 +267,6 @@
   <script src="script.js"></script>
   <script>
     const currentAdminId = localStorage.getItem('userId');
-    let questionCount = 0;
     let adminReportId = null;
     let cachedStudentsData = [];
 
@@ -545,7 +544,7 @@
         populateExistingRemark();
       } else {
         adminLbContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">No leaderboard data available.</p>';
-        approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;">No approved students found.</p>';
+        approvedContainer.innerHTML = '<p style="color:#94a3b8; font-size:14px; margin:0;"></p>';
       }
 
       const resResults = await fetch('/api/admin/results');
