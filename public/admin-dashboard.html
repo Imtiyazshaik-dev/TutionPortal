@@ -562,10 +562,33 @@
       const username = document.getElementById('enrollUser').value;
       const password = document.getElementById('enrollPass').value;
       const phone = document.getElementById('enrollPhone').value;
-      const res = await fetch('/api/admin/enroll', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, phone, classroomId }) });
+      
+      const res = await fetch('/api/admin/enroll', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ username, password, phone, classroomId }) 
+      });
       const data = await res.json();
       alert(data.message);
-      if(data.success) { loadAdminData(); }
+      
+      if(data.success) { 
+        const whatsappContainer = document.getElementById('whatsappLinkContainer');
+        if (data.whatsappUrl) {
+          whatsappContainer.innerHTML = `
+            <div style="background:rgba(16,185,129,0.15); border:1px solid #10b981; padding:12px; border-radius:10px; text-align:center;">
+              <p style="margin:0 0 8px 0; font-size:13px; color:#10b981;">Student enrolled successfully! Click below to send credentials via WhatsApp:</p>
+              <a href="${data.whatsappUrl}" target="_blank" style="display:inline-block; background:#25d366; color:#fff; padding:10px 20px; border-radius:8px; font-weight:bold; text-decoration:none;">📲 Open WhatsApp & Send Message</a>
+            </div>
+          `;
+        } else {
+          whatsappContainer.innerHTML = '';
+        }
+        
+        document.getElementById('enrollUser').value = '';
+        document.getElementById('enrollPass').value = '';
+        document.getElementById('enrollPhone').value = '';
+        loadAdminData(); 
+      }
     }
 
     async function submitAttendance() {
