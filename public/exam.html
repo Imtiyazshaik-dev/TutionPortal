@@ -32,16 +32,22 @@
       activeTestId = urlParams.get('testId');
       const userId = localStorage.getItem("userId");
 
-      if (!activeTestId || !userId) {
-        alert("Invalid test session.");
+      if (!activeTestId) {
+        alert("Error: Missing test identifier in URL link.");
         window.location.href = "student-dashboard.html";
+        return;
+      }
+      
+      if (!userId) {
+        alert("Session expired. Please log in again.");
+        window.location.href = "index.html";
         return;
       }
 
       try {
         const res = await fetch(`/api/tests/${activeTestId}`);
         const data = await res.json();
-        if (data.success) {
+        if (data.success && data.test) {
           loadedTestObj = data.test;
           document.getElementById('activeTestTitle').innerText = loadedTestObj.title;
 
@@ -79,13 +85,16 @@
               </div>`;
           });
 
-          startExamProctoring();
+          if (typeof startExamProctoring === 'function') {
+            startExamProctoring();
+          }
         } else {
-          alert("Could not load test details.");
+          alert("Could not load test details. The test may have been removed.");
           window.location.href = "student-dashboard.html";
         }
       } catch (err) {
         console.error("Error loading test:", err);
+        alert("Network error connecting to test session.");
         window.location.href = "student-dashboard.html";
       }
     }
