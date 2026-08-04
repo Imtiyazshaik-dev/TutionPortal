@@ -189,7 +189,7 @@
                 if (submitted.has(t._id)) {
                   actionHtml = '<span style="color:#10b981; font-weight:bold; font-size:12px;">✅ Completed</span>';
                 } else {
-                  actionHtml = `<a href="exam.html?id=${t._id}" class="btn-action">Take Test</a>`;
+                  actionHtml = `<a href="exam.html?testId=${t._id}" class="btn-action">Take Test</a>`;
                 }
 
                 tests.innerHTML += `
