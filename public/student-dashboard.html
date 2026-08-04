@@ -75,12 +75,13 @@
       </div>
     </div>
 
-    <!-- Study Notes -->
-    <div class="card">
-      <h3>📚 Study Resources & Notes</h3>
-      <div id="notesList">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading resources...</p>
+    <!-- Study Notes Button Card -->
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="margin: 0 0 4px 0;">📚 Study Resources & Notes</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin: 0;">Access all uploaded lecture notes and materials.</p>
       </div>
+      <a href="notes.html" class="btn-action" style="padding: 10px 18px; font-size: 14px;">📂 View All Notes</a>
     </div>
   </div>
 
@@ -196,23 +197,6 @@
                   <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
                     <div><strong>${t.title}</strong><br><span style="font-size:11px; color:#94a3b8;">${t.statusMessage}</span></div>
                     <div>${actionHtml}</div>
-                  </div>`;
-              });
-            }
-          }
-
-          // Study Notes
-          const notes = document.getElementById('notesList');
-          notes.innerHTML = '';
-          if (data.notes) {
-            if (data.notes.length === 0) {
-              notes.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No resources uploaded yet.</p>';
-            } else {
-              data.notes.forEach(n => {
-                notes.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <span>📄 ${n.title}</span>
-                    <a href="${n.contentOrLink}" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold;">View Resource</a>
                   </div>`;
               });
             }

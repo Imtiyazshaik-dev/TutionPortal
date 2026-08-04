@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Resources & Notes - Tuition Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 650px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 30px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    h2 { color: #fff; margin-top: 0; }
+    .note-item { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 15px; border-radius: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-note { background: #38bdf8; color: #0f172a; padding: 8px 16px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 13px; display: inline-block; }
+    .btn-note:hover { background: #7dd3fc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+      <h2>📚 All Study Resources & Notes</h2>
+      <a href="student-dashboard.html" style="background: #334155; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">⬅️ Back to Dashboard</a>
+    </div>
+
+    <div id="allNotesList">
+      <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading resources...</p>
+    </div>
+  </div>
+
+  <script>
+    async function loadAllNotes() {
+      const studentId = localStorage.getItem('userId');
+      if (!studentId) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/student/classroom-data/${studentId}`);
+        const data = await res.json();
+
+        const notesContainer = document.getElementById('allNotesList');
+        notesContainer.innerHTML = '';
+
+        if (data.success && data.notes) {
+          if (data.notes.length === 0) {
+            notesContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No resources uploaded yet.</p>';
+          } else {
+            data.notes.forEach(n => {
+              notesContainer.innerHTML += `
+                <div class="note-item">
+                  <span style="font-size: 14px; font-weight: 500;">📄 ${n.title}</span>
+                  <a href="${n.contentOrLink}" target="_blank" class="btn-note">${n.title}</a>
+                </div>`;
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error loading notes:", err);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAllNotes();
+    });
+  </script>
+</body>
+</html>

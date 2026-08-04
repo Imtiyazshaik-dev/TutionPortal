@@ -167,7 +167,7 @@
 
     <hr>
 
-    <h3>📊 Student Test Submissions & Exam Reset</h3>
+    <h3>📊 Student Test Submissions & Exam Review Queue</h3>
     <div id="testStatsList" style="max-height:260px; overflow-y:auto; margin-bottom:20px; background:rgba(15,23,42,0.5); padding:15px; border-radius:12px;"></div>
 
     <hr>
@@ -590,10 +590,13 @@
       if(dataResults.success) {
         const statsList = document.getElementById('testStatsList');
         statsList.innerHTML = '';
-        if(dataResults.results.length === 0) {
-          statsList.innerHTML = '<p style="color:#94a3b8; font-size:13px; margin:0;">No submissions recorded.</p>';
+        // Filter out already reviewed/granted submissions so they disappear from the admin action queue but remain saved in the database & reports
+        const pendingSubmissions = dataResults.results.filter(r => !r.xpGranted);
+
+        if(pendingSubmissions.length === 0) {
+          statsList.innerHTML = '<p style="color:#94a3b8; font-size:13px; margin:0;">No pending exam submissions to review.</p>';
         } else {
-          dataResults.results.forEach(r => {
+          pendingSubmissions.forEach(r => {
             const stuId = r.studentId ? r.studentId._id : '';
             const tstId = r.testId ? r.testId._id : '';
             statsList.innerHTML += `
