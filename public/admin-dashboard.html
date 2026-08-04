@@ -33,6 +33,14 @@
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
+    /* Touch optimization rules for instant responses across mobile and iPad */
+    select, input, textarea, button {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    select {
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -108,11 +116,11 @@
     <h3>🏫 Create New Classroom Cohort</h3>
     <div class="input-group">
       <label>Classroom Name</label>
-      <input type="text" id="cohortName" placeholder="e.g. Batch A - AI & ML" />
+      <input type="text" id="cohortNameInput" placeholder="e.g. Batch A - AI & ML" />
     </div>
     <div class="input-group">
       <label>Description</label>
-      <input type="text" id="cohortDesc" placeholder="e.g. Advanced Python & Machine Learning" />
+      <input type="text" id="cohortDescInput" placeholder="e.g. Advanced Python & Machine Learning" />
     </div>
     <button onclick="createClassroomCohort()">Create Classroom</button>
 
@@ -465,6 +473,11 @@
     }
 
     async function loadAdminData() {
+      // Safeguard: Prevent background polling from refreshing if admin is actively using any input, select, or textarea
+      if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+
       await checkAdminReport();
       await loadHolidays();
       await loadAdminTests();
@@ -635,7 +648,10 @@
       loadAdminData();
     }
 
-    window.addEventListener('DOMContentLoaded', () => { loadAdminData(); });
+    window.addEventListener('DOMContentLoaded', () => { 
+      loadAdminData(); 
+      setInterval(loadAdminData, 3000);
+    });
   </script>
 </body>
 </html>
