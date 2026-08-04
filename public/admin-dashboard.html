@@ -6,6 +6,10 @@
   <title>Admin Command Center - Cohorts</title>
   <link rel="stylesheet" href="style.css">
   <style>
+    /* Force touch piercing and prevent overlay blocks */
+    body, .container, div {
+      pointer-events: auto !important;
+    }
     .manage-list-item {
       background: rgba(15,23,42,0.5); 
       padding: 12px; 
@@ -33,16 +37,16 @@
     .xp-red { color: #ef4444; font-weight: bold; }
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
-    /* Touch optimization rules for instant responses across mobile and iPad */
-    select, input, textarea, button {
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
+    
+    /* Ultimate Mobile & iPad Dropdown Fix */
     select {
       cursor: pointer;
       pointer-events: auto !important;
-      -webkit-appearance: menulist-button;
-      appearance: menulist-button;
+      touch-action: manipulation !important;
+      -webkit-appearance: menulist-button !important;
+      appearance: menulist-button !important;
+      z-index: 9999 !important;
+      position: relative;
     }
   </style>
 </head>
@@ -77,7 +81,7 @@
     <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
       <div class="input-group">
         <label>Select Student</label>
-        <select id="remarksStudentSelect" onchange="populateExistingRemark()" style="width:100%; padding:14px; background:rgba(30,41,59,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+        <select id="remarksStudentSelect" ontouchstart="" onclick="this.focus()" onchange="populateExistingRemark()" style="width:100%; padding:14px; background:rgba(30,41,59,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
       </div>
       <div class="input-group">
         <label>Remarks for Parents</label>
@@ -149,7 +153,7 @@
     <div style="background: rgba(15,23,42,0.5); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
       <div class="input-group">
         <label>Select Student</label>
-        <select id="xpStudentSelect" style="width:100%; padding:14px; background:rgba(30,41,59,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+        <select id="xpStudentSelect" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(30,41,59,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
       </div>
       <div class="input-group">
         <label>XP Amount</label>
@@ -171,7 +175,7 @@
     <h3>Post Cohort Live Class Link</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
-      <select id="classLiveSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      <select id="classLiveSelect" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Class Title</label>
@@ -188,7 +192,7 @@
     <h3>Upload Study Notes</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
-      <select id="noteClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      <select id="noteClassSelect" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Note Title</label>
@@ -205,7 +209,7 @@
     <h3>Create & Manage Assessment Tests</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
-      <select id="testClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      <select id="testClassSelect" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Test Title</label>
@@ -233,7 +237,7 @@
     <h3>Enroll New Student & Send WhatsApp</h3>
     <div class="input-group">
       <label>Select Classroom Cohort</label>
-      <select id="enrollClassSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      <select id="enrollClassSelect" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Username</label>
@@ -255,7 +259,7 @@
     <h3>Mark Manual Attendance</h3>
     <div class="input-group">
       <label>Select Student</label>
-      <select id="attendanceStudentSelect" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
+      <select id="attendanceStudentSelect" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';"></select>
     </div>
     <div class="input-group">
       <label>Date</label>
@@ -263,7 +267,7 @@
     </div>
     <div class="input-group">
       <label>Status</label>
-      <select id="attendanceStatus" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';">
+      <select id="attendanceStatus" ontouchstart="" onclick="this.focus()" style="width:100%; padding:14px; background:rgba(15,23,42,0.6); border:2px solid #334155; border-radius:12px; color:#fff; font-family:'Outfit';">
         <option value="Present">Present</option>
         <option value="Absent">Absent</option>
       </select>
@@ -280,6 +284,13 @@
     const currentAdminId = localStorage.getItem('userId');
     let adminReportId = null;
     let cachedStudentsData = [];
+
+    // Force focus and open behavior on mobile/iPad touch
+    document.addEventListener('touchstart', (e) => {
+      if (e.target.tagName === 'SELECT') {
+        e.target.focus();
+      }
+    }, { passive: true });
 
     function getXpColorClass(xp) {
       if (xp < 30) return 'xp-red';
