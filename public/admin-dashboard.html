@@ -277,6 +277,19 @@
     const currentAdminId = localStorage.getItem('userId');
     let adminReportId = null;
     let cachedStudentsData = [];
+    let isDropdownInteracting = false;
+
+    // Listen for touch/focus on any select element to lock polling instantly on mobile/iPad
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('select').forEach(sel => {
+        sel.addEventListener('touchstart', () => { isDropdownInteracting = true; });
+        sel.addEventListener('focus', () => { isDropdownInteracting = true; });
+        sel.addEventListener('blur', () => { 
+          setTimeout(() => { isDropdownInteracting = false; }, 1000); 
+        });
+        sel.addEventListener('change', () => { isDropdownInteracting = false; });
+      });
+    });
 
     function getXpColorClass(xp) {
       if (xp < 30) return 'xp-red';
@@ -473,8 +486,8 @@
     }
 
     async function loadAdminData() {
-      // Safeguard: Prevent background polling from refreshing if admin is actively using any input, select, or textarea
-      if (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+      // Safeguard: Skip background refresh entirely if dropdown or any form input is actively focused or touched
+      if (isDropdownInteracting || (document.activeElement && (document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA'))) {
         return;
       }
 
@@ -488,9 +501,11 @@
         const selects = ['classLiveSelect', 'noteClassSelect', 'testClassSelect', 'enrollClassSelect'];
         selects.forEach(id => {
           const sel = document.getElementById(id);
-          if(sel) {
+          if(sel && !sel.matches(':focus')) {
+            const currentVal = sel.value;
             sel.innerHTML = '';
             dataC.classrooms.forEach(c => { sel.innerHTML += `<option value="${c._id}">${c.name}</option>`; });
+            if (currentVal) sel.value = currentVal;
           }
         });
       }
@@ -519,11 +534,29 @@
       approvedContainer.innerHTML = '';
       
       const attSelect = document.getElementById('attendanceStudentSelect');
-      if (attSelect) attSelect.innerHTML = '';
       const xpSelect = document.getElementById('xpStudentSelect');
-      if (xpSelect) xpSelect.innerHTML = '';
       const remarksSelect = document.getElementById('remarksStudentSelect');
-      if (remarksSelect) remarksSelect.innerHTML = '';
+
+      if (attSelect && !attSelect.matches(':focus')) {
+        const currentAttVal = attSelect.value;
+        attSelect.innerHTML = '';
+        dataApproved.students?.forEach(s => { attSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`; });
+        if (currentAttVal) attSelect.value = currentAttVal;
+      }
+
+      if (xpSelect && !xpSelect.matches(':focus')) {
+        const currentXpVal = xpSelect.value;
+        xpSelect.innerHTML = '';
+        dataApproved.students?.forEach(s => { xpSelect.innerHTML += `<option value="${s._id}">${s.username} (${s.xp} XP)</option>`; });
+        if (currentXpVal) xpSelect.value = currentXpVal;
+      }
+
+      if (remarksSelect && !remarksSelect.matches(':focus')) {
+        const currentRemVal = remarksSelect.value;
+        remarksSelect.innerHTML = '';
+        dataApproved.students?.forEach(s => { remarksSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`; });
+        if (currentRemVal) remarksSelect.value = currentRemVal;
+      }
 
       const adminLbContainer = document.getElementById('adminLeaderboardContainer');
       adminLbContainer.innerHTML = '';
@@ -541,10 +574,6 @@
         });
 
         dataApproved.students.forEach(s => {
-          if (attSelect) attSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`;
-          if (xpSelect) xpSelect.innerHTML += `<option value="${s._id}">${s.username} (${s.xp} XP)</option>`;
-          if (remarksSelect) remarksSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`;
-          
           approvedContainer.innerHTML += `
             <div class="manage-list-item">
               <div><strong>${s.username}</strong> | XP: <span class="${getXpColorClass(s.xp)}">${s.xp}</span> | Att: <strong style="color:#10b981;">${s.attendancePercentage}%</strong></div>
