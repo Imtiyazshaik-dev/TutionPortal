@@ -117,7 +117,6 @@ async function calculateAttendanceStats(student) {
     const termStart = new Date('2026-08-01');
     termStart.setHours(0,0,0,0);
     
-    // Shift to IST offset (+5:30) to prevent UTC timezone lagging behind local date
     const now = new Date();
     const istTime = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60000);
     const today = new Date(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
@@ -311,11 +310,15 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
     }
 
     const allTests = await Test.find({ classroomId: student.classroomId }).sort({ _id: -1 });
-    const now = new Date().getTime();
     const availableTests = allTests.map(test => {
-      const createdTime = test.createdAt ? new Date(test.createdAt).getTime() : test._id.getTimestamp().getTime();
-      const expirationTime = createdTime + ((test.durationHours || 24) * 60 * 60 * 1000);
-      return { _id: test._id, title: test.title, durationMinutes: test.durationMinutes, isUnlocked: now <= expirationTime, statusMessage: now <= expirationTime ? `Active (${test.durationHours || 24}h Window)` : "Expired & Locked" };
+      const hoursWindow = Number(test.durationHours) || 168;
+      return { 
+        _id: test._id, 
+        title: test.title, 
+        durationMinutes: test.durationMinutes, 
+        isUnlocked: true, 
+        statusMessage: `Active Window (${hoursWindow}h)` 
+      };
     });
 
     const notes = await Note.find({ classroomId: student.classroomId }).sort({ uploadedAt: -1 });
