@@ -280,32 +280,6 @@
     const currentAdminId = localStorage.getItem('userId');
     let adminReportId = null;
     let cachedStudentsData = [];
-    let isDropdownInteracting = false;
-
-    // Completely pause background polls if a select dropdown is touched or active
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('select').forEach(sel => {
-        sel.addEventListener('touchstart', () => { 
-          isDropdownInteracting = true; 
-        }, { passive: true });
-        
-        sel.addEventListener('mousedown', () => { 
-          isDropdownInteracting = true; 
-        });
-
-        sel.addEventListener('focus', () => { 
-          isDropdownInteracting = true; 
-        });
-
-        sel.addEventListener('blur', () => { 
-          setTimeout(() => { isDropdownInteracting = false; }, 1500); 
-        });
-
-        sel.addEventListener('change', () => { 
-          isDropdownInteracting = false; 
-        });
-      });
-    });
 
     function getXpColorClass(xp) {
       if (xp < 30) return 'xp-red';
@@ -502,11 +476,6 @@
     }
 
     async function loadAdminData() {
-      // Complete polling freeze when interacting with dropdowns or form inputs
-      if (isDropdownInteracting || (document.activeElement && ['SELECT', 'INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
-        return;
-      }
-
       await checkAdminReport();
       await loadHolidays();
       await loadAdminTests();
@@ -517,7 +486,7 @@
         const selects = ['classLiveSelect', 'noteClassSelect', 'testClassSelect', 'enrollClassSelect'];
         selects.forEach(id => {
           const sel = document.getElementById(id);
-          if(sel && !sel.matches(':focus')) {
+          if(sel) {
             const currentVal = sel.value;
             sel.innerHTML = '';
             dataC.classrooms.forEach(c => { sel.innerHTML += `<option value="${c._id}">${c.name}</option>`; });
@@ -553,21 +522,21 @@
       const xpSelect = document.getElementById('xpStudentSelect');
       const remarksSelect = document.getElementById('remarksStudentSelect');
 
-      if (attSelect && !attSelect.matches(':focus')) {
+      if (attSelect) {
         const currentAttVal = attSelect.value;
         attSelect.innerHTML = '';
         dataApproved.students?.forEach(s => { attSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`; });
         if (currentAttVal) attSelect.value = currentAttVal;
       }
 
-      if (xpSelect && !xpSelect.matches(':focus')) {
+      if (xpSelect) {
         const currentXpVal = xpSelect.value;
         xpSelect.innerHTML = '';
         dataApproved.students?.forEach(s => { xpSelect.innerHTML += `<option value="${s._id}">${s.username} (${s.xp} XP)</option>`; });
         if (currentXpVal) xpSelect.value = currentXpVal;
       }
 
-      if (remarksSelect && !remarksSelect.matches(':focus')) {
+      if (remarksSelect) {
         const currentRemVal = remarksSelect.value;
         remarksSelect.innerHTML = '';
         dataApproved.students?.forEach(s => { remarksSelect.innerHTML += `<option value="${s._id}">${s.username}</option>`; });
@@ -695,7 +664,6 @@
 
     window.addEventListener('DOMContentLoaded', () => { 
       loadAdminData(); 
-      setInterval(loadAdminData, 3000);
     });
   </script>
 </body>
