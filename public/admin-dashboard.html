@@ -6,7 +6,6 @@
   <title>Admin Command Center - Cohorts</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Force touch piercing and prevent overlay blocks */
     body, .container, div {
       pointer-events: auto !important;
     }
@@ -38,7 +37,6 @@
     .xp-yellow { color: #f59e0b; font-weight: bold; }
     .xp-green { color: #10b981; font-weight: bold; }
     
-    /* Ultimate Mobile & iPad Dropdown Fix */
     select {
       cursor: pointer;
       pointer-events: auto !important;
@@ -85,7 +83,7 @@
       </div>
       <div class="input-group">
         <label>Remarks for Parents</label>
-        <textarea id="studentRemarksInput" rows="3" placeholder="e.g. Great progress in math this week, but needs to focus more on consistency." style="width:100%; background:rgba(30,41,59,0.6); border:1px solid #334155; border-radius:10px; color:#fff; padding:12px; font-family:'Outfit'; box-sizing:border-box;"></textarea>
+        <textarea id="studentRemarksInput" rows="3" placeholder="e.g. Great progress in math this week..." style="width:100%; background:rgba(30,41,59,0.6); border:1px solid #334155; border-radius:10px; color:#fff; padding:12px; font-family:'Outfit'; box-sizing:border-box;"></textarea>
       </div>
       <div style="display: flex; gap: 10px;">
         <button onclick="saveStudentRemarks()" style="background:#38bdf8; color:#0f172a; font-weight:bold; flex: 1;">Save Teacher Remarks</button>
@@ -285,7 +283,6 @@
     let adminReportId = null;
     let cachedStudentsData = [];
 
-    // Force focus behavior on mobile/iPad touch
     document.addEventListener('touchstart', (e) => {
       if (e.target.tagName === 'SELECT') {
         e.target.focus();
@@ -557,7 +554,7 @@
       const adminLbContainer = document.getElementById('adminLeaderboardContainer');
       adminLbContainer.innerHTML = '';
 
-      if(dataApproved.success && dataApproved.students.length > 0) {
+      if(dataApproved.success && dataApproved.students && dataApproved.students.length > 0) {
         cachedStudentsData = dataApproved.students;
         const sorted = [...dataApproved.students].sort((a,b) => b.xp - a.xp);
         
@@ -590,7 +587,6 @@
       if(dataResults.success) {
         const statsList = document.getElementById('testStatsList');
         statsList.innerHTML = '';
-        // Filter out already reviewed/granted submissions so they disappear from the admin action queue but remain saved in the database & reports
         const pendingSubmissions = dataResults.results.filter(r => !r.xpGranted);
 
         if(pendingSubmissions.length === 0) {
