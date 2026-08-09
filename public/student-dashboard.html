@@ -31,7 +31,10 @@
         <h2 id="studentWelcome" style="margin: 0; color: #38bdf8;">Student Portal</h2>
         <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;"></p>
       </div>
-      <a href="index.html" onclick="localStorage.clear()" style="background: #ef4444; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">Log Out</a>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button onclick="changeStudentPassword()" style="background: #0284c7; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔑 Change Password</button>
+        <a href="index.html" onclick="localStorage.clear()" style="background: #ef4444; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">Log Out</a>
+      </div>
     </div>
 
     <!-- Live Class Box -->
@@ -93,6 +96,22 @@
       if (xp < 30) return 'xp-red';
       if (xp > 45) return 'xp-green';
       return 'xp-yellow';
+    }
+
+    async function changeStudentPassword() {
+      const studentId = localStorage.getItem('userId');
+      if (!studentId) return;
+
+      const newPassword = prompt("Enter your new password:");
+      if (!newPassword) return;
+
+      const res = await fetch('/api/student/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId, newPassword })
+      });
+      const data = await res.json();
+      alert(data.message);
     }
 
     async function loadStudentData() {

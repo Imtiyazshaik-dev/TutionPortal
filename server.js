@@ -281,6 +281,22 @@ app.post('/api/auth/change-password', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+// Student Self-Service Password Change Route
+app.post('/api/student/change-password', async (req, res) => {
+  try {
+    const { studentId, newPassword } = req.body;
+    if (!newPassword || newPassword.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Password cannot be empty.' });
+    }
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+
+    student.password = newPassword.trim();
+    await student.save();
+    res.json({ success: true, message: 'Password updated successfully!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 app.get('/api/classrooms/:adminId', async (req, res) => {
   try {
     const adminUser = await Student.findById(req.params.adminId);
