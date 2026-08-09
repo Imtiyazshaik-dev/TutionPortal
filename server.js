@@ -249,7 +249,6 @@ async function buildMasterReportHtml() {
 
 // --- API ROUTES ---
 
-// 1. Authentication Route with Whitespace Sanitization
 app.post('/api/auth', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -259,7 +258,7 @@ app.post('/api/auth', async (req, res) => {
     const cleanPassword = password.trim();
 
     const user = await Student.findOne({ username: cleanUsername });
-    if (!user || user.password !== cleanPassword) {
+    if (!user || user.password.trim() !== cleanPassword) {
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
 
@@ -271,19 +270,17 @@ app.post('/api/auth', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 2. Change Password Route
 app.post('/api/auth/change-password', async (req, res) => {
   try {
     const { userId, oldPassword, newPassword } = req.body;
     const user = await Student.findById(userId);
     if (!user || user.password !== oldPassword) return res.status(400).json({ success: false, message: 'Incorrect old password.' });
-    user.password = newPassword;
+    user.password = newPassword.trim();
     await user.save();
     res.json({ success: true, message: 'Password updated!' });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 3. Classrooms Management Route
 app.get('/api/classrooms/:adminId', async (req, res) => {
   try {
     const adminUser = await Student.findById(req.params.adminId);
@@ -293,7 +290,6 @@ app.get('/api/classrooms/:adminId', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 4. Create Classroom Cohort Route
 app.post('/api/admin/classrooms', async (req, res) => {
   try {
     const { name, description, adminId } = req.body;
@@ -302,19 +298,22 @@ app.post('/api/admin/classrooms', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 5. Student Classroom Data & Leaderboard Route
 app.get('/api/student/classroom-data/:id', async (req, res) => {
   try {
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
-    if (!student.classroomId) return res.json({ success: true, assigned: false, student });
 
     await checkAndAwardBadges(student._id);
     const updatedStudent = await Student.findById(student._id);
     const attStats = await calculateAttendanceStats(updatedStudent);
 
-    const classroom = await Classroom.findById(student.classroomId);
-    const leaderboardRaw = await Student.find({ classroomId: student.classroomId, status: 'approved' }).sort({ xp: -1 }).select('username xp studentIdTag attendance createdAt');
+    const query = { status: 'approved' };
+    if (student.classroomId) {
+      query.classroomId = student.classroomId;
+    }
+
+    const classroom = student.classroomId ? await Classroom.findById(student.classroomId) : null;
+    const leaderboardRaw = await Student.find(query).sort({ xp: -1 }).select('username xp studentIdTag attendance createdAt');
     
     const leaderboard = [];
     for (const s of leaderboardRaw) {
@@ -328,7 +327,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       });
     }
 
-    const allTests = await Test.find({ classroomId: student.classroomId }).sort({ _id: -1 });
+    const allTests = student.classroomId ? await Test.find({ classroomId: student.classroomId }).sort({ _id: -1 }) : await Test.find().sort({ _id: -1 });
     const availableTests = allTests.map(test => {
       const hoursWindow = Number(test.durationHours) || 168;
       return { 
@@ -340,8 +339,8 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       };
     });
 
-    const notes = await Note.find({ classroomId: student.classroomId }).sort({ uploadedAt: -1 });
-    const activeClass = await LiveClass.findOne({ classroomId: student.classroomId, isActive: true });
+    const notes = student.classroomId ? await Note.find({ classroomId: student.classroomId }).sort({ uploadedAt: -1 }) : [];
+    const activeClass = student.classroomId ? await LiveClass.findOne({ classroomId: student.classroomId, isActive: true }) : null;
     const submittedResults = await Result.find({ studentId: student._id });
 
     res.json({
@@ -359,7 +358,6 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 6. Join Live Class Attendance Request Route
 app.post('/api/student/join-class', async (req, res) => {
   try {
     const { userId, classId, classTitle } = req.body;
@@ -374,7 +372,6 @@ app.post('/api/student/join-class', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 7. Get Test Data Route
 app.get('/api/tests/:id', async (req, res) => {
   try {
     const test = await Test.findById(req.params.id);
@@ -383,7 +380,6 @@ app.get('/api/tests/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 8. Submit Exam Route
 app.post('/api/exam/submit', async (req, res) => {
   try {
     const { userId, testId, answers, timeTaken } = req.body;
@@ -402,7 +398,6 @@ app.post('/api/exam/submit', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 9. Exam Violation Strike Route
 app.post('/api/exam/strike', async (req, res) => {
   try {
     const { userId } = req.body;
@@ -414,7 +409,6 @@ app.post('/api/exam/strike', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 10. Admin Pending Students Queue
 app.get('/api/admin/pending-students/:adminId', async (req, res) => {
   try {
     const pendingStudents = await Student.find({ role: 'student', status: 'pending' }).populate('classroomId', 'name');
@@ -422,7 +416,6 @@ app.get('/api/admin/pending-students/:adminId', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 11. Admin Approved Students Leaderboard & Management Route
 app.get('/api/admin/approved-students/:adminId', async (req, res) => {
   try {
     const studentsRaw = await Student.find({ role: 'student', status: 'approved' }).populate('classroomId', 'name');
@@ -444,28 +437,29 @@ app.get('/api/admin/approved-students/:adminId', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 12. Enroll Student Route
 app.post('/api/admin/enroll', async (req, res) => {
   try {
     const { username, password, phone, classroomId } = req.body;
-    const existing = await Student.findOne({ username });
+    if (!username || !password) return res.status(400).json({ success: false, message: 'Username and password required' });
+
+    const cleanUsername = username.trim();
+    const existing = await Student.findOne({ username: cleanUsername });
     if (existing) return res.status(400).json({ success: false, message: 'Username exists' });
 
     const studentIdTag = `STU-${Date.now().toString().slice(-4)}${Math.floor(100 + Math.random() * 900)}`;
-    await Student.create({ username: username.trim(), password, role: 'student', status: 'pending', studentIdTag, classroomId, xp: 0, badges: [], strikes: 0, remarks: '', createdAt: new Date() });
+    await Student.create({ username: cleanUsername, password: password.trim(), role: 'student', status: 'pending', studentIdTag, classroomId, xp: 0, badges: [], strikes: 0, remarks: '', createdAt: new Date() });
     
     let whatsappUrl = '';
     if (phone && phone.trim() !== '') {
       let cleanPhone = phone.replace(/\D/g, '');
       if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
-      const message = `Hey! You have been enrolled in Tuition Portal.\nYour login credentials:\nUsername: ${username}\nPassword: ${password}`;
+      const message = `Hey! You have been enrolled in Tuition Portal.\nYour login credentials:\nUsername: ${cleanUsername}\nPassword: ${password.trim()}`;
       whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
     }
     res.json({ success: true, message: 'Student enrolled!', whatsappUrl });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 13. Update Student Status Route
 app.post('/api/admin/student-status', async (req, res) => {
   try {
     const { studentId, status } = req.body;
@@ -478,7 +472,6 @@ app.post('/api/admin/student-status', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 14. Delete Student Route
 app.delete('/api/admin/student/:id', async (req, res) => {
   try {
     await Student.findByIdAndDelete(req.params.id);
@@ -487,19 +480,17 @@ app.delete('/api/admin/student/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 15. Reset Student Password Route
 app.post('/api/admin/reset-password', async (req, res) => {
   try {
     const { studentId, newPassword } = req.body;
     const student = await Student.findById(studentId);
     if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
-    student.password = newPassword || 'student123';
+    student.password = (newPassword || 'student123').trim();
     await student.save();
     res.json({ success: true, message: `Password reset successfully for ${student.username}!` });
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 16. Teacher Remarks Save Route
 app.post('/api/admin/remarks', async (req, res) => {
   try {
     const { studentId, remarks } = req.body;
@@ -511,7 +502,6 @@ app.post('/api/admin/remarks', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 17. Teacher Remarks Delete Route
 app.delete('/api/admin/remarks/:studentId', async (req, res) => {
   try {
     const student = await Student.findById(req.params.studentId);
@@ -522,7 +512,6 @@ app.delete('/api/admin/remarks/:studentId', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 18. Add Custom Holiday Route
 app.post('/api/admin/holiday', async (req, res) => {
   try {
     const { date, title } = req.body;
@@ -532,7 +521,6 @@ app.post('/api/admin/holiday', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 19. Get Holidays Route
 app.get('/api/admin/holidays', async (req, res) => {
   try {
     const holidays = await Holiday.find({}).sort({ date: 1 });
@@ -540,7 +528,6 @@ app.get('/api/admin/holidays', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 20. Delete Holiday Route
 app.delete('/api/admin/holiday/:id', async (req, res) => {
   try {
     await Holiday.findByIdAndDelete(req.params.id);
@@ -548,7 +535,6 @@ app.delete('/api/admin/holiday/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 21. Get Attendance Requests Route
 app.get('/api/admin/attendance-requests', async (req, res) => {
   try {
     const requests = await AttendanceRequest.find({ status: 'pending' }).populate('studentId', 'username studentIdTag');
@@ -556,7 +542,6 @@ app.get('/api/admin/attendance-requests', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 22. Approve/Reject Attendance Request Route
 app.post('/api/admin/attendance-action', async (req, res) => {
   try {
     const { requestId, action } = req.body;
@@ -578,7 +563,6 @@ app.post('/api/admin/attendance-action', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 23. Manual Attendance Marking Route
 app.post('/api/admin/attendance', async (req, res) => {
   try {
     const { studentId, date, status } = req.body;
@@ -599,7 +583,6 @@ app.post('/api/admin/attendance', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 24. Manual XP Modification Route
 app.post('/api/admin/xp', async (req, res) => {
   try {
     const { studentId, xpAmount, action } = req.body;
@@ -612,7 +595,6 @@ app.post('/api/admin/xp', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 25. Admin Results View Route
 app.get('/api/admin/results', async (req, res) => {
   try {
     const results = await Result.find().populate('studentId', 'username studentIdTag').populate('testId', 'title');
@@ -620,7 +602,6 @@ app.get('/api/admin/results', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 26. Grant Exam XP Route
 app.post('/api/admin/grant-exam-xp', async (req, res) => {
   try {
     const { resultId, xpAmount } = req.body;
@@ -645,7 +626,6 @@ app.post('/api/admin/grant-exam-xp', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 27. Reset Exam Submission Route
 app.post('/api/admin/reset-exam', async (req, res) => {
   try {
     const { studentId, testId } = req.body;
@@ -663,7 +643,6 @@ app.post('/api/admin/reset-exam', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 28. Post Live Class Route
 app.post('/api/admin/class', async (req, res) => {
   try {
     const { classroomId, title, meetLink } = req.body;
@@ -673,7 +652,6 @@ app.post('/api/admin/class', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 29. Get Live Classes Route
 app.get('/api/admin/classes', async (req, res) => {
   try {
     const classes = await LiveClass.find().populate('classroomId', 'name').sort({ createdAt: -1 });
@@ -681,7 +659,6 @@ app.get('/api/admin/classes', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 30. Delete Live Class Route
 app.delete('/api/admin/class/:id', async (req, res) => {
   try {
     await LiveClass.findByIdAndDelete(req.params.id);
@@ -689,7 +666,6 @@ app.delete('/api/admin/class/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 31. Post Test Route
 app.post('/api/admin/tests', async (req, res) => {
   try {
     const { classroomId, title, durationMinutes, durationHours, questions } = req.body;
@@ -698,7 +674,6 @@ app.post('/api/admin/tests', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 32. Get Tests Route
 app.get('/api/admin/tests', async (req, res) => {
   try {
     const tests = await Test.find().populate('classroomId', 'name');
@@ -706,7 +681,6 @@ app.get('/api/admin/tests', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 33. Delete Test Route
 app.delete('/api/admin/test/:id', async (req, res) => {
   try {
     await Test.findByIdAndDelete(req.params.id);
@@ -715,7 +689,6 @@ app.delete('/api/admin/test/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 34. Post Notes Route
 app.post('/api/admin/notes', async (req, res) => {
   try {
     const { classroomId, title, contentOrLink } = req.body;
@@ -724,7 +697,6 @@ app.post('/api/admin/notes', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 35. Get Notes Route
 app.get('/api/admin/notes', async (req, res) => {
   try {
     const notes = await Note.find().populate('classroomId', 'name').sort({ uploadedAt: -1 });
@@ -732,7 +704,6 @@ app.get('/api/admin/notes', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 36. Delete Note Route
 app.delete('/api/admin/note/:id', async (req, res) => {
   try {
     await Note.findByIdAndDelete(req.params.id);
@@ -740,7 +711,6 @@ app.delete('/api/admin/note/:id', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 37. Weekly Report Check Route
 app.get('/api/admin/reports-check', async (req, res) => {
   try {
     const masterReport = await WeeklyReport.findOne({ reportType: 'master' });
@@ -753,7 +723,6 @@ app.get('/api/admin/reports-check', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// 38. Download Weekly Report Route
 app.get('/api/reports/download/:id', async (req, res) => {
   try {
     const report = await WeeklyReport.findById(req.params.id);
@@ -765,12 +734,10 @@ app.get('/api/reports/download/:id', async (req, res) => {
   } catch (err) { res.status(500).send('Error downloading report.'); }
 });
 
-// Fallback Route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Keep-Alive Self Ping Interval
 const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://www.tutorpoint.page";
 setInterval(() => {
   const protocol = RENDER_URL.startsWith('https') ? https : http;

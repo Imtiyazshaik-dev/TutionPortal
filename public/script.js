@@ -1,7 +1,6 @@
 // --- ADMIN & STUDENT CORE PORTAL SCRIPTS ---
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Mobile/iPad Touch Event Fix for Dynamic and Static Buttons
   const fixTouchEvents = () => {
     document.querySelectorAll('button, .action-btn, select, input[type="submit"]').forEach(el => {
       if (!el.dataset.touchFixed) {
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const observer = new MutationObserver(fixTouchEvents);
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Live Auto-Refresh Polling for Student Portal (Every 15s)
   const currentStudentId = localStorage.getItem('userId');
   const userRole = localStorage.getItem('role');
   if (currentStudentId && userRole === 'student') {
@@ -35,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Global Question Field Generator with Separate Option Inputs
 function addQuestionField() {
   const container = document.getElementById('questionsContainer');
   if (!container) return;
@@ -73,7 +70,6 @@ function addQuestionField() {
   container.appendChild(div);
 }
 
-// Global Assessment Test Submission Publisher with Separate Option Fields
 async function submitNewTest() {
   const classroomId = document.getElementById('testClassSelect').value;
   const title = document.getElementById('testTitle').value;
@@ -124,10 +120,11 @@ async function submitNewTest() {
   }
 }
 
-// Cohort Creation Helper
 async function createClassroomCohort() {
-  const name = document.getElementById('cohortName').value;
-  const description = document.getElementById('cohortDesc').value;
+  const nameInput = document.getElementById('cohortNameInput');
+  const descInput = document.getElementById('cohortDescInput');
+  const name = nameInput ? nameInput.value.trim() : '';
+  const description = descInput ? descInput.value.trim() : '';
   const adminId = localStorage.getItem('userId');
 
   if (!name) return alert("Please enter a classroom name.");
@@ -139,13 +136,12 @@ async function createClassroomCohort() {
   const data = await res.json();
   alert(data.message);
   if(data.success) {
-    document.getElementById('cohortName').value = '';
-    document.getElementById('cohortDesc').value = '';
+    if (nameInput) nameInput.value = '';
+    if (descInput) descInput.value = '';
     if(typeof loadAdminData === 'function') loadAdminData();
   }
 }
 
-// Live Class Publisher Helper
 async function postLiveClass() {
   const classroomId = document.getElementById('classLiveSelect').value;
   const title = document.getElementById('classTitle').value;
@@ -165,7 +161,6 @@ async function postLiveClass() {
   }
 }
 
-// Study Note Publisher Helper
 async function uploadNote() {
   const classroomId = document.getElementById('noteClassSelect').value;
   const title = document.getElementById('noteTitle').value;
