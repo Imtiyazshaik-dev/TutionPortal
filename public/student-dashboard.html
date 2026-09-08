@@ -5,86 +5,155 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Dashboard - Tuition Portal</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Outfit', sans-serif; background: #090d16; color: #f8fafc; margin: 0; padding: 20px; }
-    .container { max-width: 650px; margin: auto; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); padding: 30px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .card { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-    h2, h3 { color: #fff; margin-top: 0; }
+    :root {
+      --bg: #F3F0E8;
+      --surface: #FDFCF9;
+      --border: #E3DDCE;
+      --text: #2C2A25;
+      --text-soft: #746E60;
+      --accent: #3F6B5C;
+      --accent-soft: #E4EEE8;
+      --accent-strong: #2E5548;
+      --warm: #97762F;
+      --warm-soft: #F1E9D3;
+      --danger: #9C4A3C;
+      --danger-soft: #F2E1DB;
+      --info: #4A6C8C;
+      --info-soft: #E4EBF1;
+      --muted: #8A8474;
+      --muted-soft: #EDE9DD;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Work Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: auto;
+      background: var(--surface);
+      padding: 32px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      opacity: 0;
+      animation: settle 0.5s ease-out forwards;
+    }
+
+    @keyframes settle {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .container { animation: none; opacity: 1; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+
+    h2, h3 {
+      font-family: 'Literata', serif;
+      color: var(--text);
+      margin-top: 0;
+      font-weight: 600;
+    }
+
+    h3 { font-size: 17px; margin-bottom: 12px; }
+
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; }
-    .calendar-day { padding: 8px; text-align: center; border-radius: 6px; font-size: 12px; font-weight: bold; }
-    .day-present { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; }
-    .day-absent { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #ef4444; }
-    .day-holiday { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #3b82f6; }
-    .day-sunday { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
-    .btn-action { background: #38bdf8; color: #0f172a; padding: 6px 14px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 13px; display: inline-block; }
-    .btn-action:hover { background: #7dd3fc; }
-    .xp-red { color: #ef4444; font-weight: bold; }
-    .xp-yellow { color: #f59e0b; font-weight: bold; }
-    .xp-green { color: #10b981; font-weight: bold; }
-    .badge-chip { display: inline-block; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #f59e0b; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin: 4px; }
+    .calendar-day { padding: 8px; text-align: center; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .day-present { background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-strong); }
+    .day-absent { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); }
+    .day-holiday { background: var(--info-soft); border: 1px solid var(--info); color: var(--info); }
+    .day-sunday { background: var(--muted-soft); color: var(--muted); }
+
+    .btn-action { background: var(--accent); color: #fff; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 13px; display: inline-block; transition: background 0.15s ease; }
+    .btn-action:hover { background: var(--accent-strong); }
+
+    .xp-red { color: var(--danger); font-weight: 600; }
+    .xp-yellow { color: var(--warm); font-weight: 600; }
+    .xp-green { color: var(--accent-strong); font-weight: 600; }
+
+    .badge-chip { display: inline-block; background: var(--warm-soft); border: 1px solid #D9C68F; color: var(--warm); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 4px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
       <div>
-        <h2 id="studentWelcome" style="margin: 0; color: #38bdf8;">Student Portal</h2>
-        <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: #94a3b8;"></p>
+        <h2 id="studentWelcome" style="margin: 0; color: var(--accent-strong);">Student Portal</h2>
+        <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-soft);"></p>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <button onclick="changeStudentPassword()" style="background: #0284c7; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔑 Change Password</button>
-        <a href="index.html" onclick="localStorage.clear()" style="background: #ef4444; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: bold;">Log Out</a>
+        <button onclick="changeStudentPassword()" style="background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Work Sans', sans-serif;">Change password</button>
+        <a href="index.html" onclick="localStorage.clear()" style="background: var(--danger); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: 600;">Log out</a>
       </div>
     </div>
 
     <!-- Live Class Box -->
-    <div id="liveClassBox" class="card" style="display:none; border-color: #10b981; background: rgba(16, 185, 129, 0.08);">
-      <h3 style="color: #10b981; margin-bottom: 8px;">🔴 Active Live Class</h3>
-      <p id="liveClassTitle" style="font-size: 14px; margin-bottom: 15px; color: #cbd5e1;"></p>
-      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="background: #10b981; color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px;">Join Class & Mark Attendance</a>
+    <div id="liveClassBox" class="card" style="display:none; border-color: var(--accent); background: var(--accent-soft);">
+      <h3 style="color: var(--accent-strong); margin-bottom: 8px;">Live class in progress</h3>
+      <p id="liveClassTitle" style="font-size: 14px; margin-bottom: 15px; color: var(--text-soft);"></p>
+      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">Join class &amp; mark attendance</a>
     </div>
 
     <!-- Badges Section -->
     <div class="card">
-      <h3>🏅 Unlocked Achievements & Badges</h3>
+      <h3>Achievements &amp; badges</h3>
       <div id="badgesContainer">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading badges...</p>
+        <p style="font-size: 13px; color: var(--text-soft); margin: 0;">Loading badges...</p>
       </div>
     </div>
 
     <!-- Attendance & Calendar -->
     <div class="card">
-      <h3>📅 Attendance & Calendar</h3>
-      <p id="attendanceText" style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">Loading attendance...</p>
+      <h3>Attendance &amp; calendar</h3>
+      <p id="attendanceText" style="font-size: 14px; color: var(--text-soft); margin-bottom: 12px;">Loading attendance...</p>
       <div id="calendarGrid" class="calendar-grid"></div>
     </div>
 
     <!-- Cohort Leaderboard -->
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h3 style="margin: 0;">🏆 Cohort Leaderboard</h3>
-        <span id="studentRankBadge" style="font-size: 12px; background: rgba(56,189,248,0.15); color: #38bdf8; padding: 4px 10px; border-radius: 20px; font-weight: bold; border: 1px solid rgba(56,189,248,0.3);">Your Rank: --</span>
+        <h3 style="margin: 0;">Cohort leaderboard</h3>
+        <span id="studentRankBadge" style="font-size: 12px; background: var(--accent-soft); color: var(--accent-strong); padding: 4px 10px; border-radius: 20px; font-weight: 600; border: 1px solid var(--accent);">Your rank: --</span>
       </div>
       <div id="leaderboardList" style="max-height: 180px; overflow-y: auto;">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading leaderboard...</p>
+        <p style="font-size: 13px; color: var(--text-soft); margin: 0;">Loading leaderboard...</p>
       </div>
     </div>
 
     <!-- Tests Section -->
     <div class="card">
-      <h3>📝 Assessment Tests</h3>
+      <h3>Assessment tests</h3>
       <div id="testsList">
-        <p style="font-size: 13px; color: #94a3b8; margin: 0;">Loading tests...</p>
+        <p style="font-size: 13px; color: var(--text-soft); margin: 0;">Loading tests...</p>
       </div>
     </div>
 
     <!-- Study Notes Button Card -->
     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <h3 style="margin: 0 0 4px 0;">📚 Study Resources & Notes</h3>
-        <p style="font-size: 12px; color: #94a3b8; margin: 0;">Access all uploaded lecture notes and materials.</p>
+        <h3 style="margin: 0 0 4px 0;">Study resources &amp; notes</h3>
+        <p style="font-size: 12px; color: var(--text-soft); margin: 0;">Access all uploaded lecture notes and materials.</p>
       </div>
-      <a href="notes.html" class="btn-action" style="padding: 10px 18px; font-size: 14px;">📂 View All Notes</a>
+      <a href="notes.html" class="btn-action" style="padding: 10px 18px; font-size: 14px;">View all notes</a>
     </div>
   </div>
 
@@ -135,16 +204,16 @@
           const badges = data.student.badges || [];
           if (badges.length > 0) {
             badges.forEach(badge => {
-              badgeContainer.innerHTML += `<span class="badge-chip">✨ ${badge}</span>`;
+              badgeContainer.innerHTML += `<span class="badge-chip">${badge}</span>`;
             });
           } else {
-            badgeContainer.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No badges unlocked yet. Complete tasks or earn XP to unlock achievements!</p>';
+            badgeContainer.innerHTML = '<p style="font-size:13px; color:var(--text-soft); margin:0;">No badges unlocked yet. Complete tasks or earn XP to unlock achievements!</p>';
           }
 
           // Attendance & Calendar
           if (data.attendanceStats) {
             const stats = data.attendanceStats;
-            document.getElementById('attendanceText').innerHTML = `Overall Attendance: <strong style="color:#10b981;">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
+            document.getElementById('attendanceText').innerHTML = `Overall Attendance: <strong style="color:var(--accent-strong);">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
             
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
@@ -186,12 +255,12 @@
 
             data.leaderboard.forEach((s, i) => {
               const isCurrentStudent = s._id === studentId;
-              const rowBg = isCurrentStudent ? 'background: rgba(56, 189, 248, 0.1); padding: 4px 6px; border-radius: 6px;' : '';
+              const rowBg = isCurrentStudent ? 'background: var(--accent-soft); padding: 4px 6px; border-radius: 6px;' : '';
               
               lb.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); ${rowBg}">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border); ${rowBg}">
                   <span><strong>#${i+1}</strong> ${s.username} ${isCurrentStudent ? '(You)' : ''}</span>
-                  <span><strong style="color:#10b981;">${s.attendancePercentage}%</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
+                  <span><strong style="color:var(--accent-strong);">${s.attendancePercentage}%</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
                 </div>`;
             });
           }
@@ -202,19 +271,19 @@
           const submitted = new Set(data.submittedResults || []);
           if (data.tests) {
             if (data.tests.length === 0) {
-              tests.innerHTML = '<p style="font-size:13px; color:#94a3b8; margin:0;">No tests available.</p>';
+              tests.innerHTML = '<p style="font-size:13px; color:var(--text-soft); margin:0;">No tests available.</p>';
             } else {
               data.tests.forEach(t => {
                 let actionHtml = '';
                 if (submitted.has(t._id)) {
-                  actionHtml = '<span style="color:#10b981; font-weight:bold; font-size:12px;">✅ Completed</span>';
+                  actionHtml = '<span style="color:var(--accent-strong); font-weight:600; font-size:12px;">Completed</span>';
                 } else {
-                  actionHtml = `<a href="exam.html?testId=${t._id}" class="btn-action">Take Test</a>`;
+                  actionHtml = `<a href="exam.html?testId=${t._id}" class="btn-action">Take test</a>`;
                 }
 
                 tests.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <div><strong>${t.title}</strong><br><span style="font-size:11px; color:#94a3b8;">${t.statusMessage}</span></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid var(--border);">
+                    <div><strong>${t.title}</strong><br><span style="font-size:11px; color:var(--text-soft);">${t.statusMessage}</span></div>
                     <div>${actionHtml}</div>
                   </div>`;
               });

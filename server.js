@@ -2,8 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const https = require('https');
-const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -753,12 +751,6 @@ app.get('/api/reports/download/:id', async (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://www.tutorpoint.page";
-setInterval(() => {
-  const protocol = RENDER_URL.startsWith('https') ? https : http;
-  protocol.get(`${RENDER_URL}`, (res) => {}).on('error', (err) => {});
-}, 10 * 60 * 1000);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
