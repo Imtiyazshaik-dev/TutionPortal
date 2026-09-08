@@ -7,23 +7,23 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #F3F0E8;
-      --surface: #FDFCF9;
-      --border: #E3DDCE;
-      --text: #2C2A25;
-      --text-soft: #746E60;
-      --accent: #3F6B5C;
-      --accent-soft: #E4EEE8;
-      --accent-strong: #2E5548;
-      --warm: #97762F;
-      --warm-soft: #F1E9D3;
-      --danger: #9C4A3C;
-      --danger-soft: #F2E1DB;
-      --info: #4A6C8C;
-      --info-soft: #E4EBF1;
+      --bg: #F1EEE3;
+      --surface: #FFFFFF;
+      --ink: #1E2A1A;
+      --ink-soft: #5C6555;
+      --hairline: rgba(30, 42, 26, 0.14);
+      --accent: #23361C;
+      --accent-soft: #DCE6D0;
+      --accent-strong: #152613;
+      --warm: #93731F;
+      --warm-soft: #F1E7C9;
+      --danger: #8B3A2B;
+      --danger-soft: #F1DED7;
+      --info: #385773;
+      --info-soft: #DCE5EC;
       --muted: #8A8474;
       --muted-soft: #EDE9DD;
     }
@@ -33,9 +33,9 @@
     body {
       font-family: 'Work Sans', sans-serif;
       background: var(--bg);
-      color: var(--text);
+      color: var(--ink);
       margin: 0;
-      padding: 24px 20px;
+      padding: 24px 16px;
       line-height: 1.5;
     }
 
@@ -43,9 +43,9 @@
       max-width: 650px;
       margin: auto;
       background: var(--surface);
-      padding: 32px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
+      padding: 28px;
+      border-radius: 28px;
+      border: 3px solid var(--ink);
       opacity: 0;
       animation: settle 0.5s ease-out forwards;
     }
@@ -61,77 +61,123 @@
 
     .card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 18px;
+      border: 2px solid var(--ink);
+      padding: 18px 20px;
+      border-radius: 18px;
+      margin-bottom: 16px;
     }
 
     h2, h3 {
-      font-family: 'Literata', serif;
-      color: var(--text);
+      font-family: 'Baloo 2', sans-serif;
+      color: var(--ink);
       margin-top: 0;
-      font-weight: 600;
+      font-weight: 700;
     }
 
-    h3 { font-size: 17px; margin-bottom: 12px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 18px; margin-bottom: 12px; }
 
+    /* --- Header / identity --- */
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+    .identity { display: flex; align-items: center; gap: 12px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    .pill-btn { border: 2px solid var(--ink); padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Work Sans', sans-serif; text-decoration: none; display: inline-block; }
+    .pill-btn-accent { background: var(--accent); color: #fff; }
+    .pill-btn-danger { background: var(--danger); color: #fff; }
+
+    /* --- Avatar chip --- */
+    .avatar-chip { position: relative; width: 56px; height: 56px; border-radius: 16px; border: 2px solid var(--ink); background: var(--accent-soft); cursor: pointer; padding: 0; overflow: visible; flex-shrink: 0; }
+    .avatar-chip svg { width: 100%; height: 100%; border-radius: 13px; display: block; }
+    .wave-hand { position: absolute; bottom: -6px; right: -8px; font-size: 18px; transform-origin: 70% 70%; animation: waveHand 2.6s ease-in-out infinite; display: inline-block; }
+
+    .lb-avatar { width: 28px; height: 28px; border-radius: 9px; border: 1.5px solid var(--ink); overflow: hidden; flex-shrink: 0; display: inline-block; }
+    .lb-avatar svg { width: 100%; height: 100%; display: block; animation: avatarBob 2.6s ease-in-out infinite; transform-origin: 50% 85%; }
+
+    @keyframes avatarBob { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+    @keyframes waveHand { 0%, 55%, 100% { transform: rotate(0deg); } 10% { transform: rotate(-16deg); } 20% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 40% { transform: rotate(10deg); } 50% { transform: rotate(0deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .wave-hand, .lb-avatar svg { animation: none !important; }
+    }
+
+    /* --- Avatar picker --- */
+    .avatar-picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px; }
+    .avatar-option { width: 100%; aspect-ratio: 1; border-radius: 14px; border: 2px solid var(--hairline); background: var(--surface); cursor: pointer; padding: 4px; }
+    .avatar-option svg { width: 100%; height: 100%; border-radius: 10px; display: block; }
+    .avatar-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+
+    /* --- Calendar --- */
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; }
-    .calendar-day { padding: 8px; text-align: center; border-radius: 6px; font-size: 12px; font-weight: 600; }
-    .day-present { background: var(--accent-soft); border: 1px solid var(--accent); color: var(--accent-strong); }
-    .day-absent { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); }
-    .day-holiday { background: var(--info-soft); border: 1px solid var(--info); color: var(--info); }
+    .calendar-day { padding: 8px; text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600; }
+    .day-present { background: var(--accent-soft); border: 1.5px solid var(--accent); color: var(--accent-strong); }
+    .day-absent { background: var(--danger-soft); border: 1.5px solid var(--danger); color: var(--danger); }
+    .day-holiday { background: var(--info-soft); border: 1.5px solid var(--info); color: var(--info); }
     .day-sunday { background: var(--muted-soft); color: var(--muted); }
-    .day-not-enrolled { background: transparent; color: var(--border); }
+    .day-not-enrolled { background: transparent; color: var(--hairline); }
 
     .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .calendar-nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px; line-height: 1; font-family: 'Work Sans', sans-serif; }
+    .calendar-nav-btn { background: var(--surface); border: 2px solid var(--ink); color: var(--ink); width: 30px; height: 30px; border-radius: 9px; cursor: pointer; font-size: 14px; line-height: 1; font-family: 'Work Sans', sans-serif; }
     .calendar-nav-btn:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
     .calendar-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .calendar-nav-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .calendar-nav-label { font-size: 13px; font-weight: 700; color: var(--ink); font-family: 'Baloo 2', sans-serif; }
 
-    .btn-action { background: var(--accent); color: #fff; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 13px; display: inline-block; transition: background 0.15s ease; }
+    .btn-action { background: var(--accent); color: #fff; padding: 7px 16px; border-radius: 999px; font-weight: 600; text-decoration: none; font-size: 13px; display: inline-block; border: 2px solid var(--ink); }
     .btn-action:hover { background: var(--accent-strong); }
 
-    .xp-red { color: var(--danger); font-weight: 600; }
-    .xp-yellow { color: var(--warm); font-weight: 600; }
-    .xp-green { color: var(--accent-strong); font-weight: 600; }
+    .xp-red { color: var(--danger); font-weight: 700; }
+    .xp-yellow { color: var(--warm); font-weight: 700; }
+    .xp-green { color: var(--accent-strong); font-weight: 700; }
 
-    .badge-chip { display: inline-block; background: var(--warm-soft); border: 1px solid #D9C68F; color: var(--warm); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin: 4px; }
+    .badge-chip { display: inline-block; background: var(--warm-soft); border: 1.5px solid var(--warm); color: var(--warm); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; margin: 4px; }
+
+    .lb-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 7px 4px; border-bottom: 1px solid var(--hairline); }
+    .lb-left { display: flex; align-items: center; gap: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-      <div>
-        <h2 id="studentWelcome" style="margin: 0; color: var(--accent-strong);">Student Portal</h2>
-        <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-soft);"></p>
+    <div class="header-row">
+      <div class="identity">
+        <button id="avatarChipBtn" class="avatar-chip" onclick="toggleAvatarPicker()" aria-label="Change your avatar">
+          <span class="wave-hand" aria-hidden="true">👋</span>
+        </button>
+        <div>
+          <h2 id="studentWelcome" style="margin: 0; color: var(--accent-strong);">Student Portal</h2>
+          <p id="studentMeta" style="margin: 4px 0 0 0; font-size: 13px; color: var(--ink-soft);"></p>
+        </div>
       </div>
-      <div style="display: flex; gap: 8px; align-items: center;">
-        <button onclick="changeStudentPassword()" style="background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Work Sans', sans-serif;">Change password</button>
-        <a href="index.html" onclick="localStorage.clear()" style="background: var(--danger); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; text-decoration: none; font-weight: 600;">Log out</a>
+      <div class="header-actions">
+        <button class="pill-btn pill-btn-accent" onclick="changeStudentPassword()">Change password</button>
+        <a href="index.html" class="pill-btn pill-btn-danger" onclick="localStorage.clear()">Log out</a>
       </div>
+    </div>
+
+    <!-- Avatar Picker -->
+    <div id="avatarPickerPanel" class="card" style="display:none;">
+      <h3>Pick your avatar</h3>
+      <div id="avatarPickerGrid" class="avatar-picker-grid"></div>
     </div>
 
     <!-- Live Class Box -->
     <div id="liveClassBox" class="card" style="display:none; border-color: var(--accent); background: var(--accent-soft);">
       <h3 style="color: var(--accent-strong); margin-bottom: 8px;">Live class in progress</h3>
-      <p id="liveClassTitle" style="font-size: 14px; margin-bottom: 15px; color: var(--text-soft);"></p>
-      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" style="background: var(--accent); color: #fff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">Join class &amp; mark attendance</a>
+      <p id="liveClassTitle" style="font-size: 14px; margin-bottom: 15px; color: var(--ink-soft);"></p>
+      <a id="liveClassBtn" href="#" target="_blank" onclick="markAttendance()" class="btn-action" style="background: var(--accent);">Join class &amp; mark attendance</a>
     </div>
 
     <!-- Badges Section -->
     <div class="card">
       <h3>Achievements &amp; badges</h3>
       <div id="badgesContainer">
-        <p style="font-size: 13px; color: var(--text-soft); margin: 0;">Loading badges...</p>
+        <p style="font-size: 13px; color: var(--ink-soft); margin: 0;">Loading badges...</p>
       </div>
     </div>
 
     <!-- Attendance & Calendar -->
     <div class="card">
       <h3>Attendance &amp; calendar</h3>
-      <p id="attendanceText" style="font-size: 14px; color: var(--text-soft); margin-bottom: 12px;">Loading attendance...</p>
+      <p id="attendanceText" style="font-size: 14px; color: var(--ink-soft); margin-bottom: 12px;">Loading attendance...</p>
       <div class="calendar-nav">
         <button id="calendarPrevBtn" class="calendar-nav-btn" onclick="changeCalendarMonth(-1)" aria-label="Previous month">&lt;</button>
         <span id="calendarNavLabel" class="calendar-nav-label"></span>
@@ -144,10 +190,10 @@
     <div class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 style="margin: 0;">Cohort leaderboard</h3>
-        <span id="studentRankBadge" style="font-size: 12px; background: var(--accent-soft); color: var(--accent-strong); padding: 4px 10px; border-radius: 20px; font-weight: 600; border: 1px solid var(--accent);">Your rank: --</span>
+        <span id="studentRankBadge" style="font-size: 12px; background: var(--accent-soft); color: var(--accent-strong); padding: 4px 10px; border-radius: 999px; font-weight: 700; border: 1.5px solid var(--accent);">Your rank: --</span>
       </div>
-      <div id="leaderboardList" style="max-height: 180px; overflow-y: auto;">
-        <p style="font-size: 13px; color: var(--text-soft); margin: 0;">Loading leaderboard...</p>
+      <div id="leaderboardList" style="max-height: 220px; overflow-y: auto;">
+        <p style="font-size: 13px; color: var(--ink-soft); margin: 0;">Loading leaderboard...</p>
       </div>
     </div>
 
@@ -155,7 +201,7 @@
     <div class="card">
       <h3>Assessment tests</h3>
       <div id="testsList">
-        <p style="font-size: 13px; color: var(--text-soft); margin: 0;">Loading tests...</p>
+        <p style="font-size: 13px; color: var(--ink-soft); margin: 0;">Loading tests...</p>
       </div>
     </div>
 
@@ -163,13 +209,163 @@
     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
       <div>
         <h3 style="margin: 0 0 4px 0;">Study resources &amp; notes</h3>
-        <p style="font-size: 12px; color: var(--text-soft); margin: 0;">Access all uploaded lecture notes and materials.</p>
+        <p style="font-size: 12px; color: var(--ink-soft); margin: 0;">Access all uploaded lecture notes and materials.</p>
       </div>
-      <a href="notes.html" class="btn-action" style="padding: 10px 18px; font-size: 14px;">View all notes</a>
+      <a href="notes.html" class="btn-action">View all notes</a>
     </div>
   </div>
 
   <script>
+    // ============== PIXEL AVATAR SYSTEM ==============
+    const AV = {
+      skin_light:'#F2C9A0', skin_tan:'#D9A066', skin_med:'#C58356', skin_dark:'#8B5A34',
+      hair_black:'#241F1B', hair_brown:'#5B3A22', hair_blonde:'#D9B45C', hair_grey:'#B9B4AC',
+      cap_navy:'#233A5C', cap_red:'#A6402E', beanie_blue:'#2E4C6B',
+      santa_red:'#A6402E', fur:'#D9D4C7', ink:'#1E2A1A', brow:'#3A362E'
+    };
+
+    function avCell(x, y, color) { return `<rect x="${x*10}" y="${y*10}" width="10" height="10" fill="${color}"/>`; }
+
+    function avFace(skin, mouth = true) {
+      let px = '';
+      for (let y = 2; y < 10; y++) for (let x = 1; x < 9; x++) px += avCell(x, y, skin);
+      px += avCell(3, 5, AV.ink) + avCell(6, 5, AV.ink);
+      if (mouth) px += avCell(3, 7, AV.ink) + avCell(4, 7, AV.ink) + avCell(5, 7, AV.ink) + avCell(6, 7, AV.ink);
+      return px;
+    }
+    function stCap(hat) {
+      let px = '';
+      for (let y = 0; y < 2; y++) for (let x = 1; x < 9; x++) px += avCell(x, y, hat);
+      for (let x = 0; x < 7; x++) px += avCell(x, 2, hat);
+      return px;
+    }
+    function stAfro(hair) {
+      let px = '';
+      for (let y = 0; y < 3; y++) for (let x = 0; x < 10; x++) if (!(y === 0 && (x < 1 || x > 8))) px += avCell(x, y, hair);
+      return px;
+    }
+    function stBeretBrow(hat) {
+      let px = '';
+      for (let y = 0; y < 2; y++) for (let x = 2; x < 8; x++) px += avCell(x, y, hat);
+      px += avCell(1, 1, hat) + avCell(8, 1, hat);
+      px += avCell(3, 4, AV.brow) + avCell(6, 4, AV.brow);
+      return px;
+    }
+    function stBeanieLong(hat, hair) {
+      let px = '';
+      for (let y = 0; y < 3; y++) for (let x = 1; x < 9; x++) px += avCell(x, y, hat);
+      for (let y = 3; y < 7; y++) { px += avCell(0, y, hair) + avCell(9, y, hair); }
+      return px;
+    }
+    function stWavy(hair) {
+      let px = '';
+      for (let y = 0; y < 3; y++) for (let x = 1; x < 9; x++) px += avCell(x, y, hair);
+      px += avCell(0, 2, hair) + avCell(9, 2, hair) + avCell(0, 3, hair) + avCell(9, 3, hair);
+      return px;
+    }
+    function stSanta() {
+      let px = '';
+      for (let y = 0; y < 2; y++) for (let x = 1; x < 9; x++) px += avCell(x, y, AV.santa_red);
+      for (let x = 1; x < 9; x++) px += avCell(x, 2, AV.fur);
+      px += avCell(8, 0, AV.fur);
+      for (let x = 2; x < 8; x++) { px += avCell(x, 8, AV.fur) + avCell(x, 9, AV.fur); }
+      return px;
+    }
+    function stCurlyBrow(hair) {
+      let px = '';
+      const pat = [[1,0],[3,0],[5,0],[7,0],[0,1],[2,1],[4,1],[6,1],[8,1],[1,2],[3,2],[5,2],[7,2]];
+      pat.forEach(([x,y]) => px += avCell(x, y, hair));
+      px += avCell(3, 4, AV.brow) + avCell(6, 4, AV.brow);
+      return px;
+    }
+    function stShort(hair) {
+      let px = '';
+      for (let y = 1; y < 3; y++) for (let x = 1; x < 9; x++) px += avCell(x, y, hair);
+      return px;
+    }
+    function stBaldBrow() {
+      return avCell(3, 4, AV.brow) + avCell(6, 4, AV.brow);
+    }
+    function stBeard() {
+      let px = '';
+      for (let x = 2; x < 8; x++) px += avCell(x, 8, AV.hair_grey);
+      for (let x = 3; x < 7; x++) px += avCell(x, 9, AV.hair_grey);
+      return px;
+    }
+
+    const AVATAR_BUILDERS = {
+      'cap-navy':    () => avFace(AV.skin_light) + stCap(AV.cap_navy),
+      'bald-beard':  () => avFace(AV.skin_tan) + stBeard(),
+      'afro-dark':   () => avFace(AV.skin_dark) + stAfro(AV.hair_black),
+      'beret-brow':  () => avFace(AV.skin_med) + stBeretBrow(AV.ink),
+      'cap-red':     () => avFace(AV.skin_med) + stCap(AV.cap_red),
+      'bald-brow':   () => avFace(AV.skin_light) + stBaldBrow(),
+      'wavy-blonde': () => avFace(AV.skin_light) + stWavy(AV.hair_blonde),
+      'beanie-long': () => avFace(AV.skin_med) + stBeanieLong(AV.beanie_blue, AV.hair_black),
+      'santa-light': () => avFace(AV.skin_light) + stSanta(),
+      'santa-dark':  () => avFace(AV.skin_dark) + stSanta(),
+      'curly-grey':  () => avFace(AV.skin_tan) + stCurlyBrow(AV.hair_grey),
+      'short-black': () => avFace(AV.skin_light) + stShort(AV.hair_black)
+    };
+    const AVATAR_IDS = Object.keys(AVATAR_BUILDERS);
+
+    function avatarSvg(avatarId) {
+      const fn = AVATAR_BUILDERS[avatarId] || AVATAR_BUILDERS['short-black'];
+      return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${fn()}</svg>`;
+    }
+
+    // ============== AVATAR PICKER UI ==============
+    let currentAvatarId = 'short-black';
+    let avatarPickerBuilt = false;
+
+    function buildAvatarPicker() {
+      const grid = document.getElementById('avatarPickerGrid');
+      grid.innerHTML = '';
+      AVATAR_IDS.forEach(id => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'avatar-option' + (id === currentAvatarId ? ' selected' : '');
+        btn.dataset.avatarId = id;
+        btn.innerHTML = avatarSvg(id);
+        btn.onclick = () => selectAvatar(id);
+        grid.appendChild(btn);
+      });
+      avatarPickerBuilt = true;
+    }
+
+    function refreshAvatarPickerSelection() {
+      if (!avatarPickerBuilt) return;
+      document.querySelectorAll('#avatarPickerGrid .avatar-option').forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.avatarId === currentAvatarId);
+      });
+    }
+
+    function toggleAvatarPicker() {
+      const panel = document.getElementById('avatarPickerPanel');
+      if (!avatarPickerBuilt) buildAvatarPicker();
+      panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+    }
+
+    async function selectAvatar(avatarId) {
+      const studentId = localStorage.getItem('userId');
+      if (!studentId) return;
+      currentAvatarId = avatarId;
+      document.getElementById('avatarChipBtn').innerHTML = avatarSvg(avatarId) + '<span class="wave-hand" aria-hidden="true">👋</span>';
+      refreshAvatarPickerSelection();
+      document.getElementById('avatarPickerPanel').style.display = 'none';
+
+      try {
+        await fetch('/api/student/set-avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId, avatarId })
+        });
+      } catch (err) {
+        console.error("Error saving avatar:", err);
+      }
+    }
+
+    // ============== DASHBOARD LOGIC ==============
     let currentLiveClassId = null;
     let currentLiveClassTitle = '';
 
@@ -232,6 +428,11 @@
           document.getElementById('studentWelcome').innerText = `Welcome, ${data.student.username}`;
           document.getElementById('studentMeta').innerText = `ID Tag: ${data.student.studentIdTag || 'N/A'} | XP: ${data.student.xp} XP`;
 
+          // Avatar chip
+          currentAvatarId = data.student.avatarId || 'short-black';
+          document.getElementById('avatarChipBtn').innerHTML = avatarSvg(currentAvatarId) + '<span class="wave-hand" aria-hidden="true">👋</span>';
+          if (!avatarPickerBuilt) buildAvatarPicker(); else refreshAvatarPickerSelection();
+
           // Render Badges
           const badgeContainer = document.getElementById('badgesContainer');
           badgeContainer.innerHTML = '';
@@ -241,7 +442,7 @@
               badgeContainer.innerHTML += `<span class="badge-chip">${badge}</span>`;
             });
           } else {
-            badgeContainer.innerHTML = '<p style="font-size:13px; color:var(--text-soft); margin:0;">No badges unlocked yet. Complete tasks or earn XP to unlock achievements!</p>';
+            badgeContainer.innerHTML = '<p style="font-size:13px; color:var(--ink-soft); margin:0;">No badges unlocked yet. Complete tasks or earn XP to unlock achievements!</p>';
           }
 
           // Attendance & Calendar
@@ -306,11 +507,15 @@
 
             data.leaderboard.forEach((s, i) => {
               const isCurrentStudent = s._id === studentId;
-              const rowBg = isCurrentStudent ? 'background: var(--accent-soft); padding: 4px 6px; border-radius: 6px;' : '';
-              
+              const rowBg = isCurrentStudent ? 'background: var(--accent-soft); padding: 6px 6px; border-radius: 10px;' : '';
+              const delay = (i % 6) * 0.18;
+
               lb.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border); ${rowBg}">
-                  <span><strong>#${i+1}</strong> ${s.username} ${isCurrentStudent ? '(You)' : ''}</span>
+                <div class="lb-row" style="${rowBg}">
+                  <span class="lb-left">
+                    <span class="lb-avatar"><span style="animation-delay:${delay}s; display:block; width:100%; height:100%;">${avatarSvg(s.avatarId || 'short-black')}</span></span>
+                    <span><strong>#${i+1}</strong> ${s.username} ${isCurrentStudent ? '(You)' : ''}</span>
+                  </span>
                   <span><strong style="color:var(--accent-strong);">${s.attendancePercentage}%</strong> | <span class="${getXpColorClass(s.xp)}">${s.xp} XP</span></span>
                 </div>`;
             });
@@ -322,19 +527,19 @@
           const submitted = new Set(data.submittedResults || []);
           if (data.tests) {
             if (data.tests.length === 0) {
-              tests.innerHTML = '<p style="font-size:13px; color:var(--text-soft); margin:0;">No tests available.</p>';
+              tests.innerHTML = '<p style="font-size:13px; color:var(--ink-soft); margin:0;">No tests available.</p>';
             } else {
               data.tests.forEach(t => {
                 let actionHtml = '';
                 if (submitted.has(t._id)) {
-                  actionHtml = '<span style="color:var(--accent-strong); font-weight:600; font-size:12px;">Completed</span>';
+                  actionHtml = '<span style="color:var(--accent-strong); font-weight:700; font-size:12px;">Completed</span>';
                 } else {
                   actionHtml = `<a href="exam.html?testId=${t._id}" class="btn-action">Take test</a>`;
                 }
 
                 tests.innerHTML += `
-                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid var(--border);">
-                    <div><strong>${t.title}</strong><br><span style="font-size:11px; color:var(--text-soft);">${t.statusMessage}</span></div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; padding:8px 0; border-bottom:1px solid var(--hairline);">
+                    <div><strong>${t.title}</strong><br><span style="font-size:11px; color:var(--ink-soft);">${t.statusMessage}</span></div>
                     <div>${actionHtml}</div>
                   </div>`;
               });

@@ -38,6 +38,7 @@ const studentSchema = new mongoose.Schema({
   badges: [String],
   strikes: { type: Number, default: 0 },
   remarks: { type: String, default: '' },
+  avatarId: { type: String, default: 'short-black' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -351,6 +352,26 @@ app.post('/api/student/change-password', async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
+// Student Self-Service Avatar Selection Route
+const VALID_AVATAR_IDS = new Set([
+  'cap-navy', 'bald-beard', 'afro-dark', 'beret-brow', 'cap-red', 'bald-brow',
+  'wavy-blonde', 'beanie-long', 'santa-light', 'santa-dark', 'curly-grey', 'short-black'
+]);
+app.post('/api/student/set-avatar', async (req, res) => {
+  try {
+    const { studentId, avatarId } = req.body;
+    if (!VALID_AVATAR_IDS.has(avatarId)) {
+      return res.status(400).json({ success: false, message: 'Invalid avatar selection.' });
+    }
+    const student = await Student.findById(studentId);
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+
+    student.avatarId = avatarId;
+    await student.save();
+    res.json({ success: true, message: 'Avatar updated!' });
+  } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
 app.get('/api/classrooms/:adminId', async (req, res) => {
   try {
     const adminUser = await Student.findById(req.params.adminId);
@@ -388,7 +409,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
     }
 
     const classroom = student.classroomId ? await Classroom.findById(student.classroomId) : null;
-    const leaderboardRaw = await Student.find(query).sort({ xp: -1 }).select('username xp studentIdTag attendance createdAt');
+    const leaderboardRaw = await Student.find(query).sort({ xp: -1 }).select('username xp studentIdTag attendance createdAt avatarId');
     
     const leaderboard = [];
     for (const s of leaderboardRaw) {
@@ -398,7 +419,8 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
         username: s.username,
         xp: s.xp,
         studentIdTag: s.studentIdTag,
-        attendancePercentage: stats.percentage
+        attendancePercentage: stats.percentage,
+        avatarId: s.avatarId || 'short-black'
       });
     }
 
