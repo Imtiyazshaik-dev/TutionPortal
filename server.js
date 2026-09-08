@@ -110,52 +110,108 @@ const AttendanceRequest = mongoose.model('AttendanceRequest', attendanceRequestS
 const Note = mongoose.model('Note', noteSchema);
 const WeeklyReport = mongoose.model('WeeklyReport', weeklyReportSchema);
 
-// --- ATTENDANCE STATS CALCULATION HELPER ---
+// --- ATTENDANCE STATS CALCULATION HELPERS ---
+function getIstToday() {
+  const now = new Date();
+  const istTime = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60000);
+  return new Date(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
+}
+
+function formatDateStr(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// A student's attendance should only be tracked from the day they were
+// enrolled (approved), never before — this is what "createdAt" reflects,
+// since it's reset to the approval timestamp when an admin approves them.
+function getEffectiveStart(student) {
+  const termStart = new Date('2026-08-01');
+  termStart.setHours(0, 0, 0, 0);
+
+  let enrolledAt = termStart;
+  if (student.createdAt) {
+    const created = new Date(student.createdAt);
+    enrolledAt = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+  }
+
+  return enrolledAt.getTime() > termStart.getTime() ? enrolledAt : termStart;
+}
+
+// Overall attendance percentage across the student's full enrolled history.
 async function calculateAttendanceStats(student) {
   try {
-    const termStart = new Date('2026-08-01');
-    termStart.setHours(0,0,0,0);
-    
-    const now = new Date();
-    const istTime = new Date(now.getTime() + (330 + now.getTimezoneOffset()) * 60000);
-    const today = new Date(istTime.getFullYear(), istTime.getMonth(), istTime.getDate());
+    const effectiveStart = getEffectiveStart(student);
+    const today = getIstToday();
 
     const holidays = await Holiday.find({});
     const holidaySet = new Set(holidays.map(h => h.date));
 
     let totalWorkingDays = 0;
     let totalPresent = 0;
-    const calendarMap = {};
 
-    let curr = new Date(termStart);
+    let curr = new Date(effectiveStart);
     while (curr.getTime() <= today.getTime()) {
-      const year = curr.getFullYear();
-      const month = String(curr.getMonth() + 1).padStart(2, '0');
-      const day = String(curr.getDate()).padStart(2, '0');
-      const dateStr = `${year}-${month}-${day}`;
-      
+      const dateStr = formatDateStr(curr);
       const dayOfWeek = curr.getDay();
-      if (dayOfWeek === 0) {
-        calendarMap[dateStr] = 'Sunday';
-      } else if (holidaySet.has(dateStr)) {
-        calendarMap[dateStr] = 'Holiday';
-      } else {
+
+      if (dayOfWeek !== 0 && !holidaySet.has(dateStr)) {
         totalWorkingDays++;
         const record = (student.attendance || []).find(a => a.date === dateStr);
-        if (record && record.status === 'Present') {
-          totalPresent++;
-          calendarMap[dateStr] = 'Present';
-        } else {
-          calendarMap[dateStr] = 'Absent';
-        }
+        if (record && record.status === 'Present') totalPresent++;
       }
       curr.setDate(curr.getDate() + 1);
     }
 
     const percentage = totalWorkingDays > 0 ? Number(((totalPresent / totalWorkingDays) * 100).toFixed(1)) : 100.0;
-    return { percentage, totalWorkingDays, totalPresent, calendarMap };
+    return { percentage, totalWorkingDays, totalPresent };
   } catch (err) {
-    return { percentage: 0, totalWorkingDays: 0, totalPresent: 0, calendarMap: {} };
+    return { percentage: 0, totalWorkingDays: 0, totalPresent: 0 };
+  }
+}
+
+// Calendar for a single month only (1-12), capped at today and never
+// showing days before the student was enrolled.
+async function calculateMonthCalendar(student, month, year) {
+  try {
+    const effectiveStart = getEffectiveStart(student);
+    const today = getIstToday();
+
+    const holidays = await Holiday.find({});
+    const holidaySet = new Set(holidays.map(h => h.date));
+
+    const firstOfMonth = new Date(year, month - 1, 1);
+    const lastOfMonth = new Date(year, month, 0);
+    const cappedEnd = lastOfMonth.getTime() > today.getTime() ? today : lastOfMonth;
+
+    const calendarMap = {};
+    if (cappedEnd.getTime() < firstOfMonth.getTime()) {
+      return { month, year, calendarMap };
+    }
+
+    let curr = new Date(firstOfMonth);
+    while (curr.getTime() <= cappedEnd.getTime()) {
+      const dateStr = formatDateStr(curr);
+      const dayOfWeek = curr.getDay();
+
+      if (curr.getTime() < effectiveStart.getTime()) {
+        calendarMap[dateStr] = 'NotEnrolled';
+      } else if (dayOfWeek === 0) {
+        calendarMap[dateStr] = 'Sunday';
+      } else if (holidaySet.has(dateStr)) {
+        calendarMap[dateStr] = 'Holiday';
+      } else {
+        const record = (student.attendance || []).find(a => a.date === dateStr);
+        calendarMap[dateStr] = (record && record.status === 'Present') ? 'Present' : 'Absent';
+      }
+      curr.setDate(curr.getDate() + 1);
+    }
+
+    return { month, year, calendarMap };
+  } catch (err) {
+    return { month, year, calendarMap: {} };
   }
 }
 
@@ -321,6 +377,11 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
     const updatedStudent = await Student.findById(student._id);
     const attStats = await calculateAttendanceStats(updatedStudent);
 
+    const todayIst = getIstToday();
+    const requestedMonth = parseInt(req.query.month, 10) || (todayIst.getMonth() + 1);
+    const requestedYear = parseInt(req.query.year, 10) || todayIst.getFullYear();
+    const calendarMonth = await calculateMonthCalendar(updatedStudent, requestedMonth, requestedYear);
+
     const query = { status: 'approved' };
     if (student.classroomId) {
       query.classroomId = student.classroomId;
@@ -363,6 +424,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
       classroom,
       student: updatedStudent,
       attendanceStats: attStats,
+      calendarMonth,
       leaderboard,
       tests: availableTests,
       notes,

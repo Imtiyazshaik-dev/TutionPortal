@@ -82,6 +82,13 @@
     .day-absent { background: var(--danger-soft); border: 1px solid var(--danger); color: var(--danger); }
     .day-holiday { background: var(--info-soft); border: 1px solid var(--info); color: var(--info); }
     .day-sunday { background: var(--muted-soft); color: var(--muted); }
+    .day-not-enrolled { background: transparent; color: var(--border); }
+
+    .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .calendar-nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 14px; line-height: 1; font-family: 'Work Sans', sans-serif; }
+    .calendar-nav-btn:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
+    .calendar-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .calendar-nav-label { font-size: 13px; font-weight: 600; color: var(--text); }
 
     .btn-action { background: var(--accent); color: #fff; padding: 6px 14px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 13px; display: inline-block; transition: background 0.15s ease; }
     .btn-action:hover { background: var(--accent-strong); }
@@ -125,6 +132,11 @@
     <div class="card">
       <h3>Attendance &amp; calendar</h3>
       <p id="attendanceText" style="font-size: 14px; color: var(--text-soft); margin-bottom: 12px;">Loading attendance...</p>
+      <div class="calendar-nav">
+        <button id="calendarPrevBtn" class="calendar-nav-btn" onclick="changeCalendarMonth(-1)" aria-label="Previous month">&lt;</button>
+        <span id="calendarNavLabel" class="calendar-nav-label"></span>
+        <button id="calendarNextBtn" class="calendar-nav-btn" onclick="changeCalendarMonth(1)" aria-label="Next month">&gt;</button>
+      </div>
       <div id="calendarGrid" class="calendar-grid"></div>
     </div>
 
@@ -161,6 +173,27 @@
     let currentLiveClassId = null;
     let currentLiveClassTitle = '';
 
+    // Calendar month being viewed. Starts unset so the first request lets
+    // the server pick the real current month; we then lock onto it.
+    let viewMonth = null;
+    let viewYear = null;
+    let latestMonth = null; // the real current month, from the server
+    let latestYear = null;
+
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    function changeCalendarMonth(delta) {
+      let m = viewMonth + delta;
+      let y = viewYear;
+      if (m < 1) { m = 12; y -= 1; }
+      if (m > 12) { m = 1; y += 1; }
+      // Never let the student page forward past the real current month.
+      if (y > latestYear || (y === latestYear && m > latestMonth)) return;
+      viewMonth = m;
+      viewYear = y;
+      loadStudentData();
+    }
+
     function getXpColorClass(xp) {
       if (xp < 30) return 'xp-red';
       if (xp > 45) return 'xp-green';
@@ -191,7 +224,8 @@
       }
 
       try {
-        const res = await fetch(`/api/student/classroom-data/${studentId}`);
+        const monthQuery = (viewMonth && viewYear) ? `?month=${viewMonth}&year=${viewYear}` : '';
+        const res = await fetch(`/api/student/classroom-data/${studentId}${monthQuery}`);
         const data = await res.json();
 
         if (data.success && data.student) {
@@ -214,23 +248,40 @@
           if (data.attendanceStats) {
             const stats = data.attendanceStats;
             document.getElementById('attendanceText').innerHTML = `Overall Attendance: <strong style="color:var(--accent-strong);">${stats.percentage}%</strong> (${stats.totalPresent} Present / ${stats.totalWorkingDays} Working Days)`;
-            
+          }
+
+          if (data.calendarMonth) {
+            const cal = data.calendarMonth;
+
+            // Lock onto the server's real current month on first load only.
+            if (latestMonth === null) {
+              latestMonth = cal.month;
+              latestYear = cal.year;
+            }
+            if (viewMonth === null) {
+              viewMonth = cal.month;
+              viewYear = cal.year;
+            }
+
+            document.getElementById('calendarNavLabel').innerText = `${MONTH_NAMES[cal.month - 1]} ${cal.year}`;
+            document.getElementById('calendarNextBtn').disabled = (cal.year === latestYear && cal.month === latestMonth);
+
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
-            if (stats.calendarMap) {
-              Object.keys(stats.calendarMap).sort().forEach(date => {
-                const status = stats.calendarMap[date];
-                let cssClass = 'calendar-day';
-                let shortDate = date.slice(8);
+            Object.keys(cal.calendarMap).sort().forEach(date => {
+              const status = cal.calendarMap[date];
+              let cssClass = 'calendar-day';
+              let shortDate = date.slice(8);
 
-                if (status === 'Present') cssClass += ' day-present';
-                else if (status === 'Absent') cssClass += ' day-absent';
-                else if (status === 'Holiday') cssClass += ' day-holiday';
-                else if (status === 'Sunday') cssClass += ' day-sunday';
+              if (status === 'Present') cssClass += ' day-present';
+              else if (status === 'Absent') cssClass += ' day-absent';
+              else if (status === 'Holiday') cssClass += ' day-holiday';
+              else if (status === 'Sunday') cssClass += ' day-sunday';
+              else if (status === 'NotEnrolled') cssClass += ' day-not-enrolled';
 
-                grid.innerHTML += `<div class="${cssClass}" title="${date}: ${status}">${shortDate}<br><span style="font-size:9px;">${status.slice(0,3)}</span></div>`;
-              });
-            }
+              const label = status === 'NotEnrolled' ? '' : `<br><span style="font-size:9px;">${status.slice(0,3)}</span>`;
+              grid.innerHTML += `<div class="${cssClass}" title="${date}: ${status}">${shortDate}${label}</div>`;
+            });
           }
 
           // Live Class
