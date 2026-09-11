@@ -7,25 +7,25 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #F1EEE3;
-      --surface: #FFFFFF;
-      --ink: #1E2A1A;
-      --ink-soft: #5C6555;
-      --accent: #23361C;
-      --accent-soft: #DCE6D0;
-      --accent-strong: #152613;
-      --danger: #8B3A2B;
+      --bg: #F4BD3F;
+      --card: #FBF8F1;
+      --ink: #14140F;
+      --ink-soft: #6B6558;
+      --yellow: #F6C63B;
+      --yellow-deep: #E0A722;
+      --red: #E8503A;
     }
 
     * { box-sizing: border-box; }
 
     body {
-      font-family: 'Work Sans', sans-serif !important;
-      background: var(--bg) !important;
-      background-image: none !important;
+      font-family: 'Poppins', sans-serif !important;
+      background-color: var(--bg) !important;
+      background-image: radial-gradient(rgba(20,20,15,0.16) 1.4px, transparent 1.4px) !important;
+      background-size: 16px 16px !important;
       color: var(--ink) !important;
       margin: 0;
       display: flex;
@@ -38,12 +38,12 @@
     body::before { display: none !important; }
 
     .login-card {
-      background: var(--surface);
-      border: 3px solid var(--ink);
-      border-radius: 28px;
-      padding: 40px 32px;
+      background: var(--card);
+      border: 4px solid var(--ink);
+      border-radius: 32px;
+      padding: 40px 30px;
       width: 100%;
-      max-width: 380px;
+      max-width: 360px;
       box-sizing: border-box;
       opacity: 0;
       animation: settle 0.5s ease-out forwards;
@@ -58,22 +58,28 @@
       .login-card { animation: none; opacity: 1; }
     }
 
-    .login-mark { width: 52px; height: 52px; border-radius: 16px; border: 2px solid var(--ink); background: var(--accent-soft); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 26px; }
+    .login-mark {
+      width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--ink);
+      background: var(--card); display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px auto; overflow: hidden;
+    }
+    .login-mark svg { width: 100%; height: 100%; }
 
     .login-card h2 {
-      font-family: 'Baloo 2', sans-serif !important;
+      font-family: 'Poppins', sans-serif !important;
       color: var(--ink) !important;
       font-weight: 700 !important;
-      font-size: 26px !important;
+      font-size: 24px !important;
       letter-spacing: 0 !important;
       margin: 0 0 6px 0 !important;
+      text-align: center !important;
     }
 
     .login-card p {
       color: var(--ink-soft) !important;
-      font-size: 14px !important;
-      margin: 0 0 24px 0 !important;
-      text-align: left !important;
+      font-size: 13px !important;
+      margin: 0 0 26px 0 !important;
+      text-align: center !important;
     }
 
     .login-card .input-group { margin-bottom: 16px; }
@@ -81,40 +87,41 @@
     .login-card .input-group label {
       color: var(--ink) !important;
       font-weight: 600 !important;
-      font-size: 12px !important;
+      font-size: 11px !important;
       text-transform: uppercase !important;
       letter-spacing: 0.4px !important;
     }
 
     .login-card .input-group input {
-      background: var(--surface) !important;
+      background: var(--card) !important;
       border: 2px solid var(--ink) !important;
-      border-radius: 12px !important;
+      border-radius: 14px !important;
       color: var(--ink) !important;
-      font-family: 'Work Sans', sans-serif !important;
+      font-family: 'Poppins', sans-serif !important;
       padding: 12px 14px !important;
     }
 
     .login-card .input-group input:focus {
-      border-color: var(--accent) !important;
-      box-shadow: 0 0 0 3px var(--accent-soft) !important;
+      border-color: var(--red) !important;
+      box-shadow: none !important;
     }
 
     .login-card .input-group input::placeholder { color: #A6A190; }
 
     .login-card button {
-      background: var(--accent) !important;
-      border: 2px solid var(--ink) !important;
+      background: var(--yellow) !important;
+      border: 2.5px solid var(--ink) !important;
       border-radius: 999px !important;
       box-shadow: none !important;
-      font-family: 'Work Sans', sans-serif !important;
+      color: var(--ink) !important;
+      font-family: 'Poppins', sans-serif !important;
       font-weight: 700 !important;
       font-size: 15px !important;
       padding: 13px !important;
     }
 
     .login-card button:hover {
-      background: var(--accent-strong) !important;
+      background: var(--yellow-deep) !important;
       transform: none !important;
       box-shadow: none !important;
     }
@@ -122,7 +129,15 @@
 </head>
 <body>
   <div class="login-card">
-    <div class="login-mark">🎓</div>
+    <div class="login-mark">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="46" fill="#FBF8F1" stroke="#14140F" stroke-width="3"/>
+        <path d="M14 44 Q50 8 86 44 L86 34 Q50 14 14 34 Z" fill="#14140F"/>
+        <circle cx="38" cy="55" r="3.2" fill="#14140F"/>
+        <circle cx="62" cy="55" r="3.2" fill="#14140F"/>
+        <path d="M40 68 Q50 74 60 68" stroke="#14140F" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
     <h2>Tuition Portal</h2>
     <p>Enter your credentials to access your portal</p>
 
@@ -138,7 +153,7 @@
 
     <button onclick="handleLogin()" style="width: 100%; margin-top: 6px;">Log In</button>
 
-    <div id="loginErrorMsg" style="color: var(--danger); font-size: 13px; text-align: center; margin-top: 15px;"></div>
+    <div id="loginErrorMsg" style="color: #E8503A; font-size: 13px; text-align: center; margin-top: 15px;"></div>
   </div>
 
   <script>

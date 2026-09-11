@@ -38,7 +38,7 @@ const studentSchema = new mongoose.Schema({
   badges: [String],
   strikes: { type: Number, default: 0 },
   remarks: { type: String, default: '' },
-  avatarId: { type: String, default: 'short-black' },
+  avatarId: { type: String, default: 'buzz' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -188,8 +188,9 @@ async function calculateMonthCalendar(student, month, year) {
     const cappedEnd = lastOfMonth.getTime() > today.getTime() ? today : lastOfMonth;
 
     const calendarMap = {};
+    const todayStr = formatDateStr(today);
     if (cappedEnd.getTime() < firstOfMonth.getTime()) {
-      return { month, year, calendarMap };
+      return { month, year, calendarMap, today: todayStr };
     }
 
     let curr = new Date(firstOfMonth);
@@ -210,9 +211,9 @@ async function calculateMonthCalendar(student, month, year) {
       curr.setDate(curr.getDate() + 1);
     }
 
-    return { month, year, calendarMap };
+    return { month, year, calendarMap, today: todayStr };
   } catch (err) {
-    return { month, year, calendarMap: {} };
+    return { month, year, calendarMap: {}, today: null };
   }
 }
 
@@ -354,8 +355,8 @@ app.post('/api/student/change-password', async (req, res) => {
 
 // Student Self-Service Avatar Selection Route
 const VALID_AVATAR_IDS = new Set([
-  'cap-navy', 'bald-beard', 'afro-dark', 'beret-brow', 'cap-red', 'bald-brow',
-  'wavy-blonde', 'beanie-long', 'santa-light', 'santa-dark', 'curly-grey', 'short-black'
+  'beanie', 'glasses-short', 'curly', 'cap', 'bald-mustache',
+  'bob-hair', 'headband-pony', 'spiky', 'beard-short', 'buzz'
 ]);
 app.post('/api/student/set-avatar', async (req, res) => {
   try {
@@ -420,7 +421,7 @@ app.get('/api/student/classroom-data/:id', async (req, res) => {
         xp: s.xp,
         studentIdTag: s.studentIdTag,
         attendancePercentage: stats.percentage,
-        avatarId: s.avatarId || 'short-black'
+        avatarId: s.avatarId || 'buzz'
       });
     }
 
